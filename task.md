@@ -63,12 +63,20 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 |---|---|---|
 | T1.1 | Dominio: modelos e invariante de cita | ✅ | `[T1.1]` |
 | T1.2 | Dominio: motor de evaluación | ✅ | `[T1.2]` |
-| T1.3 | Corpus: cargador y validación de YAML | ⬜ |
-| T1.4 | Geo: reproyección e índice espacial | ⬜ |
-| T1.5 | Resolución coordenada → zona | ⬜ |
-| T1.6 | CLI | ⬜ |
-| T1.7 | Corpus real de la comuna piloto | ⬜ |
-| T1.8 | Validación contra predios reales | ⬜ |
+| T1.3 | Corpus ejecutable: esquema y migración | ⬜ |
+| T1.4 | Dominio: intérprete de reglas | ⬜ |
+| T1.5 | Dominio: verificador de factibilidad | ⬜ |
+| T1.6 | Corpus: cargador y validación de YAML | ⬜ |
+| T1.7 | Geo: reproyección e índice espacial | ⬜ |
+| T1.8 | Resolución coordenada → zona | ⬜ |
+| T1.9 | CLI | ⬜ |
+| T1.10 | Corpus real de la comuna piloto | ⬜ |
+| T1.11 | Validación contra predios reales | ⬜ |
+
+> **T1.3–T1.5 se insertaron el 2026-09-26**, tras detectar que el motor no ejecuta el corpus y que
+> evalúa parámetros acoplados como si fueran independientes (D14 y D15, `doc/03-DISENO.md` §2.5–2.6).
+> Van **antes** de T1.6 y T1.10 porque definen el esquema: si el cargador y el corpus de Ñuñoa nacen
+> con la forma vieja, hay que rehacerlos.
 
 **T1.1 — Dominio: modelos e invariante de cita.** ✅ `dominio/modelos.py`: `Cita`, `Parametro` (con
 `calificador` y `clave` compuesta), `Zona`, `Proyecto`, `Veredicto`, `Vigencia`, `Procedencia` y los
@@ -83,7 +91,51 @@ la tabla significa "sé calcularlo y sé que es un máximo". Un parámetro fuera
 se asume nada. Tres caminos separados hacia `P`: norma desconocida, dato del proyecto faltante, y
 parámetro que no sabemos comparar. 31 tests.
 
-### ⬜ T1.3 — Corpus: cargador YAML
+### ⬜ T1.3 — Corpus ejecutable: esquema y migración
+
+- **Objetivo:** que el corpus pueda expresar lo que la ordenanza realmente dice (D14). Hoy
+  `DERIVACIONES` hardcodea lo que `corpus/oguc/*.yaml` describe como texto: dos fuentes de verdad.
+- **Qué debe poder expresar:** varios límites **simultáneos** en un parámetro (`"44,00 m y 15
+  pisos"`), variantes por **clasificación** del proyecto (`continua` vs `aislada`), **excepciones
+  condicionales** (OGUC `2.6.5`: Conjunto Armónico +50 % cus) y **relaciones** entre parámetros.
+- **Test primero:** recorrer `corpus/**/*.yaml` y validar el esquema nuevo. Es inválido un
+  `limites` vacío, un límite sin `cita`, o una `expresion` que use un nombre fuera del vocabulario
+  declarado.
+- **Entregable:** esquema definitivo en `doc/03-DISENO.md` §2.5, `corpus/esquema.py` con el
+  vocabulario cerrado, y los 6 archivos de `corpus/oguc/` migrados.
+- **Aceptación:** los archivos migrados validan, y el esquema **rechaza** una expresión que use un
+  nombre no declarado.
+- **Nota:** sin intérprete todavía. Esta tarea fija la forma; T1.4 la ejecuta.
+- **Commit:** `feat(corpus): esquema ejecutable con limites multiples y variantes [T1.3]`
+
+### ⬜ T1.4 — Dominio: intérprete de reglas
+
+- **Objetivo:** que el motor lea el corpus en vez de hardcodear. `dominio/reglas.py`.
+- **Test primero:** evaluar expresiones del vocabulario cerrado; **rechazar** `__import__`,
+  atributos (`x.y`), llamadas, comprensiones y cualquier nodo del AST fuera de la lista blanca;
+  nombre desconocido levanta error; división por cero da `P`, no una excepción.
+- **Ojo (seguridad):** el corpus es **dato que llega de fuera**. Se evalúa con `ast` y lista blanca,
+  nunca con `eval`: `eval` sobre un YAML de la comunidad es ejecución de código arbitrario.
+- **Aceptación:** `eval` no se usa en ningún camino, y hay un test que lo verifica sobre el código
+  fuente. Un corpus malicioso no puede ejecutar nada.
+- **Ojo (honestidad):** lo que el corpus aún no sepa expresar sigue hardcodeado, y esa lista queda
+  explícita en el código en vez de dispersa.
+- **Commit:** `feat(dominio): interprete de reglas del corpus con lista blanca [T1.4]`
+
+### ⬜ T1.5 — Dominio: verificador de factibilidad
+
+- **Objetivo:** cazar el proyecto imposible que hoy aprueba (D15). Los parámetros están acoplados
+  geométricamente; chequeados por separado, todos pueden dar `C`.
+- **Test primero:** conjunto normativo alcanzable → sin hallazgos; `cus` normado mayor que
+  `cos + (n−1)·cos_sup` → hallazgo citado; proyecto que declara `cus`/`cos` incompatibles con su
+  altura → hallazgo; proyecto coherente → sin hallazgos. Un test por relación.
+- **Entregable:** `dominio/factibilidad.py` y el tipo `Hallazgo` en `dominio/modelos.py`
+  (severidad, cita, parámetros involucrados).
+- **Aceptación:** el caso *"todos los parámetros dan `C` pero el proyecto es imposible"* produce un
+  hallazgo. Es el motivo de existir de la tarea.
+- **Commit:** `feat(dominio): verificador de factibilidad geometrica [T1.5]`
+
+### ⬜ T1.6 — Corpus: cargador YAML
 
 - **Test primero:** cargar una zona de fixture; esquema inválido (falta `procedencia`, falta `cita`,
   `unidad` desconocida) levanta error con mensaje claro.
@@ -93,51 +145,53 @@ parámetro que no sabemos comparar. 31 tests.
 - **Ojo (A3 cerrada):** debe **rechazar claves de parámetro duplicadas**. Con `cos` y `densidad`
   teniendo variantes, un YAML con dos claves `cos` es válido sintácticamente y pierde una regla sin
   avisar. Test explícito para eso — PyYAML no lo detecta por defecto.
-- **Entregable:** `corpus/cargador.py` + `corpus/esquema.py`.
-- **Aceptación:** un YAML sin `hash_fuente` o sin `cita` por parámetro es rechazado.
-- **Commit:** `feat(corpus): cargador y validacion de esquema de zonas [T1.3]`
+- **Entregable:** `corpus/cargador.py`. Carga al esquema de T1.3, no al viejo.
+- **Aceptación:** un YAML sin `hash_fuente` o sin `cita` por límite es rechazado.
+- **Commit:** `feat(corpus): cargador y validacion de esquema de zonas [T1.6]`
 
-### ⬜ T1.4 — Geo: reproyección e índice espacial
+### ⬜ T1.7 — Geo: reproyección e índice espacial
 
 - **Test primero:** punto dentro de polígono sintético conocido → zona; punto fuera → `None`;
   verificar que EPSG:4326 → 3857 ubica un punto de Santiago en el rango esperado (cordura con
   tolerancia).
 - **Entregable:** `geo/indices.py` — `IndiceZonas.buscar(lat, lon) -> str | None`.
-- **Commit:** `feat(geo): reproyeccion e indice espacial point-in-polygon [T1.4]`
+- **Commit:** `feat(geo): reproyeccion e indice espacial point-in-polygon [T1.7]`
 
-### ⬜ T1.5 — Resolución de zona
+### ⬜ T1.8 — Resolución de zona
 
 - **Test primero:** coordenada conocida → `Zona` con parámetros del corpus; coordenada sin zona →
   `SinZonaError`; zona en el PRC pero ausente del corpus → `ZonaSinCorpusError`. Son dos fallos
   operacionales **distintos** y no deben confundirse.
 - **Entregable:** `geo/resolver.py`.
-- **Commit:** `feat(geo): resolucion coordenada -> zona del corpus [T1.5]`
+- **Commit:** `feat(geo): resolucion coordenada -> zona del corpus [T1.8]`
 
-### ⬜ T1.6 — CLI
+### ⬜ T1.9 — CLI
 
 - **Test primero:** invocación con `typer.testing.CliRunner`. `rasante zona --lat --lon` imprime
   código y nombre de zona; salida `--json` con esquema estable; código de salida distinto de cero en
-  los dos errores de T1.5.
+  los dos errores de T1.8. Los hallazgos de T1.5 se muestran aparte de los veredictos.
 - **Entregable:** `cli.py`.
 - **Aceptación:** `uv run rasante zona --lat -33.45 --lon -70.61 --json` devuelve JSON válido.
-- **Commit:** `feat(cli): comandos zona y evaluar con salida JSON [T1.6]`
+- **Commit:** `feat(cli): comandos zona y evaluar con salida JSON [T1.9]`
 
-### ⬜ T1.7 — Corpus real de la comuna piloto
+### ⬜ T1.10 — Corpus real de la comuna piloto
 
 - **Desbloqueada: A2 = Ñuñoa.** Entregable: 3–5 zonas con los **4 parámetros** extraídos **a mano**
-  de la ordenanza, revisados y citados. Empezar por las zonas que el texto refundido ya expone
-  limpiamente (`Z-1`…`Z-8` y variantes).
+  de la ordenanza, revisados y citados, **en el esquema de T1.3**. Empezar por las zonas que el texto
+  refundido expone limpiamente (`Z-1`…`Z-8` y variantes).
 - **Ojo (A3):** para `densidad` hay que declarar si la zona usa densidad **bruta** o **neta**. Sin
   eso el cálculo es ambiguo y el veredicto queda sin fundamento. Lo mismo con el calificador de `cos`.
+- **Ojo (T1.3):** Ñuñoa tiene límites **simultáneos** (`"44,00 m y 15 pisos"`) y variantes por
+  `continua`/`aislada`. Es el primer corpus real que ejercita el esquema nuevo.
 - **Test primero:** test de integración que carga las zonas reales y verifica que cada parámetro
   tiene cita y que la procedencia tiene `hash_fuente`.
 - **Aceptación:** cada valor trazable a un artículo de la ordenanza. `estado: revisado` con
   `revisado_por` poblado. **Se presenta cada extracción para validación antes del commit.**
-- **Commit:** `feat(corpus): zonas iniciales de <comuna> con parametros citados [T1.7]`
+- **Commit:** `feat(corpus): zonas iniciales de <comuna> con parametros citados [T1.10]`
 
-### ⬜ T1.8 — Validación contra predios reales
+### ⬜ T1.11 — Validación contra predios reales
 
 - **Objetivo:** cerrar la iteración 1 con evidencia. Metodología y métrica en `doc/05-VALIDACION.md`.
 - **Entregable:** `doc/` con precisión y recall sobre N expedientes reales ya aprobados.
 - **Nota:** sin esto la iteración **no se declara cerrada**.
-- **Commit:** `docs: validacion de la iteracion 1 contra predios reales [T1.8]`
+- **Commit:** `docs: validacion de la iteracion 1 contra predios reales [T1.11]`

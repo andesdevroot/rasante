@@ -77,7 +77,7 @@ def clave_compuesta(identificador: str, calificador: str | None = None) -> str:
     """Clave de un parámetro dentro de una zona: `id` o `id.calificador`.
 
     Es la única definición de la clave compuesta. `Parametro`, `Veredicto` y el cargador del
-    corpus (T1.3) tienen que coincidir en esto o las reglas se pisan.
+    corpus (T1.6) tienen que coincidir en esto o las reglas se pisan.
     """
     return f"{identificador}.{calificador}" if calificador else identificador
 

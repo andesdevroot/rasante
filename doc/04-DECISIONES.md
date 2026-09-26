@@ -116,7 +116,7 @@ Z-2A, Z-3, Z-3A, Z-4, Z-4C, Z-4m, Z-5, Z-5A, Z-6, Z-7, Z-7A/B, Z-8`.
 
 El criterio dominante es **el costo del corpus**, que es el activo del proyecto: **Ñuñoa tiene un
 texto refundido único y reciente con los parámetros en tablas extraíbles.** Ninguna otra candidata
-ofrece eso. Sobre 40 zonas, extraer 3–5 a mano para T1.7 es acotado y trazable.
+ofrece eso. Sobre 40 zonas, extraer 3–5 a mano para T1.10 es acotado y trazable.
 
 Las Condes tiene mejores datos de usos, y fue la tentación obvia, pero tiene **66 zonas** y una
 ordenanza muy enmendada: el costo de construir y *mantener* el corpus es el más alto de las tres.
@@ -131,7 +131,7 @@ conclusión sobrevive, pero por una razón distinta y verificada: **el texto ref
 1. **`UPERM` inutilizable.** Para usos (iteración 2+) la fuente es la ordenanza, no ArcGIS.
 2. **`UPROH` con calificadores** `(algunas)` / `(todas)`: requieren taxonomía canónica.
 3. **Geometría muy fragmentada** (máx. 514 polígonos en una zona): vigilar el rendimiento del índice.
-4. **Coma decimal.** La ordenanza escribe `0,6` y `3,6`. El cargador de T1.3 **debe** parsear `,`
+4. **Coma decimal.** La ordenanza escribe `0,6` y `3,6`. El cargador de T1.6 **debe** parsear `,`
    como separador decimal, o producirá `6` y `36`.
 5. **`cos` tiene dos variantes**: "ocupación de suelo" y "ocupación de suelo **pisos superiores**".
    El modelo de dominio necesita un calificador, no un único `cos`.

@@ -30,6 +30,8 @@ determinísticamente y emite el Formato Tipo MINVU (Circular DDU 514).
 | D11 | **La iteración 1 entra por coordenada (lat/lon)**, no por rol ni CIP | El rol de avalúo no tiene geometría pública masiva; la del predio vive en el CIP y parsearlo requiere LLM (iteración 2) |
 | D12 | **`P_DO` es procedencia, no vigencia** | Ver §2.3. Es la publicación original del instrumento, no la del texto consolidado |
 | D13 | **La OGUC aporta reglas; el PRC aporta valores.** Son dos mitades del corpus con naturaleza y frecuencia de cambio distintas | Ver §2.4. La OGUC define *cómo se computa*; los números (`cos 0,6`) los fija cada plan regulador |
+| D14 | **El corpus es ejecutable.** Sus reglas no se describen: se interpretan | Ver §2.5. Hoy `DERIVACIONES` en `motor.py` hardcodea lo que `corpus/oguc/*.yaml` describe: dos fuentes de verdad para el mismo cálculo |
+| D15 | **El motor verifica factibilidad, no solo parámetros sueltos** | Ver §2.6. Los parámetros están acoplados geométricamente: chequeados por separado, todos pueden dar `C` en un proyecto imposible |
 
 ## 2. Arquitectura de capas
 
@@ -177,7 +179,7 @@ parametros:
   cos.primer_piso:
     id: cos
     calificador: primer_piso
-    valor: "0.6"            # la ordenanza escribe "0,6": coma decimal, ver T1.3
+    valor: "0.6"            # la ordenanza escribe "0,6": coma decimal, ver T1.6
     unidad: adimensional
     estado: aplicable
     cita: { norma_id: "prc:nunoa", articulo: "..." }
@@ -270,6 +272,103 @@ corrección más importante al diseño original del corpus.
 **Consecuencia para el motor:** la cita de un veredicto puede referirse a la OGUC (la regla) o al PRC
 (el valor). El `Cita.norma_id` ya soporta ambos (`"oguc"` | `"prc:nunoa"`). Un veredicto de densidad
 cita **las dos**: la definición de densidad bruta de la OGUC y el valor de la ordenanza.
+
+## 2.5 El corpus es ejecutable (D14)
+
+**El problema.** `motor.py` tiene `DERIVACIONES` hardcodeado, y `corpus/oguc/2.1.22.yaml` describe la
+misma conversión como texto. Dos fuentes de verdad para el mismo cálculo, que pueden divergir sin
+que ningún test lo note. El corpus es hoy **decorativo**: se cita, no se ejecuta.
+
+**Y el corpus no puede expresar lo que la ordenanza realmente dice.** Evidencia del texto refundido
+de Ñuñoa:
+
+```
+Coeficiente de ocupación de suelo              0,6
+Coeficiente de ocupación de suelo pisos sup.   0,4
+Coeficiente de constructibilidad               4
+Altura máxima de edificación continua.  17,50 m y 6 pisos
+Altura máxima de edificación aislada.   ...
+Altura máxima de edificación.           44,00 m y 15 pisos
+```
+
+Cuatro cosas que el esquema actual no representa:
+
+| Gap | Evidencia | Consecuencia hoy |
+|---|---|---|
+| Varios límites **simultáneos** en un parámetro | *"44,00 m **y** 15 pisos"* | El corpus guarda un valor; el motor compara uno |
+| El valor depende de una **clasificación** del proyecto | *"continua"* vs *"aislada"* | `Zona` tiene un `Parametro` por clave, con un valor plano |
+| **Acoplamiento geométrico** entre parámetros | cos 0,6 + cos_sup 0,4 + cus 4 | Cada parámetro se evalúa aislado (§2.6) |
+| **Excepciones condicionales** | OGUC `2.6.5`: Conjunto Armónico excede el cus hasta 50 % | `regla` es un string decorativo |
+
+### Esquema propuesto
+
+```yaml
+# corpus/prc/RM/nunoa/zonas/Z-4.yaml
+zona: "Z-4"
+parametros:
+  cus:
+    unidad: adimensional
+    limites:                       # TODOS ligan: es una conjunción, no una alternativa
+      - valor: "4"
+        cita: { norma_id: "prc:nunoa", articulo: "..." }
+      - valor: "6"                 # excepción condicional
+        cuando: { clasificacion: conjunto_armonico }
+        cita: { norma_id: "oguc", articulo: "2.6.5" }
+  altura_maxima:
+    unidad: m
+    limites:
+      - valor: "44.00"
+        unidad: m
+        cita: { norma_id: "prc:nunoa", articulo: "..." }
+      - valor: "15"
+        unidad: pisos
+        cita: { norma_id: "prc:nunoa", articulo: "..." }
+        # la OGUC dice que el 3,50 m/piso solo aplica si NO se explicitan metros.
+        # Ñuñoa sí los explicita, así que este límite lija en pisos, no convertido.
+
+relaciones:                        # restricciones ENTRE parámetros
+  - tipo: cota_superior
+    objetivo: cus
+    expresion: "cos.primer_piso + (numero_pisos - 1) * cos.pisos_superiores"
+    fundamento: "se deduce de las definiciones de los coeficientes (OGUC 1.1.2)"
+    cita: { norma_id: "oguc", articulo: "1.1.2" }
+```
+
+**Cómo se evalúa.** La `expresion` es un mini-DSL evaluado con el módulo `ast` de la stdlib sobre
+un **vocabulario cerrado**: solo nombres declarados, operadores aritméticos y comparaciones. Nada de
+llamadas, atributos ni acceso a nada. Es un intérprete de ~60 líneas, puro y determinista.
+
+La razón de usar `ast` con lista blanca y no `eval`: un corpus es **dato que llega de fuera**. `eval`
+sobre un YAML de la comunidad es ejecución de código arbitrario. Con `ast` y vocabulario cerrado, lo
+peor que puede pasar es un error de evaluación, y el árbol sintáctico queda auditable.
+
+## 2.6 Verificación de factibilidad (D15)
+
+Chequear cada parámetro por separado **no alcanza**, porque están acoplados. Aritmética sobre datos
+reales de Ñuñoa (`cos=0,6`, `cos_sup=0,4`, `cus=4`, altura 44 m y 15 pisos):
+
+```
+cus máximo alcanzable con 15 pisos = 0,6 + 14 × 0,4 = 6,2   → cus=4 es holgado
+cus=4 con cos=0,6 exige al menos 7 pisos                    → ≈24,5 m a 3,50 m/piso
+15 pisos × 3,50 m = 52,5 m > 44,00 m                        → los dos límites no se
+                                                              alcanzan con pisos de 3,50
+```
+
+El motor actual diría `C` en **cada** parámetro de un proyecto imposible. Eso no es un problema de
+rendimiento: es un informe aprobando algo que no se puede construir.
+
+Se verifican dos cosas **distintas**, y las dos salen citadas:
+
+1. **Consistencia del conjunto normativo.** ¿Existe algún proyecto que satisfaga todos los límites
+   de la zona a la vez? Si el `cus` normado excede lo que permiten `cos`/`cos_sup`/`altura`, la
+   ordenanza es inalcanzable en ese punto. Puede ser un error del corpus o una particularidad real
+   que el revisor debe conocer.
+2. **Factibilidad del proyecto declarado.** Las relaciones geométricas se cumplen contra el proyecto
+   real: si declara `cus=4` y `cos=0,6`, necesita ≥7 pisos; si su altura no da para eso, el
+   proyecto es imposible aunque cada parámetro por separado cumpla.
+
+El hallazgo no es un `Veredicto` de parámetro: es un `Hallazgo` con severidad, cita y los parámetros
+involucrados. Ambos terminan en el Formato Tipo, pero por caminos distintos.
 
 ## 3. Flujo de la iteración 1
 

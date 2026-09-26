@@ -11,7 +11,7 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.3** (cargador del corpus) |
+| Tarea en curso | ninguna. Siguiente: **T1.3** (corpus ejecutable: esquema y migración) |
 | Código | `dominio/modelos.py` · `dominio/motor.py` · `geo/arcgis.py` · `corpus/ingesta.py` · `corpus/` |
 | Tests | **127 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | `pytest` verde, sin saltados · `ruff` limpio · `mypy --strict` limpio |
@@ -42,13 +42,17 @@ Una tarea, un commit: T0.1 quedó consolidada en `64bdcdd` tras el squash.
 
 ## Siguiente tarea
 
-**T1.3 — Corpus: cargador YAML** (`src/rasante/corpus/cargador.py`).
+**T1.3 — Corpus ejecutable: esquema y migración.** Ver `task.md`.
 
-Convierte `corpus/prc/<region>/<comuna>/zonas/*.yaml` en `Zona` del dominio. Debe manejar la
-**coma decimal** de las ordenanzas (`0,6` mal parseado se vuelve `6`) y **rechazar claves de
-parámetro duplicadas**: PyYAML no lo detecta y descartaría una regla en silencio. Es el puente
-entre el corpus (dato) y el dominio (puro), así que no puede importar nada de `dominio` hacia
-arriba.
+**T1.3, T1.4 y T1.5 son nuevas** (2026-09-26) y se insertaron **antes** de lo que era T1.3. El resto
+se renumeró: el cargador pasó de T1.3 a **T1.6**, geo a **T1.7**, resolución a **T1.8**, CLI a
+**T1.9**, corpus de Ñuñoa a **T1.10** y validación a **T1.11**.
+
+El motivo está en `03-DISENO.md` §2.5–2.6 (D14 y D15): el motor **no ejecuta el corpus** —hardcodea
+en `DERIVACIONES` lo que `corpus/oguc/*.yaml` describe como texto— y evalúa parámetros **acoplados**
+como si fueran independientes, así que puede aprobar un proyecto geométricamente imposible. Van
+antes del cargador y del corpus de Ñuñoa porque definen el esquema: nacer con la forma vieja
+significa rehacerlos.
 
 ## Blockers
 
@@ -98,11 +102,17 @@ Sin blockers de alcance: A1, A2 y A3 están cerradas.
 | 2026-09-26 | **`factor_habitantes_por_vivienda: "4"` es inferencia mía, no texto literal.** La OGUC dice "el coeficiente 4". Es la única lectura con dimensiones correctas, pero queda señalado como interpretación |
 | 2026-09-26 | **Los invariantes del dominio son de construcción, no de convención.** `Veredicto` sin `Cita` levanta `ErrorDominio`; un `float` en cualquier valor normativo levanta error; una clave de `Zona` que no coincida con su `Parametro.clave` es rechazada. No se puede construir un modelo inválido |
 | 2026-09-26 | **`LEYENDA` está hardcodeada en el dominio porque no puede leer YAML (D2).** Un test la contrasta contra `corpus/ddu/514.yaml`, que es lo que impide que las dos se separen en silencio |
-| 2026-09-26 | **`clave_compuesta()` es la única definición de la clave.** `Parametro`, `Veredicto` y (en T1.3) el cargador del corpus deben coincidir, o dos reglas se pisan en el mapping |
+| 2026-09-26 | **`clave_compuesta()` es la única definición de la clave.** `Parametro`, `Veredicto` y (en T1.6) el cargador del corpus deben coincidir, o dos reglas se pisan en el mapping |
 | 2026-09-26 | **El motor usa UNA tabla, no dos listas.** `DERIVACIONES` dice a la vez qué parámetros conocemos y cómo se deriva su valor: estar en la tabla significa "sé calcularlo y sé que es un máximo". Antes tenía `_derivar` y `_MAXIMOS` por separado, y podían divergir en silencio |
 | 2026-09-26 | **Un parámetro fuera de la tabla da `P`, no se asume que sea un máximo.** Suponerlo y compararlo produciría un `(C)` o `(NC)` sin fundamento |
 | 2026-09-26 | **T1.2 encontró un hueco en el modelo de T1.1:** `Proyecto` no tenía la superficie del primer piso, sin la cual `cos` no se puede derivar. Se agregó `superficie_primer_piso_m2` de forma **aditiva** (T1.1 no se rompió) |
 | 2026-09-26 | **`Parametro.id` rechaza el punto.** Bug real de T1.2: pasar `"densidad.bruta"` como `id` *y* `"bruta"` como calificador producía la clave `densidad.bruta.bruta`. El modelo lo aceptaba en silencio; ahora lo rechaza |
 | 2026-09-26 | **El motor no redondea antes de comparar.** Redondear en el límite puede convertir un `(NC)` en un `(C)`. El redondeo es del informe, no del veredicto |
+| 2026-09-26 | **D14: el corpus es ejecutable.** `DERIVACIONES` hardcodea lo que `corpus/oguc/2.1.22.yaml` describe como texto. Dos fuentes de verdad para el mismo cálculo, y pueden divergir sin que ningún test lo note |
+| 2026-09-26 | **El corpus actual no puede expresar lo que la ordenanza dice.** Evidencia de Ñuñoa: *"44,00 m **y** 15 pisos"* (límites simultáneos), *"continua"* vs *"aislada"* (variantes por clasificación), OGUC `2.6.5` (excepción condicional +50 % cus) |
+| 2026-09-26 | **D15: el motor verifica factibilidad, no solo parámetros sueltos.** Con cos 0,6 y cos_sup 0,4, un `cus` de 4 exige ≥7 pisos ≈24,5 m. Un proyecto con altura menor es imposible y hoy da `C` en cada parámetro |
+| 2026-09-26 | **La `expresion` del corpus se evalúa con `ast` y lista blanca, nunca con `eval`.** El corpus es dato que llega de fuera: `eval` sobre un YAML de la comunidad es ejecución de código arbitrario |
+| 2026-09-26 | **La factibilidad no es un `Veredicto`, es un `Hallazgo`.** Un veredicto es de un parámetro; un acoplamiento geométrico involucra varios. Se registran y se rinden por caminos distintos |
+| 2026-09-26 | **No hay gap de rendimiento.** El motor evalúa 8 escalares: O(n) con n≈8, microsegundos. El gap es de **corrección**: el motor aprueba proyectos imposibles |
 
 Detalle completo de cada una en `04-DECISIONES.md`.
