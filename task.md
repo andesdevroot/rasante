@@ -65,7 +65,7 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.2 | Dominio: motor de evaluación | ✅ | `[T1.2]` |
 | T1.3 | Corpus ejecutable: esquema y migración | ✅ | `[T1.3]` |
 | T1.4 | Dominio: intérprete de reglas | ✅ | `[T1.4]` |
-| T1.5 | Dominio: verificador de factibilidad | ⬜ |
+| T1.5 | Dominio: verificador de factibilidad | ✅ | `[T1.5]` |
 | T1.6 | Corpus: cargador y validación de YAML | ⬜ |
 | T1.7 | Geo: reproyección e índice espacial | ⬜ |
 | T1.8 | Resolución coordenada → zona | ⬜ |
@@ -107,18 +107,13 @@ dato faltante dan `None`, nunca excepción: eso es `P`, no un fallo. Lo que sigu
 un test que falla si el corpus deriva algo sin sentido declarado. Un test verifica sobre el código
 fuente que no hay `eval`, `exec` ni `compile`. 35 tests.
 
-### ⬜ T1.5 — Dominio: verificador de factibilidad
-
-- **Objetivo:** cazar el proyecto imposible que hoy aprueba (D15). Los parámetros están acoplados
-  geométricamente; chequeados por separado, todos pueden dar `C`.
-- **Test primero:** conjunto normativo alcanzable → sin hallazgos; `cus` normado mayor que
-  `cos + (n−1)·cos_sup` → hallazgo citado; proyecto que declara `cus`/`cos` incompatibles con su
-  altura → hallazgo; proyecto coherente → sin hallazgos. Un test por relación.
-- **Entregable:** `dominio/factibilidad.py` y el tipo `Hallazgo` en `dominio/modelos.py`
-  (severidad, cita, parámetros involucrados).
-- **Aceptación:** el caso *"todos los parámetros dan `C` pero el proyecto es imposible"* produce un
-  hallazgo. Es el motivo de existir de la tarea.
-- **Commit:** `feat(dominio): verificador de factibilidad geometrica [T1.5]`
+**T1.5 — Dominio: verificador de factibilidad.** ✅ `dominio/factibilidad.py` y el tipo `Hallazgo`
+(con `CodigoHallazgo` y `Severidad`) en `modelos.py`. **D15 cerrado:** el caso que antes aprobaba
+—cada parámetro en `C` y el proyecto imposible— ahora emite un `BLOQUEANTE`. Dos chequeos distintos:
+factibilidad del proyecto (`superficie_edificada_m2 > huella × pisos`) y consistencia del conjunto
+normativo (`cus` que excede el máximo alcanzable con `cos`, `cos` de pisos superiores y altura, a
+3,50 m/piso de la OGUC `2.1.23`). Sin `numero_pisos`, sin superficies o sin altura, **no se afirma
+nada** — igual que el `P` del motor. Sin cita no se emite hallazgo. 19 tests.
 
 ### ⬜ T1.6 — Corpus: cargador YAML
 

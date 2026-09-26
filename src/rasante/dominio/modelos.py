@@ -280,3 +280,50 @@ class Veredicto:
     def clave(self) -> str:
         """Clave compuesta del parámetro al que se refiere, igual que `Parametro.clave`."""
         return clave_compuesta(self.parametro_id, self.calificador)
+
+
+class CodigoHallazgo(StrEnum):
+    """Tipos de hallazgo del verificador de factibilidad (D15).
+
+    Un `Hallazgo` **no** es un `Veredicto`: un veredicto es de un parámetro y va en el Formato Tipo;
+    un acoplamiento geométrico involucra varios y se rinde por otro camino.
+    """
+
+    PROYECTO_IMPOSIBLE = "proyecto_imposible"
+    """El proyecto no se puede construir: no cabe en su propia huella y número de pisos."""
+
+    CUS_INALCANZABLE = "cus_inalcanzable"
+    """El conjunto normativo es internamente inalcanzable: ningún proyecto podría cumplirlo."""
+
+
+class Severidad(StrEnum):
+    """Qué hacer con un hallazgo."""
+
+    BLOQUEANTE = "bloqueante"
+    """El proyecto no existe: hay que corregirlo antes de seguir."""
+
+    ADVERTENCIA = "advertencia"
+    """Puede ser un error del corpus o una particularidad real. El revisor decide."""
+
+
+@dataclass(frozen=True, slots=True)
+class Hallazgo:
+    """Un problema que no es de un parámetro suelto, sino de su **combinación**.
+
+    Como el `Veredicto`, exige `cita`: un hallazgo sin respaldo normativo es una opinión.
+    """
+
+    codigo: CodigoHallazgo
+    severidad: Severidad
+    mensaje: str
+    cita: Cita
+    parametros: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if not self.mensaje.strip():
+            raise ErrorDominio("un Hallazgo necesita 'mensaje'")
+        if not isinstance(self.cita, Cita):
+            raise ErrorDominio(
+                f"el hallazgo '{self.codigo}' no tiene 'cita': un hallazgo sin respaldo normativo "
+                "no se puede construir"
+            )

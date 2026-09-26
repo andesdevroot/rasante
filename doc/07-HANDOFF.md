@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 1 — Vertical slice, en curso.** T1.1–T1.4 cerradas (iteración 0 completa: T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1–T1.5 cerradas (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.5** (verificador de factibilidad) |
-| Código | `dominio/{modelos,motor,reglas,vocabulario}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
-| Tests | **194 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tarea en curso | ninguna. Siguiente: **T1.6** (cargador de zonas) |
+| Código | `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
+| Tests | **213 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | `pytest` verde, sin saltados · `ruff` limpio · `mypy --strict` limpio |
 | Árbol git | limpio — todo commiteado |
 
@@ -24,6 +24,7 @@ Reestructuración a `doc/` aplicada el 2026-09-26: `01-VISION.md`, `03-DISENO.md
 ## Último commit
 
 ```
+[T1.5]    feat(dominio): verificador de factibilidad geometrica
 [T1.4]    feat(dominio): interprete de reglas del corpus con lista blanca
 [T1.3]    feat(corpus): esquema ejecutable con limites multiples y variantes
 [T1.2]    feat(dominio): motor de evaluacion de parametros urbanisticos
@@ -44,15 +45,17 @@ Una tarea, un commit: T0.1 quedó consolidada en `64bdcdd` tras el squash.
 
 ## Siguiente tarea
 
-**T1.5 — Dominio: verificador de factibilidad** (`src/rasante/dominio/factibilidad.py`).
+**T1.6 — Corpus: cargador de zonas** (`src/rasante/corpus/cargador.py`, que ya tiene
+`cargar_reglas`).
 
-Usa `Reglas.relaciones` (T1.4) para cazar el proyecto imposible que hoy aprueba (D15). Dos chequeos
-distintos y los dos citados: **consistencia del conjunto normativo** (¿existe algún proyecto que
-satisfaga todos los límites?) y **factibilidad del proyecto declarado** (¿lo que declara es
-geométricamente posible?).
+Convierte `corpus/prc/<region>/<comuna>/zonas/*.yaml` en `Zona` del dominio. Debe manejar la **coma
+decimal** de las ordenanzas (`0,6` mal parseado se vuelve `6`) y **rechazar claves de parámetro
+duplicadas**: PyYAML no lo detecta y descartaría una regla en silencio.
 
-**Aceptación:** el caso *"todos los parámetros dan `C` pero el proyecto es imposible"* produce un
-`Hallazgo`. Sin eso, el motor sigue aprobando lo que no se puede construir.
+**Bloqueante conocido:** el dominio guarda **un** valor por parámetro (`Parametro.valor`), pero el
+esquema de T1.3 admite **varios límites simultáneos** (`limites`, con `cuando`). Cargar una zona real
+de Ñuñoa —que tiene *"44,00 m y 15 pisos"*— exige decidir si `Parametro` pasa a llevar una tupla de
+límites. **Decidir antes de escribir el cargador**, o T1.10 nacerá con la forma equivocada.
 
 ## Blockers
 
