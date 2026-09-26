@@ -2,7 +2,7 @@
 
 Documento vivo. Estado real, no aspiracional. Se actualiza en **cada** commit.
 
-**Última actualización:** 2026-09-26 · **Iteración:** 0 (no iniciada) · **Commit:** 0 — spec inicial
+**Última actualización:** 2026-09-26 · **Iteración:** 0 · **Commit:** 2 — uv.lock (pendiente de aprobación)
 
 ---
 
@@ -11,10 +11,10 @@ Documento vivo. Estado real, no aspiracional. Se actualiza en **cada** commit.
 | | |
 |---|---|
 | Iteración en curso | **0 — Cimientos** |
-| Tarea en curso | ninguna — esperando aprobación de la spec |
-| Código escrito | **nada**. Solo `design.md`, `task.md`, `handoff.md` y el plan de antecedentes |
-| Tests | no existen |
-| Bloqueado por | nada — listo para iniciar T0.1 |
+| Tarea en curso | ninguna — T0.1 cerrada. Siguiente: **T0.2** |
+| Código escrito | Esqueleto: `pyproject.toml`, `src/rasante/{dominio,corpus,geo}`, licencias, `README.md` |
+| Tests | **6 pasando** en `tests/test_arquitectura.py`. `ruff` y `mypy` limpios |
+| Bloqueado por | nada — listo para T0.2 |
 
 ### Hecho
 
@@ -50,15 +50,22 @@ cada commit.
 
 ## Cómo correr
 
-Aún no aplica. Cuando exista T0.1:
+`uv 0.12.19` instalado en `~/.local/bin`. Python 3.14.3.
+
+**Dentro del sandbox de DSH**, `uv` necesita su caché dentro del workspace: su default
+(`~/.cache/uv`) queda fuera y falla con `Operation not permitted`.
 
 ```bash
+export PATH="$HOME/.local/bin:$PATH"
+export UV_CACHE_DIR="$PWD/.uv-cache"   # solo necesario dentro del sandbox
+
 uv sync
 uv run pytest
-uv run ruff check
+uv run ruff check .
 uv run mypy src
-uv run rasante zona --lat -33.45 --lon -70.61 --json
 ```
+
+Fuera del sandbox, `UV_CACHE_DIR` no hace falta: `uv sync && uv run pytest` basta.
 
 ---
 
@@ -80,15 +87,14 @@ uv run rasante zona --lat -33.45 --lon -70.61 --json
 |---|---|---|
 | 2026-09-26 | — | Investigación de fuentes (ArcGIS MINVU, DDU 514, precios DeepSeek). Plan de mercado en `docs/RASANTE-plan-desarrollo.md` |
 | 2026-09-26 | **0** | Spec inicial: `design.md`, `task.md`, `handoff.md`. A1 cerrada (entrada por coordenada) |
+| 2026-09-26 | **1** | T0.1: esqueleto del repo. Guardián de D2 en `tests/test_arquitectura.py` (test rojo → verde). 6 tests, ruff y mypy limpios |
+| 2026-09-26 | **2** | `uv` instalado (0.12.19) y `uv.lock` versionado. Caché de uv movida dentro del workspace por el sandbox |
 
 ---
 
 ## Próximo paso
 
-**T0.1 — Esqueleto del repositorio**, con TDD: primero `tests/test_arquitectura.py` (el guardián
-de D2, que verifica que `rasante.dominio` no importe nada fuera de la stdlib), luego
-`pyproject.toml`, layout `src/`, licencias y tooling de calidad.
-
-Se presenta el diff y el resultado de los tests **antes de commitear**.
+**T0.2 — Ingestor ArcGIS REST** (`geo/arcgis.py`): `listar_capas()` y `descargar_capa()`, con
+caché en disco y fixtures HTTP grabadas, para que los tests corran sin red.
 
 Pendiente de tu input: **A2** (se resuelve con datos en T0.3) y **A3** (altura_maxima vs densidad).
