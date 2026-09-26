@@ -25,6 +25,7 @@ from pathlib import Path
 
 import pytest
 
+from rasante.corpus.cargador import cargar_reglas
 from rasante.dominio.modelos import (
     Cita,
     CodigoVeredicto,
@@ -33,12 +34,24 @@ from rasante.dominio.modelos import (
     Parametro,
     Procedencia,
     Proyecto,
+    Veredicto,
     Vigencia,
     Zona,
 )
 from rasante.dominio.motor import evaluar
+from rasante.dominio.reglas import Reglas
+
+RAIZ = Path(__file__).resolve().parents[1]
+
+# Las reglas salen del corpus real: es lo que D14 quiere decir con "el corpus manda".
+REGLAS: Reglas = cargar_reglas(RAIZ / "corpus")
 
 CITA = Cita(norma_id="prc:nunoa", articulo="2.1.22", texto="Densidad bruta máxima 200 hab/ha")
+
+
+def evalua(proyecto_: Proyecto, zona: Zona) -> list[Veredicto]:
+    """`evaluar` con las reglas del corpus, para no repetirlas en cada test."""
+    return evaluar(proyecto_, zona, REGLAS)
 
 
 def procedencia() -> Procedencia:
@@ -87,7 +100,7 @@ def proyecto(**campos: object) -> Proyecto:
 
 
 def unico(proyecto_: Proyecto, zona: Zona, clave: str) -> CodigoVeredicto:
-    veredictos = [v for v in evaluar(proyecto_, zona) if v.clave == clave]
+    veredictos = [v for v in evalua(proyecto_, zona) if v.clave == clave]
     assert len(veredictos) == 1, f"esperaba un veredicto para {clave}, hay {len(veredictos)}"
     return veredictos[0].codigo
 
@@ -219,7 +232,7 @@ def test_cos_de_pisos_superiores_sin_dato_da_pendiente() -> None:
     ],
 )
 def test_ningun_caso_sin_datos_produce_cumple(z: Zona) -> None:
-    veredictos = evaluar(proyecto(), z)
+    veredictos = evalua(proyecto(), z)
     assert all(v.codigo is not CodigoVeredicto.CUMPLE for v in veredictos), (
         f"un veredicto afirmó cumplimiento sin datos: {veredictos}"
     )
@@ -235,11 +248,11 @@ def test_un_veredicto_por_cada_parametro_de_la_zona() -> None:
         parametro("altura_maxima", "20", unidad="m"),
         parametro("densidad", "50", calificador="bruta", unidad="hab/ha"),
     )
-    assert len(evaluar(proyecto(), z)) == 4
+    assert len(evalua(proyecto(), z)) == 4
 
 
 def test_la_zona_sin_parametros_no_produce_veredictos() -> None:
-    assert evaluar(proyecto(), zona_con()) == []
+    assert evalua(proyecto(), zona_con()) == []
 
 
 def test_el_orden_es_determinista() -> None:
@@ -248,26 +261,26 @@ def test_el_orden_es_determinista() -> None:
         parametro("altura_maxima", "20", unidad="m"),
         parametro("cos", "0.6"),
     )
-    assert [v.clave for v in evaluar(proyecto(), z)] == ["altura_maxima", "cos", "densidad.bruta"]
+    assert [v.clave for v in evalua(proyecto(), z)] == ["altura_maxima", "cos", "densidad.bruta"]
 
 
 def test_todo_veredicto_lleva_cita() -> None:
     z = zona_con(parametro("cos", "0.6"), parametro("cus", None))
-    for v in evaluar(proyecto(), z):
+    for v in evalua(proyecto(), z):
         assert isinstance(v.cita, Cita)
         assert v.cita.texto
 
 
 def test_el_veredicto_lleva_los_valores_comparados() -> None:
     z = zona_con(parametro("cos", "0.6"))
-    v = evaluar(proyecto(superficie_primer_piso_m2=Decimal("500")), z)[0]
+    v = evalua(proyecto(superficie_primer_piso_m2=Decimal("500")), z)[0]
     assert v.valor_norma == Decimal("0.6")
     assert v.valor_proyecto == Decimal("0.5")
 
 
 def test_el_veredicto_conserva_el_calificador() -> None:
     z = zona_con(parametro("densidad", "50", calificador="bruta", unidad="hab/ha"))
-    v = evaluar(proyecto(), z)[0]
+    v = evalua(proyecto(), z)[0]
     assert v.calificador == "bruta"
     assert v.clave == "densidad.bruta"
 
@@ -275,7 +288,7 @@ def test_el_veredicto_conserva_el_calificador() -> None:
 def test_los_valores_comparados_son_decimal() -> None:
     z = zona_con(parametro("cos", "0.6"), parametro("altura_maxima", "20", unidad="m"))
     p = proyecto(superficie_primer_piso_m2=Decimal("500"), altura_m=Decimal("18"))
-    for v in evaluar(p, z):
+    for v in evalua(p, z):
         assert not isinstance(v.valor_norma, float)
         assert not isinstance(v.valor_proyecto, float)
 
@@ -284,7 +297,7 @@ def test_el_motor_no_muta_la_zona_ni_el_proyecto() -> None:
     z = zona_con(parametro("cos", "0.6"))
     p = proyecto(superficie_primer_piso_m2=Decimal("500"))
     antes = (len(z.parametros), p.superficie_primer_piso_m2)
-    evaluar(p, z)
+    evalua(p, z)
     assert (len(z.parametros), p.superficie_primer_piso_m2) == antes
 
 

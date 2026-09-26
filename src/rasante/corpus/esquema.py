@@ -24,7 +24,7 @@ from rasante.dominio.modelos import clave_compuesta
 from rasante.dominio.vocabulario import (
     CONDICIONES,
     PARAMETROS,
-    PRIMITIVAS,
+    VOCABULARIO,
     ErrorVocabulario,
     nombres_de_expresion,
 )
@@ -67,7 +67,7 @@ def validar_documento(datos: Any, *, origen: str = "") -> None:
     _validar_derivaciones(datos, prefijo)
 
     declarados = set(datos.get("parametros", {}))
-    permitidos = set(PRIMITIVAS) | set(PARAMETROS) | declarados
+    permitidos = set(VOCABULARIO) | declarados
     for ruta_expresion, expresion in _expresiones(datos):
         _validar_expresion(expresion, permitidos, f"{prefijo}{ruta_expresion}")
 

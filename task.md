@@ -64,7 +64,7 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.1 | Dominio: modelos e invariante de cita | ✅ | `[T1.1]` |
 | T1.2 | Dominio: motor de evaluación | ✅ | `[T1.2]` |
 | T1.3 | Corpus ejecutable: esquema y migración | ✅ | `[T1.3]` |
-| T1.4 | Dominio: intérprete de reglas | ⬜ |
+| T1.4 | Dominio: intérprete de reglas | ✅ | `[T1.4]` |
 | T1.5 | Dominio: verificador de factibilidad | ⬜ |
 | T1.6 | Corpus: cargador y validación de YAML | ⬜ |
 | T1.7 | Geo: reproyección e índice espacial | ⬜ |
@@ -99,19 +99,13 @@ conversión como expresión ejecutable. Las expresiones se validan contra el voc
 con `ast`: se rechazan llamadas, atributos fuera del vocabulario, comprensiones, lambdas,
 condicionales y potencias. `Proyecto` gana `numero_pisos` y `clasificaciones`. 33 tests.
 
-### ⬜ T1.4 — Dominio: intérprete de reglas
-
-- **Objetivo:** que el motor lea el corpus en vez de hardcodear. `dominio/reglas.py`.
-- **Test primero:** evaluar expresiones del vocabulario cerrado; **rechazar** `__import__`,
-  atributos (`x.y`), llamadas, comprensiones y cualquier nodo del AST fuera de la lista blanca;
-  nombre desconocido levanta error; división por cero da `P`, no una excepción.
-- **Ojo (seguridad):** el corpus es **dato que llega de fuera**. Se evalúa con `ast` y lista blanca,
-  nunca con `eval`: `eval` sobre un YAML de la comunidad es ejecución de código arbitrario.
-- **Aceptación:** `eval` no se usa en ningún camino, y hay un test que lo verifica sobre el código
-  fuente. Un corpus malicioso no puede ejecutar nada.
-- **Ojo (honestidad):** lo que el corpus aún no sepa expresar sigue hardcodeado, y esa lista queda
-  explícita en el código en vez de dispersa.
-- **Commit:** `feat(dominio): interprete de reglas del corpus con lista blanca [T1.4]`
+**T1.4 — Dominio: intérprete de reglas.** ✅ `dominio/reglas.py` (intérprete con `ast` y lista
+blanca) y `corpus/cargador.py` (`cargar_reglas`). **D14 cerrado:** el motor ya no tiene tabla
+hardcodeada — lee `derivaciones` del corpus. `evaluar(proyecto, zona, reglas)`. División por cero y
+dato faltante dan `None`, nunca excepción: eso es `P`, no un fallo. Lo que sigue hardcodeado es solo
+`MAXIMOS` (el sentido de la comparación, que el esquema aún no expresa), en un sitio explícito y con
+un test que falla si el corpus deriva algo sin sentido declarado. Un test verifica sobre el código
+fuente que no hay `eval`, `exec` ni `compile`. 35 tests.
 
 ### ⬜ T1.5 — Dominio: verificador de factibilidad
 

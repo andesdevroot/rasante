@@ -57,6 +57,11 @@ CONDICIONES: frozenset[str] = frozenset(
     }
 )
 
+# Todo lo que una expresión puede nombrar. Definición ÚNICA: la usan el intérprete (`reglas.py`) y
+# el validador del corpus (`corpus/esquema.py`). Si estuviera en dos sitios, podrían divergir y una
+# expresión pasaría la validación para romper en la evaluación.
+VOCABULARIO: frozenset[str] = frozenset(PRIMITIVAS) | PARAMETROS
+
 OPERADORES_BINARIOS = (ast.Add, ast.Sub, ast.Mult, ast.Div)
 OPERADORES_UNARIOS = (ast.UAdd, ast.USub)
 
@@ -71,15 +76,15 @@ class ErrorVocabulario(ValueError):
 def nombres_de_expresion(expresion: str) -> frozenset[str]:
     """Nombres que referencia una expresión, ya resueltos a rutas con punto.
 
-    `cos.primer_piso` se extrae como `"cos.primer_piso"`, no como `"cos"`: son claves de parámetro
-    con punto, no acceso a atributos.
+    `cos.primer_piso` se extrae como `"cos.primer_piso"`, no como `"cos"`: son claves de
+    parámetro con punto, no acceso a atributos.
 
     Levanta `ErrorVocabulario` si la sintaxis sale de la lista blanca.
     """
-    return frozenset(_recolectar(_arbol(expresion).body))
+    return frozenset(_recolectar(arbol(expresion).body))
 
 
-def _arbol(expresion: str) -> ast.Expression:
+def arbol(expresion: str) -> ast.Expression:
     try:
         arbol = ast.parse(expresion, mode="eval")
     except SyntaxError as error:
@@ -119,15 +124,15 @@ def _recolectar(nodo: ast.expr) -> set[str]:
     if isinstance(nodo, ast.UnaryOp):
         return _recolectar(nodo.operand)
     if isinstance(nodo, (ast.Name, ast.Attribute)):
-        ruta = _ruta(nodo)
+        ruta = ruta_de(nodo)
         return {ruta} if ruta else set()
     return set()
 
 
-def _ruta(nodo: ast.expr) -> str | None:
+def ruta_de(nodo: ast.expr) -> str | None:
     if isinstance(nodo, ast.Name):
         return nodo.id
     if isinstance(nodo, ast.Attribute):
-        base = _ruta(nodo.value)
+        base = ruta_de(nodo.value)
         return f"{base}.{nodo.attr}" if base else None
     return None

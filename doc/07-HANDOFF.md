@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 1 — Vertical slice, en curso.** T1.1, T1.2 y T1.3 cerradas (iteración 0 completa: T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1–T1.4 cerradas (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.4** (intérprete de reglas) |
-| Código | `dominio/{modelos,motor,vocabulario}.py` · `corpus/{ingesta,esquema}.py` · `geo/arcgis.py` · `corpus/` |
-| Tests | **160 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tarea en curso | ninguna. Siguiente: **T1.5** (verificador de factibilidad) |
+| Código | `dominio/{modelos,motor,reglas,vocabulario}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
+| Tests | **194 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | `pytest` verde, sin saltados · `ruff` limpio · `mypy --strict` limpio |
 | Árbol git | limpio — todo commiteado |
 
@@ -24,6 +24,7 @@ Reestructuración a `doc/` aplicada el 2026-09-26: `01-VISION.md`, `03-DISENO.md
 ## Último commit
 
 ```
+[T1.4]    feat(dominio): interprete de reglas del corpus con lista blanca
 [T1.3]    feat(corpus): esquema ejecutable con limites multiples y variantes
 [T1.2]    feat(dominio): motor de evaluacion de parametros urbanisticos
 [T1.1]    feat(dominio): modelos de dominio e invariante de cita obligatoria
@@ -43,14 +44,15 @@ Una tarea, un commit: T0.1 quedó consolidada en `64bdcdd` tras el squash.
 
 ## Siguiente tarea
 
-**T1.4 — Dominio: intérprete de reglas** (`src/rasante/dominio/reglas.py`).
+**T1.5 — Dominio: verificador de factibilidad** (`src/rasante/dominio/factibilidad.py`).
 
-Ejecuta las expresiones del corpus con `ast` y el vocabulario de `dominio/vocabulario.py`, y aplica
-`limites` (conjunción: todos ligan), `cuando` (condiciones) y `relaciones`. El motor pasa a leer
-`derivaciones` de `corpus/oguc/1.1.2.yaml` en vez de su `DERIVACIONES` hardcodeado.
+Usa `Reglas.relaciones` (T1.4) para cazar el proyecto imposible que hoy aprueba (D15). Dos chequeos
+distintos y los dos citados: **consistencia del conjunto normativo** (¿existe algún proyecto que
+satisfaga todos los límites?) y **factibilidad del proyecto declarado** (¿lo que declara es
+geométricamente posible?).
 
-**Aceptación:** `eval` no se usa en ningún camino, con un test que lo verifica sobre el código
-fuente. Un corpus malicioso no puede ejecutar nada.
+**Aceptación:** el caso *"todos los parámetros dan `C` pero el proyecto es imposible"* produce un
+`Hallazgo`. Sin eso, el motor sigue aprobando lo que no se puede construir.
 
 ## Blockers
 

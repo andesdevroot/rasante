@@ -22,8 +22,9 @@ from typing import Any
 import pytest
 import yaml
 
+from rasante.corpus.cargador import cargar_reglas
 from rasante.corpus.esquema import ErrorEsquema, validar_archivo, validar_corpus, validar_documento
-from rasante.dominio.motor import DERIVACIONES
+from rasante.dominio.motor import MAXIMOS
 from rasante.dominio.vocabulario import CONDICIONES, PARAMETROS, PRIMITIVAS, nombres_de_expresion
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -81,9 +82,25 @@ def test_las_primitivas_incluyen_lo_que_las_reglas_necesitan() -> None:
     assert "altura_m" in PRIMITIVAS
 
 
-def test_los_parametros_del_vocabulario_son_los_que_el_motor_sabe_calcular() -> None:
-    """Si divergen, el corpus podría nombrar algo que el motor no evalúa, o al revés."""
-    assert frozenset(DERIVACIONES) == PARAMETROS
+def test_las_derivaciones_del_corpus_caben_en_el_vocabulario() -> None:
+    """Si el corpus deriva un parámetro que el vocabulario no declara, el corpus miente."""
+    assert set(cargar_reglas(CORPUS).derivaciones) <= PARAMETROS
+
+
+def test_toda_derivacion_del_corpus_tiene_sentido_declarado() -> None:
+    """Sin sentido, el motor daría `P` para siempre en vez de fallar. Que falle el test."""
+    assert set(cargar_reglas(CORPUS).derivaciones) <= MAXIMOS
+
+
+def test_el_corpus_solo_usa_unidades_conocidas() -> None:
+    """Las unidades del corpus deben ser las que el dominio sabe manejar."""
+    unidades = set()
+    for archivo in CORPUS.rglob("*.yaml"):
+        datos = yaml.safe_load(archivo.read_text(encoding="utf-8"))
+        for parametro in (datos.get("parametros") or {}).values():
+            for limite in parametro.get("limites", []):
+                unidades.add(limite.get("unidad") or parametro.get("unidad"))
+    assert unidades <= {"adimensional", "m", "pisos", "hab/ha", None}
 
 
 def test_hay_condiciones_para_las_variantes_reales() -> None:
