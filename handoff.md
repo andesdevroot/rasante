@@ -2,7 +2,7 @@
 
 Documento vivo. Estado real, no aspiracional. Se actualiza en **cada** commit.
 
-**Última actualización:** 2026-09-26 · **Iteración:** 0 · **Commit:** 3 — T0.2 (pendiente de aprobación)
+**Última actualización:** 2026-09-26 · **Iteración:** 0 · **Commit:** 4 — spec T0.4 (pendiente de aprobación)
 
 ---
 
@@ -11,10 +11,10 @@ Documento vivo. Estado real, no aspiracional. Se actualiza en **cada** commit.
 | | |
 |---|---|
 | Iteración en curso | **0 — Cimientos** |
-| Tarea en curso | **T0.2** — implementada, esperando tu aprobación para commitear |
+| Tarea en curso | ninguna — T0.2 cerrada. Siguiente: **T0.3** |
 | Código escrito | `geo/arcgis.py` (ingestor + caché), frontera de capas, tooling |
 | Tests | **15 pasando** (`test_arquitectura.py`, `test_arcgis.py`). `ruff` y `mypy` limpios |
-| Bloqueado por | tu aprobación del commit 3 |
+| Bloqueado por | nada — listo para T0.3 |
 
 ### Hecho
 
@@ -93,6 +93,7 @@ Fuera del sandbox, `UV_CACHE_DIR` no hace falta: `uv sync && uv run pytest` bast
 | 2026-09-26 | **1** | T0.1: esqueleto del repo. Guardián de D2 en `tests/test_arquitectura.py` (test rojo → verde). 6 tests, ruff y mypy limpios |
 | 2026-09-26 | **2** | `uv` instalado (0.12.19) y `uv.lock` versionado. Caché de uv movida dentro del workspace por el sandbox |
 | 2026-09-26 | **3** | T0.2: ingestor ArcGIS REST con paginación y caché. 9 tests con fixtures grabadas, sin red. Descarga real validada |
+| 2026-09-26 | **4** | Spec: agregada T0.4 (test de integración contra la API real, excluido por defecto) |
 
 ---
 
@@ -104,5 +105,7 @@ numéricos es obtenible y legible. Entregable: `docs/decision-comuna.md`. **No l
 es tarea de análisis, excepción documentada del TDD.
 
 **T0.3 resuelve A2**, que es la entrada de T1.7.
+
+En cola: **T0.4** — test de integración contra la API real, excluido de la corrida por defecto.
 
 Pendiente de tu input: **A2** (se resuelve en T0.3) y **A3** (altura_maxima vs densidad).

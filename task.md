@@ -50,6 +50,20 @@ Formato de commit: `tipo(ámbito): descripción [T<n>.<m>]`
 - **Aceptación:** decisión tomada y registrada. **Se te consulta antes de fijarla.**
 - **Commit:** `docs(repo): comparación de comunas candidatas y decisión [T0.3]`
 
+### T0.4 — Test de integración contra la API real de MINVU
+- **Objetivo:** detectar si MINVU cambia el esquema, mueve un servicio o altera `maxRecordCount`.
+  Los 9 tests de T0.2 son offline (D9) y por diseño no pueden detectar eso.
+- **Entregable:** `tests/integracion/test_arcgis_real.py`, marcado `@pytest.mark.integracion` y
+  **excluido de la corrida por defecto** vía `addopts`/`-m "not integracion"`.
+- **Qué verifica:** que `listar_capas` devuelve capas, y que el número de features descargados
+  de una capa conocida coincide con el `count` que reporta la API.
+- **Ojo con la fragilidad:** **no** comparar contra un literal fijo (1718). El PRC de una comuna
+  cambia y el test se rompería sin que nada esté mal. Se compara contra el `count` consultado
+  en el momento — así detecta truncamiento, que es lo que importa.
+- **Aceptación:** `RASANTE_INTEGRACION=1 uv run pytest -m integracion` pasa; `uv run pytest`
+  no lo ejecuta y sigue 100% offline.
+- **Commit:** `test(geo): test de integracion contra la API real de MINVU [T0.4]`
+
 ---
 
 ## Iteración 1 — Vertical slice: coordenada → zona + 3 parámetros
