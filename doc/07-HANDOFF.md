@@ -11,7 +11,7 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.1** |
+| Tarea en curso | ninguna. Siguiente: **T0.5** (corpus OGUC + DDU 514) |
 | Código | `src/rasante/geo/arcgis.py` (ingestor ArcGIS con paginación y caché) · frontera de capas · tooling |
 | Tests | **15 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | `pytest` verde, sin saltados · `ruff` limpio · `mypy --strict` limpio |
@@ -38,16 +38,17 @@ Una tarea, un commit: T0.1 quedó consolidada en `64bdcdd` tras el squash.
 
 ## Siguiente tarea
 
-**T1.1 — Dominio: modelos e invariante de cita** (`src/rasante/dominio/modelos.py`).
+**T0.5 — Troceador determinista de la OGUC** (`src/rasante/corpus/ingesta.py`).
 
-Desbloqueada: **A2 y A3 están cerradas**. Es la primera tarea de la iteración 1 y fija el modelo de
-dominio, del que dependen T1.2 a T1.6.
+Pedido explícito del usuario: cargar la OGUC y la Circular DDU 514 como fuente de verdad citable
+antes de seguir. Va **antes** de T1.1 porque T1.1-T1.3 necesitan saber qué reglas existen para
+citar. Después, **T0.6** produce el corpus curado.
 
 ## Blockers
 
 | Blocker | Detalle |
 |---|---|
-| **Titularidad normativa** | Sin verificar el artículo de la Ley 17.336 que excluye textos oficiales de protección. Bloquea fijar la licencia definitiva del corpus, **no el desarrollo** |
+| **Titularidad normativa** | **No resuelto.** Intenté tres fuentes de la Ley 17.336: BCN devuelve 401, el archivo de la UNESCO devuelve HTML, y LeyChile se renderiza por JS (solo devuelve el título). Mitigación adoptada: el corpus guarda **citas, no texto íntegro** — artículo, URL, hash y fecha. Eso baja el riesgo a algo asumible. Verificado que **MINVU publica la OGUC consolidada para descarga abierta** |
 
 Sin blockers de alcance: A1, A2 y A3 están cerradas.
 
@@ -64,5 +65,11 @@ Sin blockers de alcance: A1, A2 y A3 están cerradas.
 | 2026-09-26 | **La clave de parámetro es compuesta** (`cos.primer_piso`). Con variantes, una clave por `id` produce claves YAML duplicadas y PyYAML descarta una **en silencio**, perdiendo una regla |
 | 2026-09-26 | **Squash de T0.1** (`64bdcdd`), pedido por el usuario tras la regla "un commit por tarea". Reescribió todos los hashes posteriores; corregidos en `def1a5d` |
 | 2026-09-26 | **Tests de integración excluidos por `addopts`, no por `skip`.** El DoD exige "sin tests saltados": se deseleccionan (`-m 'not integracion'`) en vez de saltarse. El `-m` de la línea de comandos sobreescribe el de `addopts`, verificado |
+| 2026-09-26 | **D13: la OGUC aporta reglas, el PRC aporta valores.** La OGUC define *cómo se computa* (Art. `1.1.2`, `2.1.23`); los números los fija cada plan regulador |
+| 2026-09-26 | **El corpus normativo va en `corpus/`, no en `doc/`.** `doc/` es la spec (prosa); el texto normativo es dato. Además la OGUC son 577 págs / 4,4 MB: no se commitea |
+| 2026-09-26 | **Corpus curado (~10-15 artículos), no la OGUC completa.** Se guardan **citas, no texto íntegro**: resuelve el riesgo de titularidad y reduce el mantenimiento |
+| 2026-09-26 | **"Entrenar" es la palabra equivocada.** D4 sigue: nada de fine-tuning. El motor **recupera y cita**, no aprende |
+| 2026-09-26 | **La extracción de la ordenanza por comuna sigue a mano en iteración 1.** Automatizarla es LLM, o sea iteración 2. Antes hay que fijar el esquema del YAML |
+| 2026-09-26 | **Mis números de artículo de la OGUC estaban mal.** `2.6.2` es adosamiento, `2.6.3` distanciamientos y rasantes, `2.6.4` Conjunto Armónico. Las definiciones reales están en `1.1.2` |
 
 Detalle completo de cada una en `04-DECISIONES.md`.

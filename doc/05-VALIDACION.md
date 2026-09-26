@@ -44,6 +44,9 @@ momento — así sigue detectando truncamiento, que es lo que importa.
 3. **`rasante.dominio` solo importa stdlib** (guardián en `tests/test_arquitectura.py`).
 4. **Decimal, nunca `float`** en rutas normativas.
 5. **Un fallo de descarga no deja caché parcial** — un GeoJSON a medias se leería como completo.
+6. **Toda norma del corpus cita y declara procedencia** — artículo, URL, hash y fecha de extracción.
+   Una regla sin fuente no entra al corpus. El corpus guarda **citas, no texto íntegro**: es
+   citación, no reproducción (ver `03-DISENO.md` §2.2).
 
 ## Validación contra predios reales (cierre de iteración 1)
 

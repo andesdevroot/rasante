@@ -29,6 +29,7 @@ determinísticamente y emite el Formato Tipo MINVU (Circular DDU 514).
 | D10 | Código `Apache-2.0`, corpus `CC-BY-4.0` con atribución municipal | — |
 | D11 | **La iteración 1 entra por coordenada (lat/lon)**, no por rol ni CIP | El rol de avalúo no tiene geometría pública masiva; la del predio vive en el CIP y parsearlo requiere LLM (iteración 2) |
 | D12 | **`P_DO` es procedencia, no vigencia** | Ver §2.3. Es la publicación original del instrumento, no la del texto consolidado |
+| D13 | **La OGUC aporta reglas; el PRC aporta valores.** Son dos mitades del corpus con naturaleza y frecuencia de cambio distintas | Ver §2.4. La OGUC define *cómo se computa*; los números (`cos 0,6`) los fija cada plan regulador |
 
 ## 2. Arquitectura de capas
 
@@ -115,12 +116,54 @@ Por eso el motor recibe el `Proyecto` completo y no un número suelto.
 
 ## 2.2 Esquema del corpus
 
+El corpus tiene **tres partes** con ciclos de vida distintos (§2.4).
+
 ```
-corpus/prc/<REGION>/<comuna>/
-  ordenanza.md              # texto fuente (referencia, no se republica íntegro)
-  fuentes.yaml              # procedencia + hash
-  zonas/<codigo>.yaml       # parámetros extraídos
+corpus/
+  oguc/                     # NACIONAL. Reglas y definiciones. Cambia por decreto
+    fuentes.yaml            # URL, hash, fecha de extracción, decreto consolidante
+    1.1.2.yaml              # definiciones: constructibilidad, densidad bruta/neta, altura, rasante
+    2.1.23.yaml             # altura en pisos -> 3,50 m
+    5.1.10.yaml             # cómputo de la superficie del primer piso (COS)
+    ...
+  ddu/                      # NACIONAL. Circulares MINVU
+    514.yaml                # Formato Tipo del informe + leyenda (C)/(NC)/(P)/(NP)/(PR)
+  prc/<REGION>/<comuna>/    # MUNICIPAL. Valores. Cambia por enmienda
+    fuentes.yaml            # dónde vive la ordenanza, versión, hash
+    zonas/<codigo>.yaml     # los valores por zona
 ```
+
+**Qué se guarda de cada norma.** Número de artículo + cita corta + URL + hash + fecha de extracción,
+**no el texto íntegro**. Es citación, no reproducción: reduce el riesgo de titularidad y es mejor
+ingeniería. Los PDFs crudos viven en `cache/`, que está en `.gitignore`.
+
+```yaml
+# corpus/oguc/2.1.23.yaml
+norma_id: oguc
+articulo: "2.1.23"
+materia: altura de edificación expresada en pisos
+cita: >
+  Si el instrumento de planificación territorial fija altura de edificación en pisos, sin
+  explicitar su medida en metros, ésta se determinará multiplicando 3,50 m por el número de pisos.
+regla:
+  tipo: conversion
+  entrada: pisos
+  factor: "3.50"
+  unidad: m
+procedencia:
+  url_fuente: "https://www.minvu.gob.cl/wp-content/uploads/2019/05/OGUC-Mayo-2026-D.S.-N5-D.O.-22-05-2026-rev-15.09.2026.pdf"
+  consolidado_por: "D.D. N°5, D.O. 22-05-2026"
+  hash_fuente: "sha256:..."
+  extraido: 2026-09-26
+  extraido_por: "rasante.corpus.ingesta (determinista, sin LLM)"
+  revisado_por: null
+  estado: borrador          # borrador | revisado | validado
+```
+
+La OGUC se trocea **de forma determinista** por el patrón `Artículo X.Y.Z.` — sin LLM. El motor no
+adivina dónde empieza un artículo.
+
+## 2.2.1 Esquema de las zonas del PRC
 
 ```yaml
 zona: "Z-4"
@@ -197,6 +240,36 @@ enmiendas desde la propia ordenanza. `P_DO` queda como campo de **procedencia**.
 pero cuesta más de lo que se supuso al diseñar el corpus.
 
 Evidencia completa en `04-DECISIONES.md`.
+
+## 2.4 La OGUC aporta reglas, el PRC aporta valores (D13)
+
+Descubierto al inspeccionar el texto consolidado de la OGUC (577 págs, 1.334.802 caracteres). Es la
+corrección más importante al diseño original del corpus.
+
+| | OGUC | PRC / ordenanza |
+|---|---|---|
+| Qué aporta | **Definiciones y procedimiento**: cómo se computa cada parámetro, rasantes, distanciamientos | **Los valores** por zona (`cos 0,6`, `cus 3,6`) |
+| Alcance | Nacional | Una comuna |
+| Cambia por | Decreto (decenas al año) | Enmienda municipal |
+| Consolidador | MINVU publica la versión vigente y **declara el decreto que la consolida** | Nadie lo declara: `P_DO` trae la publicación original (§2.3) |
+
+**Artículos verificados como necesarios** (nótese que los números NO son los que se suponen):
+
+| Artículo | Materia | Para qué |
+|---|---|---|
+| `1.1.2` | Definiciones: *coeficiente de constructibilidad*, *densidad*, ***densidad bruta***, ***densidad neta***, *altura de edificación*, *rasante* | Resuelve con fuente la ambigüedad bruta/neta de A3 |
+| `2.1.23` | Altura en pisos → **3,50 m por piso** | Regla dura y testeable |
+| `5.1.10`, `5.1.11` | Cómo se determina la superficie edificada del primer piso | Cómputo del `cos` |
+
+**Números que NO son lo que parecen**, y por eso hay que buscar en el texto en vez de asumir:
+
+- `2.6.2` = **adosamiento** (no densidad)
+- `2.6.3` = **distanciamientos y rasantes** (no ocupación de suelo)
+- `2.6.4` = **Conjunto Armónico** (no constructibilidad)
+
+**Consecuencia para el motor:** la cita de un veredicto puede referirse a la OGUC (la regla) o al PRC
+(el valor). El `Cita.norma_id` ya soporta ambos (`"oguc"` | `"prc:nunoa"`). Un veredicto de densidad
+cita **las dos**: la definición de densidad bruta de la OGUC y el valor de la ordenanza.
 
 ## 3. Flujo de la iteración 1
 

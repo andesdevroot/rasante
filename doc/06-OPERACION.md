@@ -39,7 +39,8 @@ Ver `05-VALIDACION.md`.
 | Fuente | Uso |
 |---|---|
 | `https://geoide.minvu.cl/server/rest/services/IPT` | PRC de todas las regiones como ArcGIS REST, consultable en GeoJSON |
-| `https://www.bcn.cl/leychile` | OGUC (DS 47), LGUC (DFL 458), Ley 21.826, Ley 21.718 |
+| `https://www.minvu.gob.cl/elementos-tecnicos/decretos/d-s-n47-1992-ordenanza-general-de-urbanismo-y-construccione/` | **OGUC consolidada** (D.S. N°47). El PDF vigente declara el decreto que lo consolida: hoy *D.D. N°5, D.O. 22-05-2026* (rev. 15.09.2026). **577 págs / 4,4 MB** |
+| `https://www.bcn.cl/leychile` | LGUC (DFL 458), Ley 21.826, Ley 21.718, Ley 17.336. Ojo: las páginas se renderizan por JS, `web_fetch` devuelve solo el título |
 | `https://www.minvu.gob.cl/elementos-tecnicos/formularios/grupo-15-...` | Formato Tipo del informe del revisor independiente (Circular DDU 514) |
 | `https://api.deepseek.com` | LLM (iteración 2+). `deepseek-flash`: 1M contexto, visión, cache hit $0.003/M |
 
