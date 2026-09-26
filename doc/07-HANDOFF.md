@@ -7,14 +7,14 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 0 — Cimientos.** Dos tareas cerradas, una en curso.
+**Iteración 0 — Cimientos.** Tres tareas cerradas (T0.1, T0.2, T0.4). T0.3 abierta esperando A2.
 
 | | |
 |---|---|
 | Tarea en curso | **T0.3** — análisis hecho, registrado en `04-DECISIONES.md` y commiteado. **Solo falta tu confirmación de A2** |
 | Código | `src/rasante/geo/arcgis.py` (ingestor ArcGIS con paginación y caché) · frontera de capas · tooling |
-| Tests | **15 verdes** (`test_arquitectura.py`, `test_arcgis.py`) |
-| Gate | `pytest` verde · `ruff` limpio · `mypy --strict` limpio |
+| Tests | **15 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Gate | `pytest` verde, sin saltados · `ruff` limpio · `mypy --strict` limpio |
 | Árbol git | limpio — todo commiteado |
 
 Reestructuración a `doc/` aplicada el 2026-09-26: `01-VISION.md`, `03-DISENO.md`,
@@ -24,7 +24,8 @@ Reestructuración a `doc/` aplicada el 2026-09-26: `01-VISION.md`, `03-DISENO.md
 ## Último commit
 
 ```
-a536894  docs: reestructura la documentacion a doc/ y actualiza la metodologia
+[T0.4]    test(geo): test de integracion contra la API real de MINVU
+f991466  docs: reestructura la documentacion a doc/ y actualiza la metodologia
 5009ecd  docs: agrega T0.4 (test de integracion contra la API real)
 20871c3  feat(geo): ingestor ArcGIS REST con paginacion y cache en disco [T0.2]
 d8064b8  chore(repo): versionar uv.lock y documentar cache local de uv [T0.1]
@@ -37,15 +38,21 @@ si se squashan.
 
 ## Siguiente tarea
 
-**Confirmar A2 y commitear T0.3.** Después, **T0.4** (test de integración contra la API real).
+**Confirmar A2 y cerrar T0.3.** Con eso la iteración 0 queda cerrada y empieza la iteración 1.
+
+**T1.1 está bloqueada por A3** (tercer parámetro: `altura_maxima` vs `densidad`): el modelo de
+dominio depende de esa decisión.
 
 ## Blockers
 
 | Blocker | Detalle |
 |---|---|
-| **A2 sin confirmar** | La comuna piloto está recomendada (Ñuñoa) pero **no fijada**. No bloquea T0.4; sí bloquea T1.7 |
-| **A3 sin confirmar** | Tercer parámetro: `altura_maxima` (recomendado) vs `densidad`. No bloquea hasta T1.1 |
+| **A2 sin confirmar** | La comuna piloto está recomendada (Ñuñoa) pero **no fijada**. Bloquea T1.7 |
+| **A3 sin confirmar** | Tercer parámetro: `altura_maxima` (recomendado) vs `densidad`. **Bloquea T1.1**, o sea el arranque de la iteración 1 |
 | **Titularidad normativa** | Sin verificar el artículo de la Ley 17.336 que excluye textos oficiales de protección. Bloquea fijar la licencia definitiva del corpus, no el desarrollo |
+
+**Deuda de higiene:** T0.1 quedó en dos commits (`6c55cd3` + `d8064b8`), lo que viola la regla "un
+commit por tarea" de `00-METODOLOGIA.md`. Pendiente decidir si se squashan.
 
 ## Decisiones recientes
 
@@ -56,5 +63,6 @@ si se squashan.
 | 2026-09-26 | Estructura `doc/` numérica (00–07) fijada. `task.md` pasa a ser cola con estado, en la raíz |
 | 2026-09-26 | **`P_DO` no es la vigencia**: es la publicación original del instrumento. Corrige D5 en `03-DISENO.md` |
 | 2026-09-26 | **Comuna piloto recomendada: Ñuñoa** — por el texto refundido de la ordenanza (jun 2025) con parámetros extraíbles, no por la antigüedad del PRC |
+| 2026-09-26 | **Tests de integración excluidos por `addopts`, no por `skip`.** El DoD exige "sin tests saltados": se deseleccionan (`-m 'not integracion'`) en vez de saltarse. El `-m` de la línea de comandos sobreescribe el de `addopts`, verificado |
 
 Detalle completo de cada una en `04-DECISIONES.md`.

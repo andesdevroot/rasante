@@ -48,6 +48,11 @@ y decisiones recientes) **antes** de escribir código.
 
 **El handoff viaja en el commit que cierra la tarea.** No se deja para un commit aparte.
 
+**No citar el hash del propio commit.** Un commit no puede contener su propio hash: escribirlo
+cambia el hash, y corregirlo lo cambia otra vez — nunca converge. En `task.md` y en el handoff, la
+tarea que cierra el commit en curso se referencia por su **tag** (`[T0.4]`). Los hashes se listan
+solo para commits **anteriores**, que ya son inmutables.
+
 ## Definición de terminado
 
 1. El test se escribió antes y se verificó en **rojo**.

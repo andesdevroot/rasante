@@ -19,7 +19,7 @@ Las tareas completadas quedan resumidas en una línea; las pendientes llevan el 
 | T0.1 | Esqueleto del repositorio | ✅ | `6c55cd3` + `d8064b8` |
 | T0.2 | Ingestor ArcGIS REST | ✅ | `20871c3` |
 | T0.3 | Comparación de comunas → decisión A2 | 🟦 en curso | — |
-| T0.4 | Test de integración contra la API real | ⬜ pendiente | — |
+| T0.4 | Test de integración contra la API real | ✅ | `[T0.4]` |
 
 **T0.1 — Esqueleto del repositorio.** ✅ `pyproject.toml` con `uv`, layout `src/`, licencias
 Apache-2.0 y CC-BY-4.0, ruff y mypy `--strict`, y el guardián de arquitectura
@@ -28,6 +28,11 @@ Apache-2.0 y CC-BY-4.0, ruff y mypy `--strict`, y el guardián de arquitectura
 **T0.2 — Ingestor ArcGIS REST.** ✅ `geo/arcgis.py` con `listar_capas()` y `descargar_geojson()`,
 paginación por `resultOffset` siguiendo `exceededTransferLimit`, y caché en disco. 9 tests con
 fixtures grabadas, sin red.
+
+**T0.4 — Test de integración contra la API real.** ✅ `tests/integracion/test_arcgis_real.py`,
+marcado `@pytest.mark.integracion` y excluido por defecto vía `addopts`. Verifica que el servicio
+expone capas y que el conteo descargado coincide con el `count` de la API — detecta truncamiento.
+3 tests contra la API real; la suite por defecto sigue en 15, sin saltados.
 
 ### 🟦 T0.3 — Comparación de comunas candidatas → decisión A2
 
@@ -39,21 +44,6 @@ fixtures grabadas, sin red.
 - **Estado:** análisis **hecho** y escrito. Recomendación: **Ñuñoa**. Falta que se confirme **A2**.
 - **Hallazgo colateral:** `P_DO` es la publicación original, no la vigencia → corrige D5.
 - **Commit:** `docs(repo): comparacion de comunas y decision A2 [T0.3]`
-
-### ⬜ T0.4 — Test de integración contra la API real de MINVU
-
-- **Objetivo:** detectar si MINVU cambia el esquema, mueve un servicio o altera `maxRecordCount`.
-  Los 9 tests de T0.2 son offline (D9) y por diseño no pueden detectarlo.
-- **Entregable:** `tests/integracion/test_arcgis_real.py`, marcado `@pytest.mark.integracion` y
-  **excluido de la corrida por defecto**.
-- **Qué verifica:** que `listar_capas` devuelve capas, y que el número de features descargados de
-  una capa conocida coincide con el `count` que reporta la API.
-- **Ojo con la fragilidad:** **no** comparar contra un literal fijo (1718). El PRC de una comuna
-  cambia y el test se rompería sin que nada esté mal. Se compara contra el `count` consultado en el
-  momento — así detecta truncamiento, que es lo que importa.
-- **Aceptación:** `RASANTE_INTEGRACION=1 uv run pytest -m integracion` pasa; `uv run pytest` no lo
-  ejecuta y sigue 100% offline.
-- **Commit:** `test(geo): test de integracion contra la API real de MINVU [T0.4]`
 
 ---
 
