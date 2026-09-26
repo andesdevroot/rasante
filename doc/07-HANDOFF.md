@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 0 — Cimientos: CERRADA.** Las seis tareas hechas (T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1 cerrada (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.1** (modelos de dominio) |
-| Código | `geo/arcgis.py` (ingestor ArcGIS) · `corpus/ingesta.py` (troceador OGUC) · `corpus/` (8 normas citadas) · tooling |
-| Tests | **67 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tarea en curso | ninguna. Siguiente: **T1.2** (motor de evaluación) |
+| Código | `dominio/modelos.py` · `geo/arcgis.py` · `corpus/ingesta.py` · `corpus/` (8 normas citadas) |
+| Tests | **96 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | `pytest` verde, sin saltados · `ruff` limpio · `mypy --strict` limpio |
 | Árbol git | limpio — todo commiteado |
 
@@ -24,6 +24,7 @@ Reestructuración a `doc/` aplicada el 2026-09-26: `01-VISION.md`, `03-DISENO.md
 ## Último commit
 
 ```
+[T1.1]    feat(dominio): modelos de dominio e invariante de cita obligatoria
 [T0.6]    feat(corpus): corpus curado de OGUC y DDU 514 con citas
 [T0.5]    feat(corpus): troceador determinista de la OGUC por articulo
 [T0.3]    docs: cierra T0.3, registra A2 y A3 y actualiza el alcance a 4 parametros
@@ -40,11 +41,15 @@ Una tarea, un commit: T0.1 quedó consolidada en `64bdcdd` tras el squash.
 
 ## Siguiente tarea
 
-**T1.1 — Dominio: modelos e invariante de cita** (`src/rasante/dominio/modelos.py`).
+**T1.2 — Dominio: motor de evaluación** (`src/rasante/dominio/motor.py`).
 
-Arranca la iteración 1. Fija `Cita`, `Parametro` (con `calificador`), `Zona`, `Proyecto`,
-`Veredicto` y `CodigoVeredicto`, y del que dependen T1.2 a T1.6. `CodigoVeredicto` debe reproducir
-la leyenda de `corpus/ddu/514.yaml`.
+`evaluar(proyecto, zona) -> list[Veredicto]`. **Es la tarea más delicada de la iteración**: el
+invariante que importa es que un dato desconocido dé `P`, **jamás `C`**. Y `densidad` es la única
+regla derivada (`numero_viviendas / superficie_predio_ha`), así que el motor recibe el `Proyecto`
+completo, no un número suelto.
+
+Reglas en `corpus/oguc/`: `2.1.22` (densidad bruta hab/ha, conversión /4), `2.1.23` (3,50 m por
+piso), `5.1.10`/`5.1.11` (cómputo del cos), `5.1.12` (subterráneo fuera del cus).
 
 ## Blockers
 
@@ -87,5 +92,8 @@ Sin blockers de alcance: A1, A2 y A3 están cerradas.
 | 2026-09-26 | **La obligación del revisor está en el art. 116 bis de la LGUC**, no en "art. 116 de la Ley 21.718" como yo había escrito. La Ley 21.718 lo modificó. Corregido en `01-VISION.md` (×3) y `02-ALCANCE.md` |
 | 2026-09-26 | **La OGUC se compone de reglas, no de valores** (D13), confirmado al curar el corpus: `2.1.23` da la conversión 3,50 m/piso, pero la altura máxima la fija cada PRC. Un veredicto de altura cita **las dos** fuentes |
 | 2026-09-26 | **`factor_habitantes_por_vivienda: "4"` es inferencia mía, no texto literal.** La OGUC dice "el coeficiente 4". Es la única lectura con dimensiones correctas, pero queda señalado como interpretación |
+| 2026-09-26 | **Los invariantes del dominio son de construcción, no de convención.** `Veredicto` sin `Cita` levanta `ErrorDominio`; un `float` en cualquier valor normativo levanta error; una clave de `Zona` que no coincida con su `Parametro.clave` es rechazada. No se puede construir un modelo inválido |
+| 2026-09-26 | **`LEYENDA` está hardcodeada en el dominio porque no puede leer YAML (D2).** Un test la contrasta contra `corpus/ddu/514.yaml`, que es lo que impide que las dos se separen en silencio |
+| 2026-09-26 | **`clave_compuesta()` es la única definición de la clave.** `Parametro`, `Veredicto` y (en T1.3) el cargador del corpus deben coincidir, o dos reglas se pisan en el mapping |
 
 Detalle completo de cada una en `04-DECISIONES.md`.

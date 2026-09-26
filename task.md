@@ -61,7 +61,7 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 
 | # | Tarea | Estado |
 |---|---|---|
-| T1.1 | Dominio: modelos e invariante de cita | ⬜ |
+| T1.1 | Dominio: modelos e invariante de cita | ✅ | `[T1.1]` |
 | T1.2 | Dominio: motor de evaluación | ⬜ |
 | T1.3 | Corpus: cargador y validación de YAML | ⬜ |
 | T1.4 | Geo: reproyección e índice espacial | ⬜ |
@@ -70,20 +70,12 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.7 | Corpus real de la comuna piloto | ⬜ |
 | T1.8 | Validación contra predios reales | ⬜ |
 
-### ⬜ T1.1 — Dominio: modelos e invariante de cita
-
-- **Test primero:** (a) construir un `Veredicto` sin `Cita` levanta error; (b) `Decimal` se preserva
-  sin pérdida en roundtrip; (c) `CodigoVeredicto` expone exactamente `C|NC|P|NP|PR` con los textos
-  de la DDU 514.
-- **Ojo (A3 cerrada):** el modelo necesita **`calificador`** en `Parametro`. `cos` tiene dos
-  variantes ("ocupación de suelo" `0,6` y "pisos superiores" `0,4`, ambas en la misma zona de
-  Ñuñoa), y `densidad` distingue **bruta** de **neta**. Sin calificador, dos reglas colisionan en
-  la misma clave.
-- **Ojo (diseño):** la **clave del mapping es compuesta** (`cos.primer_piso`). Una clave por `id`
-  produce claves duplicadas en el YAML y el parser descarta una **en silencio**, perdiendo una
-  regla. Ver `doc/03-DISENO.md`.
-- **Entregable:** `dominio/modelos.py`.
-- **Commit:** `feat(dominio): modelos de dominio e invariante de cita obligatoria [T1.1]`
+**T1.1 — Dominio: modelos e invariante de cita.** ✅ `dominio/modelos.py`: `Cita`, `Parametro` (con
+`calificador` y `clave` compuesta), `Zona`, `Proyecto`, `Veredicto`, `Vigencia`, `Procedencia` y los
+tres enums. Los tres invariantes son de construcción, no de convención: sin `Cita` no hay
+`Veredicto`, un `float` en cualquier valor normativo levanta error, y una clave de `Zona` que no
+coincida con su parámetro es rechazada. `LEYENDA` está hardcodeada porque el dominio no puede leer
+YAML (D2); un test la contrasta contra `corpus/ddu/514.yaml` para que no se separen. 24 tests.
 
 ### ⬜ T1.2 — Dominio: motor de evaluación
 
