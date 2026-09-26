@@ -66,17 +66,18 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.3 | Corpus ejecutable: esquema y migración | ✅ | `[T1.3]` |
 | T1.4 | Dominio: intérprete de reglas | ✅ | `[T1.4]` |
 | T1.5 | Dominio: verificador de factibilidad | ✅ | `[T1.5]` |
-| T1.6 | Corpus: cargador y validación de YAML | ⬜ |
-| T1.7 | Geo: reproyección e índice espacial | ⬜ |
-| T1.8 | Resolución coordenada → zona | ⬜ |
-| T1.9 | CLI | ⬜ |
-| T1.10 | Corpus real de la comuna piloto | ⬜ |
-| T1.11 | Validación contra predios reales | ⬜ |
+| T1.6 | Hechos y selección de límites condicionales | ⬜ |
+| T1.7 | Corpus: cargador y validación de YAML | ⬜ |
+| T1.8 | Geo: reproyección e índice espacial | ⬜ |
+| T1.9 | Resolución coordenada → zona | ⬜ |
+| T1.10 | CLI | ⬜ |
+| T1.11 | Corpus real de la comuna piloto | ⬜ |
+| T1.12 | Validación contra predios reales | ⬜ |
 
-> **T1.3–T1.5 se insertaron el 2026-09-26**, tras detectar que el motor no ejecuta el corpus y que
-> evalúa parámetros acoplados como si fueran independientes (D14 y D15, `doc/03-DISENO.md` §2.5–2.6).
-> Van **antes** de T1.6 y T1.10 porque definen el esquema: si el cargador y el corpus de Ñuñoa nacen
-> con la forma vieja, hay que rehacerlos.
+> **T1.3–T1.6 se insertaron el 2026-09-26**, al detectar tres gaps encadenados: el motor no
+> ejecutaba el corpus (D14), evaluaba parámetros acoplados como si fueran independientes (D15), y no
+> podía elegir entre límites condicionales (D16). Van **antes** de T1.7 y T1.11 porque definen el
+> esquema: nacer con la forma vieja significa rehacerlos.
 
 **T1.1 — Dominio: modelos e invariante de cita.** ✅ `dominio/modelos.py`: `Cita`, `Parametro` (con
 `calificador` y `clave` compuesta), `Zona`, `Proyecto`, `Veredicto`, `Vigencia`, `Procedencia` y los
@@ -115,7 +116,7 @@ normativo (`cus` que excede el máximo alcanzable con `cos`, `cos` de pisos supe
 3,50 m/piso de la OGUC `2.1.23`). Sin `numero_pisos`, sin superficies o sin altura, **no se afirma
 nada** — igual que el `P` del motor. Sin cita no se emite hallazgo. 19 tests.
 
-### ⬜ T1.6 — Corpus: cargador YAML
+### ⬜ T1.7 — Corpus: cargador YAML
 
 - **Test primero:** cargar una zona de fixture; esquema inválido (falta `procedencia`, falta `cita`,
   `unidad` desconocida) levanta error con mensaje claro.
@@ -127,34 +128,34 @@ nada** — igual que el `P` del motor. Sin cita no se emite hallazgo. 19 tests.
   avisar. Test explícito para eso — PyYAML no lo detecta por defecto.
 - **Entregable:** `corpus/cargador.py`. Carga al esquema de T1.3, no al viejo.
 - **Aceptación:** un YAML sin `hash_fuente` o sin `cita` por límite es rechazado.
-- **Commit:** `feat(corpus): cargador y validacion de esquema de zonas [T1.6]`
+- **Commit:** `feat(corpus): cargador y validacion de esquema de zonas [T1.7]`
 
-### ⬜ T1.7 — Geo: reproyección e índice espacial
+### ⬜ T1.8 — Geo: reproyección e índice espacial
 
 - **Test primero:** punto dentro de polígono sintético conocido → zona; punto fuera → `None`;
   verificar que EPSG:4326 → 3857 ubica un punto de Santiago en el rango esperado (cordura con
   tolerancia).
 - **Entregable:** `geo/indices.py` — `IndiceZonas.buscar(lat, lon) -> str | None`.
-- **Commit:** `feat(geo): reproyeccion e indice espacial point-in-polygon [T1.7]`
+- **Commit:** `feat(geo): reproyeccion e indice espacial point-in-polygon [T1.8]`
 
-### ⬜ T1.8 — Resolución de zona
+### ⬜ T1.9 — Resolución de zona
 
 - **Test primero:** coordenada conocida → `Zona` con parámetros del corpus; coordenada sin zona →
   `SinZonaError`; zona en el PRC pero ausente del corpus → `ZonaSinCorpusError`. Son dos fallos
   operacionales **distintos** y no deben confundirse.
 - **Entregable:** `geo/resolver.py`.
-- **Commit:** `feat(geo): resolucion coordenada -> zona del corpus [T1.8]`
+- **Commit:** `feat(geo): resolucion coordenada -> zona del corpus [T1.9]`
 
-### ⬜ T1.9 — CLI
+### ⬜ T1.10 — CLI
 
 - **Test primero:** invocación con `typer.testing.CliRunner`. `rasante zona --lat --lon` imprime
   código y nombre de zona; salida `--json` con esquema estable; código de salida distinto de cero en
-  los dos errores de T1.8. Los hallazgos de T1.5 se muestran aparte de los veredictos.
+  los dos errores de T1.9. Los hallazgos de T1.5 se muestran aparte de los veredictos.
 - **Entregable:** `cli.py`.
 - **Aceptación:** `uv run rasante zona --lat -33.45 --lon -70.61 --json` devuelve JSON válido.
-- **Commit:** `feat(cli): comandos zona y evaluar con salida JSON [T1.9]`
+- **Commit:** `feat(cli): comandos zona y evaluar con salida JSON [T1.10]`
 
-### ⬜ T1.10 — Corpus real de la comuna piloto
+### ⬜ T1.11 — Corpus real de la comuna piloto
 
 - **Desbloqueada: A2 = Ñuñoa.** Entregable: 3–5 zonas con los **4 parámetros** extraídos **a mano**
   de la ordenanza, revisados y citados, **en el esquema de T1.3**. Empezar por las zonas que el texto
@@ -167,11 +168,11 @@ nada** — igual que el `P` del motor. Sin cita no se emite hallazgo. 19 tests.
   tiene cita y que la procedencia tiene `hash_fuente`.
 - **Aceptación:** cada valor trazable a un artículo de la ordenanza. `estado: revisado` con
   `revisado_por` poblado. **Se presenta cada extracción para validación antes del commit.**
-- **Commit:** `feat(corpus): zonas iniciales de <comuna> con parametros citados [T1.10]`
+- **Commit:** `feat(corpus): zonas iniciales de <comuna> con parametros citados [T1.11]`
 
-### ⬜ T1.11 — Validación contra predios reales
+### ⬜ T1.12 — Validación contra predios reales
 
 - **Objetivo:** cerrar la iteración 1 con evidencia. Metodología y métrica en `doc/05-VALIDACION.md`.
 - **Entregable:** `doc/` con precisión y recall sobre N expedientes reales ya aprobados.
 - **Nota:** sin esto la iteración **no se declara cerrada**.
-- **Commit:** `docs: validacion de la iteracion 1 contra predios reales [T1.11]`
+- **Commit:** `docs: validacion de la iteracion 1 contra predios reales [T1.12]`

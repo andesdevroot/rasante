@@ -32,6 +32,7 @@ determinísticamente y emite el Formato Tipo MINVU (Circular DDU 514).
 | D13 | **La OGUC aporta reglas; el PRC aporta valores.** Son dos mitades del corpus con naturaleza y frecuencia de cambio distintas | Ver §2.4. La OGUC define *cómo se computa*; los números (`cos 0,6`) los fija cada plan regulador |
 | D14 | **El corpus es ejecutable.** Sus reglas no se describen: se interpretan | Ver §2.5. Hoy `DERIVACIONES` en `motor.py` hardcodea lo que `corpus/oguc/*.yaml` describe: dos fuentes de verdad para el mismo cálculo |
 | D15 | **El motor verifica factibilidad, no solo parámetros sueltos** | Ver §2.6. Los parámetros están acoplados geométricamente: chequeados por separado, todos pueden dar `C` en un proyecto imposible |
+| D16 | **El motor selecciona el límite aplicable evaluando hechos del corpus.** Si un hecho es indeterminado, da `P` — **nunca elige el límite más permisivo** | Ver §2.7. El caso real: la OGUC `2.6.5` permite +50 % de `cus` bajo las condiciones 1.a/1.b del `2.6.4`, pero solo +30 % bajo la 1.c |
 
 ## 2. Arquitectura de capas
 
@@ -369,6 +370,86 @@ Se verifican dos cosas **distintas**, y las dos salen citadas:
 
 El hallazgo no es un `Veredicto` de parámetro: es un `Hallazgo` con severidad, cita y los parámetros
 involucrados. Ambos terminan en el Formato Tipo, pero por caminos distintos.
+
+## 2.7 Hechos y selección de límites (D16)
+
+**El problema.** `Parametro` guarda **un** `valor`, pero la ordenanza fija **varios límites según cómo
+sea el proyecto**. El caso no es hipotético; está en la OGUC:
+
+```
+2.6.4  Un proyecto tiene la calidad de Conjunto Armónico cuando cumple ALGUNA de estas
+       condiciones:
+       1.- Condición de dimensión:
+         a) terreno cuya superficie total sea >= 5 veces la superficie predial mínima del PRC
+         b) ...
+         c) ...
+
+2.6.5  Los proyectos que cumplan la condición a) o b) podrán exceder hasta en un 50% el
+       coeficiente de constructibilidad.
+       Los que cumplan la condición c) podrán exceder hasta en un 30%.
+```
+
+`superficie_predio_m2 >= 5 × superficie_predial_minima` **es una comparación**, no algo que haya que
+aprender. Y el desglose importa: entre 50 % y 30 % de `cus` hay 20 puntos, que es justo lo que
+convierte un `(NC)` en un `(C)`.
+
+**Por qué no un clasificador entrenado.** Sería descalificante en los cuatro frentes a la vez:
+
+1. **Reproducibilidad.** El mismo expediente debe dar el mismo veredicto siempre.
+2. **Trazabilidad.** El revisor tiene que poder escribir *"cumple la condición 1.a) del art. 2.6.4
+   porque el predio tiene 6.200 m² y la superficie predial mínima es 1.000 m²"*. *"El sistema
+   determinó que es Conjunto Armónico"* no es defendible ante la DOM.
+3. **Error asimétrico.** Un clasificador con 95 % de acierto falla en 1 de cada 20 proyectos y el
+   revisor **no tiene forma de saber en cuál**. Aquí ese fallo invierte el veredicto.
+4. **No hay nada que aprender.** La regla está escrita. Un modelo la aproximaría peor.
+
+Es D3 (*"el LLM nunca decide"*) aplicado a las condiciones.
+
+**El mecanismo: hechos.** Un *hecho* es un predicado nombrado, definido en el corpus con una
+expresión del mismo vocabulario cerrado que las derivaciones. La maquinaria de T1.4 ya lo evalúa.
+
+```yaml
+# corpus/oguc/2.6.4.yaml
+hechos:
+  dimension_a_o_b:
+    expresion: "superficie_predio_m2 >= 5 * superficie_predial_minima"
+    cita: { norma_id: oguc, articulo: "2.6.4" }
+  dimension_c:
+    expresion: "..."
+    cita: { norma_id: oguc, articulo: "2.6.4" }
+```
+
+```yaml
+# en la zona
+cus:
+  limites:
+    - { valor: "4",   cita: { norma_id: "prc:nunoa", articulo: "Z-4" } }
+    - { valor: "6",   cuando: [dimension_a_o_b], cita: { norma_id: oguc, articulo: "2.6.5" } }
+    - { valor: "5.2", cuando: [dimension_c],     cita: { norma_id: oguc, articulo: "2.6.5" } }
+```
+
+La expresión mezcla una primitiva del proyecto (`superficie_predio_m2`) con un **valor normado**
+(`superficie_predial_minima`, que fija el PRC). El validador ya lo admite porque suma los parámetros
+declarados por la zona al vocabulario.
+
+**Las dos capas de fallo, y ninguna es silenciosa.**
+
+| Cuándo | Qué falta | Qué pasa |
+|---|---|---|
+| **Al validar** | Un límite pide `cuando: [x]` y ningún artículo define el hecho `x` | El validador **falla fuerte**: es un defecto del corpus, y silenciarlo haría que ese límite nunca aplique |
+| **Al evaluar** | El hecho está definido pero al proyecto le falta un dato para evaluarlo | **`P` + `Hallazgo` de clasificación indeterminada**, diciendo qué falta |
+
+Lo segundo es el mismo principio que ya gobierna el motor: **lo que no se puede verificar no se
+afirma**. Y acá es crítico, porque el fallback permisivo —aplicar el +50 %— aprobaría proyectos que
+no califican.
+
+**Cambio de modelo.** `Parametro` pasa de `valor: Decimal | None` a `limites: tuple[Limite, ...]`, y
+aparece `Limite` con `valor`, `unidad`, `cita` y `cuando`. Varios límites aplicables **ligan todos**:
+manda el más restrictivo.
+
+**Dónde sí entra el aprendizaje.** Extrayendo datos de PDFs y planos (iteración 2), y redactando la
+propuesta de regla que un humano valida por PR. **El modelo propone; el humano firma.** Nunca en la
+ruta del veredicto.
 
 ## 3. Flujo de la iteración 1
 

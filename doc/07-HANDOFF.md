@@ -11,7 +11,7 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.6** (cargador de zonas) |
+| Tarea en curso | ninguna. Siguiente: **T1.6** (hechos y selección de límites) |
 | Código | `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
 | Tests | **213 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | `pytest` verde, sin saltados · `ruff` limpio · `mypy --strict` limpio |
@@ -24,6 +24,7 @@ Reestructuración a `doc/` aplicada el 2026-09-26: `01-VISION.md`, `03-DISENO.md
 ## Último commit
 
 ```
+[T1.6]    feat(dominio): hechos y seleccion de limites condicionales
 [T1.5]    feat(dominio): verificador de factibilidad geometrica
 [T1.4]    feat(dominio): interprete de reglas del corpus con lista blanca
 [T1.3]    feat(corpus): esquema ejecutable con limites multiples y variantes
@@ -45,17 +46,21 @@ Una tarea, un commit: T0.1 quedó consolidada en `64bdcdd` tras el squash.
 
 ## Siguiente tarea
 
-**T1.6 — Corpus: cargador de zonas** (`src/rasante/corpus/cargador.py`, que ya tiene
-`cargar_reglas`).
+**T1.6 — Hechos y selección de límites condicionales.** Ver `task.md` y `03-DISENO.md` §2.7.
 
-Convierte `corpus/prc/<region>/<comuna>/zonas/*.yaml` en `Zona` del dominio. Debe manejar la **coma
-decimal** de las ordenanzas (`0,6` mal parseado se vuelve `6`) y **rechazar claves de parámetro
-duplicadas**: PyYAML no lo detecta y descartaría una regla en silencio.
+El motor tiene que **elegir cuál límite aplica** según cómo sea el proyecto, evaluando hechos que el
+corpus define como expresiones — la misma maquinaria de T1.4. El caso real es la OGUC `2.6.5`: +50 %
+de `cus` bajo las condiciones 1.a/1.b del `2.6.4`, pero solo +30 % bajo la 1.c.
 
-**Bloqueante conocido:** el dominio guarda **un** valor por parámetro (`Parametro.valor`), pero el
-esquema de T1.3 admite **varios límites simultáneos** (`limites`, con `cuando`). Cargar una zona real
-de Ñuñoa —que tiene *"44,00 m y 15 pisos"*— exige decidir si `Parametro` pasa a llevar una tupla de
-límites. **Decidir antes de escribir el cargador**, o T1.10 nacerá con la forma equivocada.
+**No es un clasificador entrenado.** La regla está escrita y es una comparación
+(`superficie_predio_m2 >= 5 * superficie_predial_minima`). Un modelo la aproximaría peor, no sería
+reproducible, y el revisor no podría citar por qué. Es D3 aplicado a las condiciones.
+
+**Lo que cambia:** `Parametro` pasa de `valor` a `limites: tuple[Limite, ...]`.
+
+**Lo que no puede pasar:** un hecho indeterminado **jamás** cae al límite más permisivo. Da `P`.
+
+**T1.7 quedó desbloqueada** por esta tarea: el cargador necesita el modelo con tupla de límites.
 
 ## Blockers
 
