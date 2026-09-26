@@ -13,6 +13,7 @@ regla:
   factor_habitantes_por_vivienda: '4'
   conversion_a_viviendas: densidad_bruta / 4
   alcance: solo se aplica al destino vivienda del tipo de uso de suelo residencial
+  expresion: numero_viviendas / (superficie_predio_m2 / 10000)
 procedencia:
   url_fuente: https://www.minvu.gob.cl/wp-content/uploads/2019/05/OGUC-Mayo-2026-D.S.-N5-D.O.-22-05-2026-rev-15.09.2026.pdf
   consolidado_por: D.D. N°5, D.O. 22-05-2026

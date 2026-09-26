@@ -22,6 +22,8 @@ from decimal import Decimal
 from enum import StrEnum
 from types import MappingProxyType
 
+from .vocabulario import CONDICIONES
+
 
 class ErrorDominio(ValueError):
     """Se intentó construir un modelo violando un invariante del dominio."""
@@ -226,6 +228,9 @@ class Proyecto:
     superficie_edificada_m2: Decimal | None = None
     superficie_primer_piso_m2: Decimal | None = None
     altura_m: Decimal | None = None
+    numero_pisos: int | None = None
+    clasificaciones: frozenset[str] = frozenset()
+    """Atributos que activan límites condicionales (`conjunto_armonico`, `agrupamiento_*`)."""
 
     def __post_init__(self) -> None:
         if not isinstance(self.superficie_predio_m2, Decimal):
@@ -238,6 +243,11 @@ class Proyecto:
         for nombre in opcionales:
             if getattr(self, nombre) is not None and not isinstance(getattr(self, nombre), Decimal):
                 raise ErrorDominio(f"'{nombre}' debe ser Decimal o None")
+        if self.numero_pisos is not None and self.numero_pisos < 0:
+            raise ErrorDominio("'numero_pisos' no puede ser negativo")
+        desconocidas = sorted(self.clasificaciones - CONDICIONES)
+        if desconocidas:
+            raise ErrorDominio(f"clasificaciones fuera del vocabulario: {desconocidas}")
 
 
 @dataclass(frozen=True, slots=True)

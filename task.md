@@ -63,7 +63,7 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 |---|---|---|
 | T1.1 | Dominio: modelos e invariante de cita | ✅ | `[T1.1]` |
 | T1.2 | Dominio: motor de evaluación | ✅ | `[T1.2]` |
-| T1.3 | Corpus ejecutable: esquema y migración | ⬜ |
+| T1.3 | Corpus ejecutable: esquema y migración | ✅ | `[T1.3]` |
 | T1.4 | Dominio: intérprete de reglas | ⬜ |
 | T1.5 | Dominio: verificador de factibilidad | ⬜ |
 | T1.6 | Corpus: cargador y validación de YAML | ⬜ |
@@ -91,22 +91,13 @@ la tabla significa "sé calcularlo y sé que es un máximo". Un parámetro fuera
 se asume nada. Tres caminos separados hacia `P`: norma desconocida, dato del proyecto faltante, y
 parámetro que no sabemos comparar. 31 tests.
 
-### ⬜ T1.3 — Corpus ejecutable: esquema y migración
-
-- **Objetivo:** que el corpus pueda expresar lo que la ordenanza realmente dice (D14). Hoy
-  `DERIVACIONES` hardcodea lo que `corpus/oguc/*.yaml` describe como texto: dos fuentes de verdad.
-- **Qué debe poder expresar:** varios límites **simultáneos** en un parámetro (`"44,00 m y 15
-  pisos"`), variantes por **clasificación** del proyecto (`continua` vs `aislada`), **excepciones
-  condicionales** (OGUC `2.6.5`: Conjunto Armónico +50 % cus) y **relaciones** entre parámetros.
-- **Test primero:** recorrer `corpus/**/*.yaml` y validar el esquema nuevo. Es inválido un
-  `limites` vacío, un límite sin `cita`, o una `expresion` que use un nombre fuera del vocabulario
-  declarado.
-- **Entregable:** esquema definitivo en `doc/03-DISENO.md` §2.5, `corpus/esquema.py` con el
-  vocabulario cerrado, y los 6 archivos de `corpus/oguc/` migrados.
-- **Aceptación:** los archivos migrados validan, y el esquema **rechaza** una expresión que use un
-  nombre no declarado.
-- **Nota:** sin intérprete todavía. Esta tarea fija la forma; T1.4 la ejecuta.
-- **Commit:** `feat(corpus): esquema ejecutable con limites multiples y variantes [T1.3]`
+**T1.3 — Corpus ejecutable: esquema y migración.** ✅ `dominio/vocabulario.py` (el vocabulario
+cerrado: 6 primitivas, 8 parámetros, 4 condiciones) y `corpus/esquema.py` (el validador).
+`corpus/oguc/1.1.2.yaml` gana `derivaciones` — **el corpus ya dice cómo calcular cada parámetro**, que
+es el corazón de D14 — y `relaciones` con el acoplamiento del `cus`. `2.1.22` y `2.1.23` llevan su
+conversión como expresión ejecutable. Las expresiones se validan contra el vocabulario y la sintaxis
+con `ast`: se rechazan llamadas, atributos fuera del vocabulario, comprensiones, lambdas,
+condicionales y potencias. `Proyecto` gana `numero_pisos` y `clasificaciones`. 33 tests.
 
 ### ⬜ T1.4 — Dominio: intérprete de reglas
 

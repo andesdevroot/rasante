@@ -13,6 +13,8 @@ regla:
   unidad_norma: m
   metros_por_piso: '3.50'
   condicion: solo si el IPT fija la altura en pisos sin explicitar su medida en metros
+  expresion: numero_pisos * 3.50
+  aplica_a: altura_maxima
 procedencia:
   url_fuente: https://www.minvu.gob.cl/wp-content/uploads/2019/05/OGUC-Mayo-2026-D.S.-N5-D.O.-22-05-2026-rev-15.09.2026.pdf
   consolidado_por: D.D. N°5, D.O. 22-05-2026

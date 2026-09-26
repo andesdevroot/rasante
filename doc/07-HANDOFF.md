@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 1 — Vertical slice, en curso.** T1.1 y T1.2 cerradas (iteración 0 completa: T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1, T1.2 y T1.3 cerradas (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.3** (corpus ejecutable: esquema y migración) |
-| Código | `dominio/modelos.py` · `dominio/motor.py` · `geo/arcgis.py` · `corpus/ingesta.py` · `corpus/` |
-| Tests | **127 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tarea en curso | ninguna. Siguiente: **T1.4** (intérprete de reglas) |
+| Código | `dominio/{modelos,motor,vocabulario}.py` · `corpus/{ingesta,esquema}.py` · `geo/arcgis.py` · `corpus/` |
+| Tests | **160 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | `pytest` verde, sin saltados · `ruff` limpio · `mypy --strict` limpio |
 | Árbol git | limpio — todo commiteado |
 
@@ -24,6 +24,7 @@ Reestructuración a `doc/` aplicada el 2026-09-26: `01-VISION.md`, `03-DISENO.md
 ## Último commit
 
 ```
+[T1.3]    feat(corpus): esquema ejecutable con limites multiples y variantes
 [T1.2]    feat(dominio): motor de evaluacion de parametros urbanisticos
 [T1.1]    feat(dominio): modelos de dominio e invariante de cita obligatoria
 [T0.6]    feat(corpus): corpus curado de OGUC y DDU 514 con citas
@@ -42,17 +43,14 @@ Una tarea, un commit: T0.1 quedó consolidada en `64bdcdd` tras el squash.
 
 ## Siguiente tarea
 
-**T1.3 — Corpus ejecutable: esquema y migración.** Ver `task.md`.
+**T1.4 — Dominio: intérprete de reglas** (`src/rasante/dominio/reglas.py`).
 
-**T1.3, T1.4 y T1.5 son nuevas** (2026-09-26) y se insertaron **antes** de lo que era T1.3. El resto
-se renumeró: el cargador pasó de T1.3 a **T1.6**, geo a **T1.7**, resolución a **T1.8**, CLI a
-**T1.9**, corpus de Ñuñoa a **T1.10** y validación a **T1.11**.
+Ejecuta las expresiones del corpus con `ast` y el vocabulario de `dominio/vocabulario.py`, y aplica
+`limites` (conjunción: todos ligan), `cuando` (condiciones) y `relaciones`. El motor pasa a leer
+`derivaciones` de `corpus/oguc/1.1.2.yaml` en vez de su `DERIVACIONES` hardcodeado.
 
-El motivo está en `03-DISENO.md` §2.5–2.6 (D14 y D15): el motor **no ejecuta el corpus** —hardcodea
-en `DERIVACIONES` lo que `corpus/oguc/*.yaml` describe como texto— y evalúa parámetros **acoplados**
-como si fueran independientes, así que puede aprobar un proyecto geométricamente imposible. Van
-antes del cargador y del corpus de Ñuñoa porque definen el esquema: nacer con la forma vieja
-significa rehacerlos.
+**Aceptación:** `eval` no se usa en ningún camino, con un test que lo verifica sobre el código
+fuente. Un corpus malicioso no puede ejecutar nada.
 
 ## Blockers
 

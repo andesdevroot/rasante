@@ -35,3 +35,43 @@ procedencia:
   extraido_por: rasante.corpus.ingesta (determinista) + seleccion manual
   revisado_por: null
   estado: borrador
+derivaciones:
+  cos:
+    expresion: superficie_primer_piso_m2 / superficie_predio_m2
+    cita:
+      norma_id: oguc
+      articulo: 1.1.2
+  cos.primer_piso:
+    expresion: superficie_primer_piso_m2 / superficie_predio_m2
+    cita:
+      norma_id: oguc
+      articulo: 1.1.2
+  cus:
+    expresion: superficie_edificada_m2 / superficie_predio_m2
+    cita:
+      norma_id: oguc
+      articulo: 1.1.2
+  altura_maxima:
+    expresion: altura_m
+    cita:
+      norma_id: oguc
+      articulo: 1.1.2
+  densidad:
+    expresion: numero_viviendas / (superficie_predio_m2 / 10000)
+    cita:
+      norma_id: oguc
+      articulo: 1.1.2
+  densidad.bruta:
+    expresion: numero_viviendas / (superficie_predio_m2 / 10000)
+    cita:
+      norma_id: oguc
+      articulo: 1.1.2
+relaciones:
+- tipo: cota_superior
+  objetivo: cus
+  expresion: cos.primer_piso + (numero_pisos - 1) * cos.pisos_superiores
+  fundamento: El cus no puede exceder la superficie del primer piso mas la de cada piso superior. Se deduce
+    de las propias definiciones de los coeficientes.
+  cita:
+    norma_id: oguc
+    articulo: 1.1.2
