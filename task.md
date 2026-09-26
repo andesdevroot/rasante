@@ -18,7 +18,7 @@ Las tareas completadas quedan resumidas en una línea; las pendientes llevan el 
 |---|---|---|---|
 | T0.1 | Esqueleto del repositorio | ✅ | `64bdcdd` |
 | T0.2 | Ingestor ArcGIS REST | ✅ | `6420178` |
-| T0.3 | Comparación de comunas → decisión A2 | 🟦 en curso | — |
+| T0.3 | Comparación de comunas → decisión A2 | ✅ | `[T0.3]` |
 | T0.4 | Test de integración contra la API real | ✅ | `[T0.4]` |
 
 **T0.1 — Esqueleto del repositorio.** ✅ `pyproject.toml` con `uv`, layout `src/`, licencias
@@ -29,28 +29,22 @@ Apache-2.0 y CC-BY-4.0, ruff y mypy `--strict`, y el guardián de arquitectura
 paginación por `resultOffset` siguiendo `exceededTransferLimit`, y caché en disco. 9 tests con
 fixtures grabadas, sin red.
 
+**T0.3 — Comparación de comunas → decisión A2.** ✅ Análisis con datos en vivo de Ñuñoa, Las Condes
+y Providencia, registrado en `doc/04-DECISIONES.md`. **A2 cerrada: Ñuñoa**, por el texto refundido
+de la ordenanza (jun 2025) con parámetros extraíbles. Hallazgo colateral: `P_DO` es la publicación
+original, no la vigencia → nueva D12. No lleva test: es tarea de análisis.
+
 **T0.4 — Test de integración contra la API real.** ✅ `tests/integracion/test_arcgis_real.py`,
 marcado `@pytest.mark.integracion` y excluido por defecto vía `addopts`. Verifica que el servicio
 expone capas y que el conteo descargado coincide con el `count` de la API — detecta truncamiento.
 3 tests contra la API real; la suite por defecto sigue en 15, sin saltados.
 
-### 🟦 T0.3 — Comparación de comunas candidatas → decisión A2
-
-- **Objetivo:** elegir la comuna piloto con datos, no por intuición.
-- **No lleva test** (tarea de análisis). Rompe el patrón TDD a propósito y se documenta así.
-- **Método:** para Ñuñoa, Las Condes y Providencia: nº de zonas, calidad de `UPERM`/`UPROH`,
-  `P_DO` poblado, y si la ordenanza con los parámetros numéricos es obtenible y legible.
-- **Entregable:** `doc/04-DECISIONES.md`.
-- **Estado:** análisis **hecho** y escrito. Recomendación: **Ñuñoa**. Falta que se confirme **A2**.
-- **Hallazgo colateral:** `P_DO` es la publicación original, no la vigencia → corrige D5.
-- **Commit:** `docs(repo): comparacion de comunas y decision A2 [T0.3]`
-
 ---
 
-## Iteración 1 — Vertical slice: coordenada → zona + 3 parámetros
+## Iteración 1 — Vertical slice: coordenada → zona + 4 parámetros
 
-Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima`. Sin LLM, sin informes,
-sin UI.
+Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`densidad`**
+(A3 = ambas). Sin LLM, sin informes, sin UI.
 
 | # | Tarea | Estado |
 |---|---|---|
@@ -68,9 +62,13 @@ sin UI.
 - **Test primero:** (a) construir un `Veredicto` sin `Cita` levanta error; (b) `Decimal` se preserva
   sin pérdida en roundtrip; (c) `CodigoVeredicto` expone exactamente `C|NC|P|NP|PR` con los textos
   de la DDU 514.
-- **Ojo (hallazgo de T0.3):** `cos` tiene **dos variantes** en las ordenanzas — "ocupación de suelo"
-  y "ocupación de suelo **pisos superiores**". El modelo necesita un calificador, no un `cos` único.
-  Resolver **A3** antes de cerrar esta tarea.
+- **Ojo (A3 cerrada):** el modelo necesita **`calificador`** en `Parametro`. `cos` tiene dos
+  variantes ("ocupación de suelo" `0,6` y "pisos superiores" `0,4`, ambas en la misma zona de
+  Ñuñoa), y `densidad` distingue **bruta** de **neta**. Sin calificador, dos reglas colisionan en
+  la misma clave.
+- **Ojo (diseño):** la **clave del mapping es compuesta** (`cos.primer_piso`). Una clave por `id`
+  produce claves duplicadas en el YAML y el parser descarta una **en silencio**, perdiendo una
+  regla. Ver `doc/03-DISENO.md`.
 - **Entregable:** `dominio/modelos.py`.
 - **Commit:** `feat(dominio): modelos de dominio e invariante de cita obligatoria [T1.1]`
 
@@ -79,6 +77,9 @@ sin UI.
 - **Test primero:** tabla de casos por parámetro — valor proyecto < norma → `C`; > norma → `NC`;
   parámetro en `desconocido`/`no_aplica` → `P`/`NP` **nunca `C`**; dato de proyecto faltante → `P`.
   Un test por artículo citado.
+- **Ojo (A3 cerrada):** `densidad` es la **única regla derivada**, no una comparación directa:
+  `numero_viviendas / (superficie_predio_m2 / 10_000)` en viv/ha. Los casos de test deben cubrir el
+  cálculo, no solo la comparación. Es lo que obliga a que `evaluar` reciba el `Proyecto` completo.
 - **Entregable:** `dominio/motor.py` — `evaluar(proyecto, zona) -> list[Veredicto]`.
 - **Aceptación:** el caso "norma desconocida" da `P`, jamás `C`. Es el invariante más importante.
 - **Commit:** `feat(dominio): motor de evaluacion de parametros urbanisticos [T1.2]`
@@ -90,6 +91,9 @@ sin UI.
 - **Ojo (hallazgo de T0.3):** las ordenanzas escriben **coma decimal** (`0,6`, `3,6`). Si el cargador
   no lo maneja, `0,6` se vuelve `6`. Debe exigir separador decimal explícito y tener un test para
   `"0,6"` y `"0.6"`.
+- **Ojo (A3 cerrada):** debe **rechazar claves de parámetro duplicadas**. Con `cos` y `densidad`
+  teniendo variantes, un YAML con dos claves `cos` es válido sintácticamente y pierde una regla sin
+  avisar. Test explícito para eso — PyYAML no lo detecta por defecto.
 - **Entregable:** `corpus/cargador.py` + `corpus/esquema.py`.
 - **Aceptación:** un YAML sin `hash_fuente` o sin `cita` por parámetro es rechazado.
 - **Commit:** `feat(corpus): cargador y validacion de esquema de zonas [T1.3]`
@@ -121,9 +125,11 @@ sin UI.
 
 ### ⬜ T1.7 — Corpus real de la comuna piloto
 
-- **Bloqueada por A2.** Entregable: 3–5 zonas de la comuna piloto con parámetros extraídos **a mano**
-  de la ordenanza, revisados y citados. Empezar por las zonas que el texto de Ñuñoa ya expone
+- **Desbloqueada: A2 = Ñuñoa.** Entregable: 3–5 zonas con los **4 parámetros** extraídos **a mano**
+  de la ordenanza, revisados y citados. Empezar por las zonas que el texto refundido ya expone
   limpiamente (`Z-1`…`Z-8` y variantes).
+- **Ojo (A3):** para `densidad` hay que declarar si la zona usa densidad **bruta** o **neta**. Sin
+  eso el cálculo es ambiguo y el veredicto queda sin fundamento. Lo mismo con el calificador de `cos`.
 - **Test primero:** test de integración que carga las zonas reales y verifica que cada parámetro
   tiene cita y que la procedencia tiene `hash_fuente`.
 - **Aceptación:** cada valor trazable a un artículo de la ordenanza. `estado: revisado` con

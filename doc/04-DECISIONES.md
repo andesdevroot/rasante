@@ -8,13 +8,13 @@ Decisiones abiertas, cerradas y su fundamento. Las decisiones de arquitectura **
 | ID | Decisión | Estado |
 |---|---|---|
 | A1 | Entrada de la iteración 1: coordenada vs rol/CIP | ✅ cerrada — por **coordenada** |
-| A2 | Comuna piloto | 🟦 recomendada **Ñuñoa**, sin confirmar |
-| A3 | Tercer parámetro: `altura_maxima` vs `densidad` | ⬜ abierta (bloquea T1.1) |
+| A2 | Comuna piloto | ✅ cerrada — **Ñuñoa** |
+| A3 | Tercer parámetro | ✅ cerrada — **ambas**: `altura_maxima` y `densidad` |
 | — | `P_DO` como fuente de vigencia (corrige D5) | ⚠️ **corregida** — ver §3 |
 
 ---
 
-# A2 — Decisión de comuna piloto (T0.3)
+# A2 — Comuna piloto: Ñuñoa (cerrada el 2026-09-26)
 
 **2026-09-26** · Datos obtenidos en vivo de `IPT/PRC_RM_Norte` (MINVU) y de las ordenanzas
 municipales. Candidatas: **Las Condes** (capa 11), **Ñuñoa** (capa 17), **Providencia** (capa 21).
@@ -159,3 +159,38 @@ historia de enmiendas desde la propia ordenanza.
 `P_DO` sigue siendo útil como **procedencia** ("publicación original del instrumento"), no como
 `vigencia`. La capacidad de "evaluar contra la norma vigente a la fecha de ingreso" sigue siendo
 alcanzable, pero es más trabajo del que impliqué. Ver **D12** en `03-DISENO.md`.
+
+---
+
+# A3 — Tercer parámetro (cerrada el 2026-09-26)
+
+**Decisión: ambas.** La iteración 1 evaluará **cuatro** parámetros: `cos`, `cus`, `altura_maxima`
+y `densidad`.
+
+## Implicación de diseño: `densidad` no es un escalar comparable
+
+`cos`, `cus` y `altura_maxima` se evalúan comparando un valor del proyecto contra el de la norma.
+**`densidad` no**: es una razón derivada.
+
+```
+densidad_proyecto = numero_viviendas / (superficie_predio_m2 / 10_000)   [viv/ha]
+```
+
+Consecuencias que hay que absorber **antes de T1.1**:
+
+1. **`Proyecto` deja de ser un placeholder.** Necesita `superficie_predio_m2` y `numero_viviendas`
+   como campos reales, no como relleno de tests.
+2. **`Parametro.unidad`** necesita `viv/ha` además de `adimensional` y `m`.
+3. **El motor de T1.2 tiene que soportar un caso derivado**, no solo comparación directa. Es la
+   primera regla que no es "valor contra valor", y obliga a que la evaluación reciba el `Proyecto`
+   completo en vez de un solo número.
+4. **Bruta o neta.** Las ordenanzas pueden expresar densidad sobre el predio (bruta) o descontando
+   vialidad (neta). Son números distintos para la misma zona. El corpus debe declarar cuál usa cada
+   zona, o el cálculo es ambiguo y el veredicto queda sin fundamento.
+
+## Nota sobre `cos`
+
+`cos` arrastra el mismo problema de calificador: las ordenanzas distinguen "ocupación de suelo" de
+"ocupación de suelo **pisos superiores**" (verificado en el texto refundido de Ñuñoa, `0,6` y `0,4`
+en la misma zona). El modelo necesita un **calificador explícito** en `Parametro`, no un `cos`
+único.

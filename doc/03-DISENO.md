@@ -59,9 +59,11 @@ class Cita:
 
 @dataclass(frozen=True)
 class Parametro:
-    id: str                  # "cos" | "cus" | "altura_maxima"
+    id: str                  # "cos" | "cus" | "altura_maxima" | "densidad"
+    calificador: str | None  # cos: "primer_piso" | "pisos_superiores"
+                             # densidad: "bruta" | "neta"
     valor: Decimal | None
-    unidad: str              # "adimensional" | "m"
+    unidad: str              # "adimensional" | "m" | "viv/ha"
     estado: Estado           # APLICABLE | NO_APLICA | DESCONOCIDO
     cita: Cita
 
@@ -75,8 +77,18 @@ class Zona:
     procedencia: Procedencia # url_fuente, hash_fuente, publicado_do, estado
 
 @dataclass(frozen=True)
+class Proyecto:
+    """Datos declarados del proyecto. Con `densidad` en alcance (A3) deja de ser un
+    placeholder: el motor necesita estos campos de verdad, no relleno de tests."""
+    superficie_predio_m2: Decimal
+    numero_viviendas: int
+    superficie_edificada_m2: Decimal | None   # para `cus`
+    altura_m: Decimal | None                  # para `altura_maxima`
+
+@dataclass(frozen=True)
 class Veredicto:
     parametro_id: str
+    calificador: str | None
     codigo: CodigoVeredicto  # C | NC | P | NP | PR
     valor_norma: Decimal | None
     valor_proyecto: Decimal | None
@@ -89,9 +101,17 @@ class Veredicto:
 **Invariante:** un `Veredicto` sin `Cita` es un error de construcción. Es lo que impide fabricar
 veredictos sin respaldo normativo.
 
-**Nota pendiente (A3, hallazgo de T0.3):** las ordenanzas distinguen "ocupación de suelo" de
-"ocupación de suelo **pisos superiores**". El modelo probablemente necesita un calificador en
-`Parametro`, no un `cos` único. Resolver antes de T1.1.
+**Calificadores (resuelto en A3).** `calificador` no es decorativo: sin él dos reglas distintas
+colisionan en la misma clave.
+
+- `cos` distingue "ocupación de suelo" (`0,6`) de "ocupación de suelo **pisos superiores**" (`0,4`)
+  — ambos verificados en la misma zona del texto refundido de Ñuñoa. Un `cos` único perdería uno.
+- `densidad` distingue **bruta** (sobre el predio) de **neta** (descontando vialidad). Son números
+  distintos para la misma zona; el corpus debe declarar cuál usa cada una.
+
+**`densidad` es la única regla derivada.** Las otras tres comparan un valor del proyecto contra el
+de la norma. La densidad se calcula: `numero_viviendas / (superficie_predio_m2 / 10_000)` en viv/ha.
+Por eso el motor recibe el `Proyecto` completo y no un número suelto.
 
 ## 2.2 Esquema del corpus
 
@@ -108,13 +128,44 @@ nombre: "Z-4"
 comuna: "Ñuñoa"
 region: "RM"
 parametros:
-  cos:
+  # La clave es COMPUESTA (id.calificador). Con `cos` y `densidad` teniendo variantes, una
+  # clave por `id` produciria claves duplicadas en el YAML, y el parser descartaria una en
+  # silencio perdiendo una regla. Leccion de diseño, no estilo.
+  cos.primer_piso:
+    id: cos
+    calificador: primer_piso
     valor: "0.6"            # la ordenanza escribe "0,6": coma decimal, ver T1.3
     unidad: adimensional
     estado: aplicable
     cita: { norma_id: "prc:nunoa", articulo: "..." }
-  cus: { valor: "3.6", unidad: adimensional, estado: aplicable, cita: {...} }
-  altura_maxima: { valor: null, unidad: m, estado: desconocido, cita: {...} }
+  cos.pisos_superiores:
+    id: cos
+    calificador: pisos_superiores
+    valor: "0.4"
+    unidad: adimensional
+    estado: aplicable
+    cita: { norma_id: "prc:nunoa", articulo: "..." }
+  cus:
+    id: cus
+    calificador: null
+    valor: "3.6"
+    unidad: adimensional
+    estado: aplicable
+    cita: { norma_id: "prc:nunoa", articulo: "..." }
+  altura_maxima:
+    id: altura_maxima
+    calificador: null
+    valor: null
+    unidad: m
+    estado: desconocido
+    cita: { norma_id: "prc:nunoa", articulo: "..." }
+  densidad.bruta:
+    id: densidad
+    calificador: bruta      # bruta o neta: el corpus DEBE declararlo (A3)
+    valor: null
+    unidad: viv/ha
+    estado: desconocido
+    cita: { norma_id: "prc:nunoa", articulo: "..." }
 vigencia:
   desde: null               # NO se deriva de P_DO (D12)
   hasta: null
@@ -156,7 +207,7 @@ coordenada (lat, lon)
   → código de zona
   → lookup en corpus YAML                       [cargador]
   → Zona
-  → motor L1 evalúa cos / cus / altura_maxima
+  → motor L1 evalúa cos / cus / altura_maxima / densidad
   → [Veredicto, Veredicto, Veredicto]  (cada uno con cita)
 ```
 
