@@ -1,4 +1,4 @@
-"""Guardián de la decisión D2 (`design.md` §2 y §3).
+"""Guardián de la decisión D2 (`doc/03-DISENO.md` §1 y §2).
 
 `rasante.dominio` es el motor de reglas: debe poder portarse a otro lenguaje o compilarse a
 WASM sin arrastrar dependencias. Por eso solo puede importar stdlib.

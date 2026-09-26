@@ -1,7 +1,8 @@
 """Tests del ingestor ArcGIS REST (T0.2).
 
 Corren **sin red**: las respuestas vienen de `tests/fixtures/`, grabadas una vez contra la API
-real de MINVU. Decisión D9 (`design.md` §2): los tests no dependen de que el servicio esté arriba.
+real de MINVU. Decisión D9 (`doc/03-DISENO.md` §1): los tests no dependen de que el servicio
+esté arriba.
 """
 
 from __future__ import annotations

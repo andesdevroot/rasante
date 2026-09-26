@@ -4,7 +4,7 @@ Los planes reguladores comunales de todo Chile están expuestos como MapServer c
 GeoJSON (`https://geoide.minvu.cl/server/rest/services/IPT`). Este módulo los lista y los baja a
 disco para que el resto del sistema no dependa de la red.
 
-Decisiones: D9 (caché en disco, tests sin red) en `design.md` §2.
+Decisiones: D9 (caché en disco, tests sin red) en `doc/03-DISENO.md` §1.
 Los tests usan `tests/fixtures/`, grabadas contra la API real.
 """
 

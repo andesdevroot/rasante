@@ -5,10 +5,21 @@ Copiloto open source para revisores independientes y Direcciones de Obras Munici
 Computa normas urbanísticas de forma **determinística** (OGUC + plan regulador comunal) y emite
 el Formato Tipo oficial de informe del revisor independiente (Circular DDU 514).
 
-- `design.md` — arquitectura y decisiones (D1–D11)
-- `task.md` — tareas atómicas, 1 tarea = 1 commit, con TDD
-- `handoff.md` — estado vivo del proyecto
-- `docs/RASANTE-plan-desarrollo.md` — antecedentes, fuentes verificadas y plan de mercado
+## Documentación
+
+`doc/` es la **fuente de verdad** del proyecto. `task.md` es la cola de trabajo.
+
+| | |
+|---|---|
+| `doc/00-METODOLOGIA.md` | Cómo se trabaja: SDD, TDD estricto, commits atómicos, handoff |
+| `doc/01-VISION.md` | Problema, mercado, fuentes verificadas y plan |
+| `doc/02-ALCANCE.md` | Qué entra en cada iteración y qué queda fuera |
+| `doc/03-DISENO.md` | Arquitectura, decisiones D1–D12, modelo de dominio, corpus |
+| `doc/04-DECISIONES.md` | Registro de decisiones (A1–A3) y su fundamento |
+| `doc/05-VALIDACION.md` | Estrategia de tests, invariantes, riesgos |
+| `doc/06-OPERACION.md` | Entorno, cómo correr, licencias |
+| `doc/07-HANDOFF.md` | Estado actual, último commit, siguiente tarea, blockers |
+| `task.md` | Cola de trabajo con estado por tarea |
 
 ## Principio
 
