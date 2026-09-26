@@ -20,7 +20,7 @@ Las tareas completadas quedan resumidas en una línea; las pendientes llevan el 
 | T0.2 | Ingestor ArcGIS REST | ✅ | `6420178` |
 | T0.3 | Comparación de comunas → decisión A2 | ✅ | `[T0.3]` |
 | T0.4 | Test de integración contra la API real | ✅ | `[T0.4]` |
-| T0.5 | Troceador determinista de la OGUC | ⬜ pendiente | — |
+| T0.5 | Troceador determinista de la OGUC | ✅ | `[T0.5]` |
 | T0.6 | Corpus curado: OGUC + DDU 514 | ⬜ pendiente | — |
 
 **T0.1 — Esqueleto del repositorio.** ✅ `pyproject.toml` con `uv`, layout `src/`, licencias
@@ -41,19 +41,10 @@ marcado `@pytest.mark.integracion` y excluido por defecto vía `addopts`. Verifi
 expone capas y que el conteo descargado coincide con el `count` de la API — detecta truncamiento.
 3 tests contra la API real; la suite por defecto sigue en 15, sin saltados.
 
-### ⬜ T0.5 — Troceador determinista de la OGUC
-
-- **Objetivo:** partir el texto consolidado de la OGUC en artículos citables. **Sin LLM**: el motor
-  no adivina dónde empieza un artículo.
-- **Test primero:** `trocear()` sobre texto sintético devuelve los artículos indexados por número;
-  recupera `1.1.2` y `2.1.23`; un artículo ausente devuelve `None`; el cuerpo de un artículo **no se
-  come el siguiente**; tolera variantes de espaciado y acentos en `Artículo`/`ARTÍCULO`.
-- **Entregable:** `src/rasante/corpus/ingesta.py` con `descargar_fuente()` (cacheada, mismo patrón
-  que T0.2), `extraer_texto()` y `trocear()`.
-- **Aceptación:** sobre el texto real de la OGUC (577 págs, 1.334.802 chars) `trocear` devuelve
-  > 400 artículos y los buscados están presentes. Verificación contra la fuente real, tests offline.
-- **Nota:** el PDF crudo no se versiona; va a `cache/`.
-- **Commit:** `feat(corpus): troceador determinista de la OGUC por articulo [T0.5]`
+**T0.5 — Troceador determinista de la OGUC.** ✅ `corpus/ingesta.py` con `descargar_fuente()`
+(cacheada), `extraer_texto()` y `trocear()`. Sin LLM y sin red en los tests. Verificado contra la
+OGUC real (4,3 MB, sha256 `64cf1b7c…`): **591 artículos, 582 únicos, 18 ocurrencias `bis`, 5
+duplicados preservados**, cero IDs basura y orden documental perfecto. 27 tests.
 
 ### ⬜ T0.6 — Corpus curado: OGUC + DDU 514
 

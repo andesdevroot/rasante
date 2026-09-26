@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 0 — Cimientos: CERRADA.** Las cuatro tareas hechas (T0.1, T0.2, T0.3, T0.4).
+**Iteración 0 — Cimientos.** Cinco tareas cerradas (T0.1–T0.5). Falta T0.6.
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T0.5** (corpus OGUC + DDU 514) |
-| Código | `src/rasante/geo/arcgis.py` (ingestor ArcGIS con paginación y caché) · frontera de capas · tooling |
-| Tests | **15 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tarea en curso | ninguna. Siguiente: **T0.6** (corpus curado) |
+| Código | `geo/arcgis.py` (ingestor ArcGIS) · `corpus/ingesta.py` (troceador OGUC) · frontera de capas · tooling |
+| Tests | **42 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | `pytest` verde, sin saltados · `ruff` limpio · `mypy --strict` limpio |
 | Árbol git | limpio — todo commiteado |
 
@@ -24,6 +24,7 @@ Reestructuración a `doc/` aplicada el 2026-09-26: `01-VISION.md`, `03-DISENO.md
 ## Último commit
 
 ```
+[T0.5]    feat(corpus): troceador determinista de la OGUC por articulo
 [T0.3]    docs: cierra T0.3, registra A2 y A3 y actualiza el alcance a 4 parametros
 def1a5d  docs: corrige los hashes invalidados por el squash de T0.1
 [T0.4]    test(geo): test de integracion contra la API real de MINVU
@@ -38,11 +39,11 @@ Una tarea, un commit: T0.1 quedó consolidada en `64bdcdd` tras el squash.
 
 ## Siguiente tarea
 
-**T0.5 — Troceador determinista de la OGUC** (`src/rasante/corpus/ingesta.py`).
+**T0.6 — Corpus curado: OGUC + DDU 514.**
 
-Pedido explícito del usuario: cargar la OGUC y la Circular DDU 514 como fuente de verdad citable
-antes de seguir. Va **antes** de T1.1 porque T1.1-T1.3 necesitan saber qué reglas existen para
-citar. Después, **T0.6** produce el corpus curado.
+Produce los ~10-15 YAML del corpus citable. Exige **buscar** los artículos que
+`cos`/`cus`/`altura_maxima`/`densidad` necesitan, no asumir números. **Necesita tu validación de
+cada cita antes del commit.**
 
 ## Blockers
 
@@ -71,5 +72,7 @@ Sin blockers de alcance: A1, A2 y A3 están cerradas.
 | 2026-09-26 | **"Entrenar" es la palabra equivocada.** D4 sigue: nada de fine-tuning. El motor **recupera y cita**, no aprende |
 | 2026-09-26 | **La extracción de la ordenanza por comuna sigue a mano en iteración 1.** Automatizarla es LLM, o sea iteración 2. Antes hay que fijar el esquema del YAML |
 | 2026-09-26 | **Mis números de artículo de la OGUC estaban mal.** `2.6.2` es adosamiento, `2.6.3` distanciamientos y rasantes, `2.6.4` Conjunto Armónico. Las definiciones reales están en `1.1.2` |
+| 2026-09-26 | **El patrón de troceado exige tres cosas, cada una verificada contra el texto real.** (1) `A` mayúscula obligatoria: con IGNORECASE pleno entran 82 falsos positivos por saltos de línea. (2) El número exige un punto: descarta `Artículo 116` de la LGUC. (3) Anclaje a inicio de línea: sin él, las referencias del cuerpo cuentan como encabezados |
+| 2026-09-26 | **El sufijo `bis` va DESPUÉS del punto.** El formato real es `Artículo  2.1.3. bis.` (dos espacios, punto intermedio). Implementé el grupo `BIS` antes del punto: detectaba **0 de 18** `bis` y los etiquetaba con su número base, **colisionando con el artículo base**. Lo cazó la verificación contra datos reales, no los tests sintéticos |
 
 Detalle completo de cada una en `04-DECISIONES.md`.
