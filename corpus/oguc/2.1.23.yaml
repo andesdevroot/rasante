@@ -1,0 +1,23 @@
+norma_id: oguc
+articulo: 2.1.23
+materia: 'Altura máxima de edificación: se expresa en metros; si el IPT la fija en pisos, 3,50 m por piso'
+cita: En los Instrumentos de Planificación Territorial la altura máxima de edificación se expresará siempre
+  en metros, sin perjuicio de fijar, además, número máximo de pisos en sectores determinados. En los casos
+  en que un Instrumento de Planificación Territorial haya fijado la altura de edificación en pisos, sin
+  explicitar su medida en metros, ésta se determinará multiplicando 3,50 m por el número de pisos. Las
+  construcciones de uno o dos pisos siempre podrán contemplar mansarda de hasta un piso de altura, en
+  tanto no superen el coeficiente de constructibilidad, las rasantes, ni la altura máxima en metros que
+  el Plan Regulador Comunal o Seccional hubiere establecido.
+regla:
+  tipo: conversion
+  unidad_norma: m
+  metros_por_piso: '3.50'
+  condicion: solo si el IPT fija la altura en pisos sin explicitar su medida en metros
+procedencia:
+  url_fuente: https://www.minvu.gob.cl/wp-content/uploads/2019/05/OGUC-Mayo-2026-D.S.-N5-D.O.-22-05-2026-rev-15.09.2026.pdf
+  consolidado_por: D.D. N°5, D.O. 22-05-2026
+  hash_fuente: sha256:64cf1b7c2e455a43c57548dfede31af4616182e4fe55b658a7e5fbf49b127acc
+  extraido: '2026-09-26'
+  extraido_por: rasante.corpus.ingesta (determinista) + seleccion manual
+  revisado_por: null
+  estado: borrador

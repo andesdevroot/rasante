@@ -1,0 +1,19 @@
+norma_id: oguc
+articulo: 5.1.10
+materia: 'Coeficiente de ocupación de suelo: la superficie edificada del primer piso se determina según
+  el art. 5.1.11'
+cita: Para la aplicación del coeficiente de ocupación de suelo, la superficie edificada del primer piso
+  de la edificación se determinará conforme al procedimiento que establece el artículo 5.1.11.2
+regla:
+  tipo: remision
+  parametro: cos
+  articulo_relacionado: 5.1.11
+  computo: la superficie edificada del primer piso se determina conforme al artículo 5.1.11
+procedencia:
+  url_fuente: https://www.minvu.gob.cl/wp-content/uploads/2019/05/OGUC-Mayo-2026-D.S.-N5-D.O.-22-05-2026-rev-15.09.2026.pdf
+  consolidado_por: D.D. N°5, D.O. 22-05-2026
+  hash_fuente: sha256:64cf1b7c2e455a43c57548dfede31af4616182e4fe55b658a7e5fbf49b127acc
+  extraido: '2026-09-26'
+  extraido_por: rasante.corpus.ingesta (determinista) + seleccion manual
+  revisado_por: null
+  estado: borrador

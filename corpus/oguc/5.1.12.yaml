@@ -1,0 +1,24 @@
+norma_id: oguc
+articulo: 5.1.12
+materia: 'Coeficiente de constructibilidad: cálculo separado; el subterráneo no se contabiliza'
+cita: Para la aplicación del coeficiente de constructibilidad debe presentarse el cálculo de superficie
+  edificada separado en superficie edificada sobre el terreno natural o el suelo resultante del proyecto
+  si éste fuere más bajo que el terreno natural y superficie edificada en subterráneo, para los efectos
+  de no contabilizar ésta última.1 Con todo, cuando en los subterráneos se contemplen unidades con destino
+  residencial, las superficies útiles de estas unidades deberán contabilizarse para el coeficiente de
+  constructibilidad.2
+regla:
+  tipo: exclusion
+  parametro: cus
+  computo: cálculo separado en sobre terreno natural y en subterráneo
+  exclusion: la superficie edificada en subterráneo no se contabiliza
+  excepcion: si en los subterráneos hay unidades con destino residencial, sus superficies útiles sí se
+    contabilizan
+procedencia:
+  url_fuente: https://www.minvu.gob.cl/wp-content/uploads/2019/05/OGUC-Mayo-2026-D.S.-N5-D.O.-22-05-2026-rev-15.09.2026.pdf
+  consolidado_por: D.D. N°5, D.O. 22-05-2026
+  hash_fuente: sha256:64cf1b7c2e455a43c57548dfede31af4616182e4fe55b658a7e5fbf49b127acc
+  extraido: '2026-09-26'
+  extraido_por: rasante.corpus.ingesta (determinista) + seleccion manual
+  revisado_por: null
+  estado: borrador

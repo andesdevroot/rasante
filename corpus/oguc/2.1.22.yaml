@@ -1,0 +1,23 @@
+norma_id: oguc
+articulo: 2.1.22
+materia: 'Densidad: los IPT deben expresarla en densidad bruta en habitantes por hectárea'
+cita: Los Instrumentos de Planificación Territorial que fijen densidad, deberán expresarla en densidad
+  bruta en habitantes por hectárea y se entenderá que su equivalencia o conversión en número de viviendas
+  será igual al valor que resulte de dividir la densidad establecida por el coeficiente 4. El parámetro
+  de densidad establecido en los instrumentos de planificación territorial sólo se aplicará al destino
+  de vivienda del tipo de uso de suelo residencial. 2
+regla:
+  tipo: unidad_y_conversion
+  expresion_obligatoria: densidad bruta
+  unidad: hab/ha
+  factor_habitantes_por_vivienda: '4'
+  conversion_a_viviendas: densidad_bruta / 4
+  alcance: solo se aplica al destino vivienda del tipo de uso de suelo residencial
+procedencia:
+  url_fuente: https://www.minvu.gob.cl/wp-content/uploads/2019/05/OGUC-Mayo-2026-D.S.-N5-D.O.-22-05-2026-rev-15.09.2026.pdf
+  consolidado_por: D.D. N°5, D.O. 22-05-2026
+  hash_fuente: sha256:64cf1b7c2e455a43c57548dfede31af4616182e4fe55b658a7e5fbf49b127acc
+  extraido: '2026-09-26'
+  extraido_por: rasante.corpus.ingesta (determinista) + seleccion manual
+  revisado_por: null
+  estado: borrador

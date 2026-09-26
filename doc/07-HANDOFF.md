@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 0 — Cimientos.** Cinco tareas cerradas (T0.1–T0.5). Falta T0.6.
+**Iteración 0 — Cimientos: CERRADA.** Las seis tareas hechas (T0.1–T0.6).
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T0.6** (corpus curado) |
-| Código | `geo/arcgis.py` (ingestor ArcGIS) · `corpus/ingesta.py` (troceador OGUC) · frontera de capas · tooling |
-| Tests | **42 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tarea en curso | ninguna. Siguiente: **T1.1** (modelos de dominio) |
+| Código | `geo/arcgis.py` (ingestor ArcGIS) · `corpus/ingesta.py` (troceador OGUC) · `corpus/` (8 normas citadas) · tooling |
+| Tests | **67 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | `pytest` verde, sin saltados · `ruff` limpio · `mypy --strict` limpio |
 | Árbol git | limpio — todo commiteado |
 
@@ -24,6 +24,7 @@ Reestructuración a `doc/` aplicada el 2026-09-26: `01-VISION.md`, `03-DISENO.md
 ## Último commit
 
 ```
+[T0.6]    feat(corpus): corpus curado de OGUC y DDU 514 con citas
 [T0.5]    feat(corpus): troceador determinista de la OGUC por articulo
 [T0.3]    docs: cierra T0.3, registra A2 y A3 y actualiza el alcance a 4 parametros
 def1a5d  docs: corrige los hashes invalidados por el squash de T0.1
@@ -39,11 +40,11 @@ Una tarea, un commit: T0.1 quedó consolidada en `64bdcdd` tras el squash.
 
 ## Siguiente tarea
 
-**T0.6 — Corpus curado: OGUC + DDU 514.**
+**T1.1 — Dominio: modelos e invariante de cita** (`src/rasante/dominio/modelos.py`).
 
-Produce los ~10-15 YAML del corpus citable. Exige **buscar** los artículos que
-`cos`/`cus`/`altura_maxima`/`densidad` necesitan, no asumir números. **Necesita tu validación de
-cada cita antes del commit.**
+Arranca la iteración 1. Fija `Cita`, `Parametro` (con `calificador`), `Zona`, `Proyecto`,
+`Veredicto` y `CodigoVeredicto`, y del que dependen T1.2 a T1.6. `CodigoVeredicto` debe reproducir
+la leyenda de `corpus/ddu/514.yaml`.
 
 ## Blockers
 
@@ -52,6 +53,14 @@ cada cita antes del commit.**
 | **Titularidad normativa** | **No resuelto.** Intenté tres fuentes de la Ley 17.336: BCN devuelve 401, el archivo de la UNESCO devuelve HTML, y LeyChile se renderiza por JS (solo devuelve el título). Mitigación adoptada: el corpus guarda **citas, no texto íntegro** — artículo, URL, hash y fecha. Eso baja el riesgo a algo asumible. Verificado que **MINVU publica la OGUC consolidada para descarga abierta** |
 
 Sin blockers de alcance: A1, A2 y A3 están cerradas.
+
+**Deudas registradas, no bloqueantes:**
+
+- **La DDU 514 pública está escaneada con OCR** (`texto_extraible: false` en el corpus). No se
+  derivan reglas de su texto. Cualquier regla que se necesite de ahí exige verificación visual.
+- **La leyenda de veredictos viene de la respuesta ministerial a la consulta pública**, no del
+  Formato Tipo oficial. Aceptada como provisional por el usuario; reemplazar cuando se obtenga el
+  oficial de MINVU.
 
 ## Decisiones recientes
 
@@ -74,5 +83,9 @@ Sin blockers de alcance: A1, A2 y A3 están cerradas.
 | 2026-09-26 | **Mis números de artículo de la OGUC estaban mal.** `2.6.2` es adosamiento, `2.6.3` distanciamientos y rasantes, `2.6.4` Conjunto Armónico. Las definiciones reales están en `1.1.2` |
 | 2026-09-26 | **El patrón de troceado exige tres cosas, cada una verificada contra el texto real.** (1) `A` mayúscula obligatoria: con IGNORECASE pleno entran 82 falsos positivos por saltos de línea. (2) El número exige un punto: descarta `Artículo 116` de la LGUC. (3) Anclaje a inicio de línea: sin él, las referencias del cuerpo cuentan como encabezados |
 | 2026-09-26 | **El sufijo `bis` va DESPUÉS del punto.** El formato real es `Artículo  2.1.3. bis.` (dos espacios, punto intermedio). Implementé el grupo `BIS` antes del punto: detectaba **0 de 18** `bis` y los etiquetaba con su número base, **colisionando con el artículo base**. Lo cazó la verificación contra datos reales, no los tests sintéticos |
+| 2026-09-26 | **La densidad bruta deja de ser una suposición: el art. `2.1.22` la hace obligatoria.** Los IPT *"deberán expresarla en densidad bruta en habitantes por hectárea"*, con conversión a viviendas dividiendo por el coeficiente 4. Cierra A3 con fuente |
+| 2026-09-26 | **La obligación del revisor está en el art. 116 bis de la LGUC**, no en "art. 116 de la Ley 21.718" como yo había escrito. La Ley 21.718 lo modificó. Corregido en `01-VISION.md` (×3) y `02-ALCANCE.md` |
+| 2026-09-26 | **La OGUC se compone de reglas, no de valores** (D13), confirmado al curar el corpus: `2.1.23` da la conversión 3,50 m/piso, pero la altura máxima la fija cada PRC. Un veredicto de altura cita **las dos** fuentes |
+| 2026-09-26 | **`factor_habitantes_por_vivienda: "4"` es inferencia mía, no texto literal.** La OGUC dice "el coeficiente 4". Es la única lectura con dimensiones correctas, pero queda señalado como interpretación |
 
 Detalle completo de cada una en `04-DECISIONES.md`.

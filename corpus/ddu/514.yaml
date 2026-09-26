@@ -1,0 +1,42 @@
+norma_id: ddu-514
+circular: '514'
+materia: Formato Tipo del Informe del Revisor Independiente
+cita: Circular DDU 514, Santiago 10 de enero de 2025. Distribuye el Formulario con formato tipo del Informe
+  del Revisor Independiente, conforme a la Ley N°21.718 que modifica el artículo 116 bis de la Ley General
+  de Urbanismo y Construcciones.
+base_legal: Ley N°21.718, que modifica el artículo 116 bis de la LGUC
+leyenda_veredictos:
+  C: Cumple con exigencias normativas
+  NC: No cumple con exigencia normativa
+  P: Pendiente
+  NP: No procede
+  PR: Plan Regulador
+secciones:
+- I. Identificación del propietario y profesionales
+- II. Información del predio
+- III. Información del proyecto
+- IV. Normas a las que se acoge el proyecto
+- V. Descripción del proyecto
+- C. Cumplimiento de las normas urbanísticas
+- D. Cumplimiento de otras normas asociadas
+- E. Capítulos 1, 2 y 3 del Título 4 OGUC
+- F. Capítulos 4 al 14 del Título 4 OGUC
+- G. Instalaciones y pavimentación de calzadas
+procedencia:
+  url_fuente: https://www.aoa.cl/wp-content/uploads/2025/01/DDU-514-10-de-enero-de-2025.pdf
+  consolidado_por: Circular DDU 514, 10 de enero de 2025
+  hash_fuente: sha256:a2780ea1b4cb9de24adbab45a3dba000e8bf959aa2dded33a9d08747c4ff4003
+  extraido: '2026-09-26'
+  extraido_por: rasante.corpus.ingesta (determinista)
+  texto_extraible: false
+  requiere_verificacion_visual: true
+  nota: 'PDF escaneado con OCR: extrae ''SAANTIAGo, 10 ENE 2029'' y ''coentempladas''. No se derivan reglas
+    de su texto'
+  revisado_por: null
+  estado: borrador
+procedencia_leyenda:
+  url_fuente: https://territoriociudadano.minvu.gob.cl/sites/default/files/2026-08/respuesta_ministerial_formato_tipo_de_informe_del_revisor_independiente.pdf
+  hash_fuente: sha256:318ecc0d7fed72e1bb0977aafb386fd00d3bb88b062bfc1e1d1f7f5a51bb7c7c
+  extraido: '2026-09-26'
+  nota: La leyenda no aparece en el texto extraible de la Circular. Se toma de la respuesta ministerial
+    a la consulta pública del Formato Tipo. Pendiente reemplazar por el Formato Tipo oficial de MINVU.

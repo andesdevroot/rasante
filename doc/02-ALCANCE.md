@@ -43,7 +43,7 @@ distanciamientos · checklist de admisibilidad · usos de suelo.
 | Iteración | Contenido |
 |---|---|
 | 2 | Ingesta de CIP y Formularios Únicos Nacionales · extracción con `deepseek-flash` visión · citas por ID de regla |
-| 3 | Emisión del Formato Tipo DOCX/PDF (DDU 514) con veredictos y narrativa del Art. 116 Ley 21.718 |
+| 3 | Emisión del Formato Tipo DOCX/PDF (DDU 514) con veredictos y narrativa del art. 116 bis LGUC |
 | 4 | Checklist de admisibilidad Ley 21.826 (5 días hábiles) |
 | 5 | UI local SvelteKit · instaladores Nuitka/Briefcase · demo pública FastAPI |
 | 6 | Rasantes, estacionamientos, distanciamientos, aguas lluvias · 2ª y 3ª comuna |

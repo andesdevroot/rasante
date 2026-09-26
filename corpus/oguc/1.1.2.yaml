@@ -1,0 +1,37 @@
+norma_id: oguc
+articulo: 1.1.2
+materia: Definiciones
+cita: Artículo 1.1.2. Definiciones. Se transcriben solo las entradas que la iteración 1 necesita, no las
+  209 del artículo completo.
+definiciones:
+  Coeficiente de constructibilidad: número que multiplicado por la superficie total del predio, descontadas
+    de esta última las áreas declaradas de utilidad pública, fija el máximo de metros cuadrados posibles
+    de construir sobre el terreno.8
+  Coeficiente de ocupación del suelo: número que, multiplicado por la superficie total del predio, descontadas
+    de esta última las áreas declaradas de utilidad pública, fija el máximo de metros cuadrados posibles
+    de construir en el nivel de primer piso. 2
+  Coeficiente de ocupación de los pisos superiores: número que multiplicado por la superficie total del
+    predio, descontadas de ésta las áreas declaradas de utilidad pública, fija el máximo de superficie
+    edificada posible de construir en cada uno de los pisos superiores al primero.1
+  Densidad: número de unidades (personas, familias, viviendas, locales, metros cuadrados construidos,
+    etc.), por unidad de superficie (predio, lote, manzana, hectárea, etc.).
+  Densidad bruta: Número de unidades por unidad de superficie, en que la superficie a considerar es la
+    del predio en que se emplaza el proyecto, más la superficie exterior, hasta el eje del espacio público
+    adyacente, sea éste existente o previsto en el Instrumento de Planificación Territorial, en una franja
+    de un ancho máximo de 30 m.4
+  Densidad neta: Número de unidades por unidad de superficie, siendo ésta última la del predio en que
+    se emplaza el proyecto, descontada, en su caso, la parte afecta a declaración de utilidad pública
+    establecida en el respectivo Instrumento de Planificación Territorial.5
+  Altura de edificación: la distancia vertical, expresada en metros, entre el suelo natural y un plano
+    paralelo superior al mismo.3
+  Superficie edificada: superficie de una construcción calculada horizontalmente por pisos, sin incluir
+    los vacíos, los ductos verticales y las escaleras de evacuación, medida hasta la cara exterior de
+    los muros perimetrales.1
+procedencia:
+  url_fuente: https://www.minvu.gob.cl/wp-content/uploads/2019/05/OGUC-Mayo-2026-D.S.-N5-D.O.-22-05-2026-rev-15.09.2026.pdf
+  consolidado_por: D.D. N°5, D.O. 22-05-2026
+  hash_fuente: sha256:64cf1b7c2e455a43c57548dfede31af4616182e4fe55b658a7e5fbf49b127acc
+  extraido: '2026-09-26'
+  extraido_por: rasante.corpus.ingesta (determinista) + seleccion manual
+  revisado_por: null
+  estado: borrador

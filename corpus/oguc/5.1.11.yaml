@@ -1,0 +1,34 @@
+norma_id: oguc
+articulo: 5.1.11
+materia: 'Superficie edificada: composición como suma de superficies parciales'
+cita: 'La superficie edificada de una construcción comprenderá la suma de las siguientes superficies parciales:3
+  1. En cada piso, el 100% de la superficie construida, techada y lateralmente cerrada en forma total,
+  medida desde la cara exterior de los muros perimetrales, incluyendo todos sus elementos excepto los
+  vacíos y ductos verticales. En el caso de escaleras, sólo se calculará su superficie edificada en cada
+  piso si éstas no forman parte de una vía de evacuación. 2. En cada piso, el 50% de la superficie construida,
+  techada y lateralmente abierta, siempre que su profundidad no sea superior al frente abierto, debiendo
+  considerar como superficie completa el área que sobrepase dicha profundidad. En cada piso no se contabilizarán
+  las superficies abiertas cuya cubierta esté en volado por dos o más lados convergentes, las jardineras
+  exteriores y los espacios cubiertos y abiertos del primer piso que sean de uso común. En el caso de
+  planos inclinados, la superficie edificada se determinará por el área definida en un plano paralelo
+  al piso trazado a la altura de 1,60 m sobre él. En el caso de cuerpos salientes, se computará la superficie
+  horizontal de ellos si su altura libre interior es igual o superior a 1,60 m.4 1 Modificado por D.S.
+  112 – D.O. 05.01.93, reemplaza artículo. 2 Modificado por D.S. 112 – D.O. 05.01.93; por D.S. 75 – D.O.
+  25.06.01, sustituye artículo. 3 Modificado por D.S. 108 – D.O. 04.08.98, sustituye oración inicial inciso
+  primero. 4 Modificado por D.S. 112 – D.O. 05.01.93; por D.S. 22 – D.O. 18.03.93; por D.S. 7 – D.O. 12.02.94;
+  por D.S. 173 – D.O. 12.03.97; por D.S. 108 – D.O. 04.08.98; por D.S. 75 – D.O. 25.06.01, sustituye artículo.
+  TITULO 5: DE LA CONSTRUCCION CAPITULO 2 CONST. 1-26 FEBRERO 2026'
+regla:
+  tipo: composicion
+  parametros:
+  - cos
+  - cus
+  computo: suma de superficies parciales
+procedencia:
+  url_fuente: https://www.minvu.gob.cl/wp-content/uploads/2019/05/OGUC-Mayo-2026-D.S.-N5-D.O.-22-05-2026-rev-15.09.2026.pdf
+  consolidado_por: D.D. N°5, D.O. 22-05-2026
+  hash_fuente: sha256:64cf1b7c2e455a43c57548dfede31af4616182e4fe55b658a7e5fbf49b127acc
+  extraido: '2026-09-26'
+  extraido_por: rasante.corpus.ingesta (determinista) + seleccion manual
+  revisado_por: null
+  estado: borrador

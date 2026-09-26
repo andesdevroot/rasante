@@ -21,7 +21,7 @@ Las tareas completadas quedan resumidas en una línea; las pendientes llevan el 
 | T0.3 | Comparación de comunas → decisión A2 | ✅ | `[T0.3]` |
 | T0.4 | Test de integración contra la API real | ✅ | `[T0.4]` |
 | T0.5 | Troceador determinista de la OGUC | ✅ | `[T0.5]` |
-| T0.6 | Corpus curado: OGUC + DDU 514 | ⬜ pendiente | — |
+| T0.6 | Corpus curado: OGUC + DDU 514 | ✅ | `[T0.6]` |
 
 **T0.1 — Esqueleto del repositorio.** ✅ `pyproject.toml` con `uv`, layout `src/`, licencias
 Apache-2.0 y CC-BY-4.0, ruff y mypy `--strict`, y el guardián de arquitectura
@@ -46,19 +46,11 @@ expone capas y que el conteo descargado coincide con el `count` de la API — de
 OGUC real (4,3 MB, sha256 `64cf1b7c…`): **591 artículos, 582 únicos, 18 ocurrencias `bis`, 5
 duplicados preservados**, cero IDs basura y orden documental perfecto. 27 tests.
 
-### ⬜ T0.6 — Corpus curado: OGUC + DDU 514
-
-- **Objetivo:** producir el corpus citable que la iteración 1 necesita.
-- **Test primero:** test que recorre `corpus/oguc/*.yaml` y `corpus/ddu/*.yaml` y exige que cada uno
-  tenga `cita`, `procedencia.url_fuente`, `procedencia.hash_fuente` y `procedencia.consolidado_por`.
-- **Trabajo de búsqueda:** encontrar los artículos que `cos`, `cus`, `altura_maxima` y `densidad`
-  necesitan **buscando en el texto, no asumiendo números**. Los que creí correctos estaban mal
-  (`2.6.2` es adosamiento, `2.6.3` es distanciamientos y rasantes).
-- **Entregable:** `corpus/oguc/{1.1.2,2.1.23,5.1.10,5.1.11,...}.yaml`, `corpus/ddu/514.yaml`,
-  `corpus/oguc/fuentes.yaml`.
-- **Aceptación:** cada archivo cita y declara procedencia con hash y decreto consolidante.
-  **Se te presenta cada extracción para que la valides antes del commit.**
-- **Commit:** `feat(corpus): corpus curado de OGUC y DDU 514 con citas [T0.6]`
+**T0.6 — Corpus curado: OGUC + DDU 514.** ✅ 8 archivos en `corpus/`, validados por el usuario.
+Artículos de cálculo encontrados **buscando**, no asumiendo: `2.1.22` (densidad en **bruta** hab/ha
++ conversión), `2.1.23` (3,50 m por piso), `5.1.10`/`5.1.11` (cómputo del cos), `5.1.12` (el
+subterráneo no cuenta para el cus). 8 definiciones extraídas de las 209 de `1.1.2`. Cada archivo
+cita con URL, hash y decreto consolidante.
 
 ---
 

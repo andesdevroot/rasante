@@ -11,7 +11,7 @@
 
 La Ley 21.826 (publicada el 24 de junio de 2026) reformó la LGUC y creó algo que antes no existía: una **revisión formal de admisibilidad en 5 días hábiles**. Si la DOM no la declara inadmisible en plazo, *la solicitud se entiende acogida a trámite*. Y con **informe favorable de revisor independiente**, el plazo de la DOM baja de 25 a 15 días hábiles.
 
-Eso convirtió el informe del revisor independiente en un **ticket de vía rápida**. Se creó un mercado privado de revisiones, con un formato de salida **definido por el Ministerio** (Circular DDU 514) y una obligación legal explícita en el **Art. 116 de la Ley 21.718**: el revisor debe *explicar la forma* en que el proyecto da cumplimiento a las normas urbanísticas.
+Eso convirtió el informe del revisor independiente en un **ticket de vía rápida**. Se creó un mercado privado de revisiones, con un formato de salida **definido por el Ministerio** (Circular DDU 514) y una obligación legal explícita en el **art. 116 bis de la LGUC**, introducido por la Ley 21.718: el revisor debe *explicar la forma* en que el proyecto da cumplimiento a las normas urbanísticas.
 
 Nadie tiene herramienta para producir eso. Los code-checkers BIM existentes (Solibri, Verifi3D) validan contra códigos extranjeros — ICC, IFC genérico — no contra OGUC + plan regulador comunal.
 
@@ -100,7 +100,7 @@ IV.  NORMAS A LAS QUE SE ACOGE EL PROYECTO
      IV.2  Otras disposiciones
      IV.3  Conjunto viviendas económicas (6.1.8 OGUC)
 V.   DESCRIPCIÓN DEL PROYECTO
-C.   CUMPLIMIENTO DE LAS NORMAS URBANÍSTICAS        ← Art. 116 Ley 21.718
+C.   CUMPLIMIENTO DE LAS NORMAS URBANÍSTICAS        ← art. 116 bis LGUC (Ley 21.718)
 D.   CUMPLIMIENTO DE OTRAS NORMAS ASOCIADAS
 E.   CUMPLIMIENTO CAPÍTULOS 1, 2 y 3, TÍTULO 4 OGUC
 F.   CUMPLIMIENTO CAPÍTULOS 4 AL 14, TÍTULO 4 OGUC
@@ -175,7 +175,7 @@ Tres capas:
 ┌─ L2 · LLM (extractor y redactor) ────────────────────────────────┐
 │  (a) compila prosa de ordenanza → reglas L1   [revisión humana]  │
 │  (b) extrae datos de PDFs escaneados y planos [visión]           │
-│  (c) redacta "la forma en que da cumplimiento" (Art. 116)        │
+│  (c) redacta "la forma en que da cumplimiento" (116 bis LGUC)    │
 │  (d) responde consultas con cita verificable                     │
 │  NUNCA: aritmética, veredictos, ni números inventados            │
 └──────────────────────────────────────────────────────────────────┘
