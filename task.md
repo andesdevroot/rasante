@@ -16,8 +16,8 @@ Las tareas completadas quedan resumidas en una línea; las pendientes llevan el 
 
 | # | Tarea | Estado | Commit |
 |---|---|---|---|
-| T0.1 | Esqueleto del repositorio | ✅ | `6c55cd3` + `d8064b8` |
-| T0.2 | Ingestor ArcGIS REST | ✅ | `20871c3` |
+| T0.1 | Esqueleto del repositorio | ✅ | `64bdcdd` |
+| T0.2 | Ingestor ArcGIS REST | ✅ | `6420178` |
 | T0.3 | Comparación de comunas → decisión A2 | 🟦 en curso | — |
 | T0.4 | Test de integración contra la API real | ✅ | `[T0.4]` |
 

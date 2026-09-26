@@ -25,15 +25,14 @@ Reestructuración a `doc/` aplicada el 2026-09-26: `01-VISION.md`, `03-DISENO.md
 
 ```
 [T0.4]    test(geo): test de integracion contra la API real de MINVU
-f991466  docs: reestructura la documentacion a doc/ y actualiza la metodologia
-5009ecd  docs: agrega T0.4 (test de integracion contra la API real)
-20871c3  feat(geo): ingestor ArcGIS REST con paginacion y cache en disco [T0.2]
-d8064b8  chore(repo): versionar uv.lock y documentar cache local de uv [T0.1]
-6c55cd3  chore(repo): esqueleto, uv, licencias y guardian de arquitectura [T0.1]
+c426875  docs: reestructura la documentacion a doc/ y actualiza la metodologia
+9538bd1  docs: agrega T0.4 (test de integracion contra la API real)
+6420178  feat(geo): ingestor ArcGIS REST con paginacion y cache en disco [T0.2]
+64bdcdd  chore(repo): esqueleto, uv, licencias y guardian de arquitectura [T0.1]
 e02ff7c  docs: spec inicial (design, task, handoff)
 ```
 
-`6c55cd3` y `d8064b8` son ambos T0.1 y **violan la regla "un commit por tarea"**. Pendiente decidir
+`64bdcdd` y `64bdcdd` son ambos T0.1 y **violan la regla "un commit por tarea"**. Pendiente decidir
 si se squashan.
 
 ## Siguiente tarea
@@ -51,7 +50,7 @@ dominio depende de esa decisión.
 | **A3 sin confirmar** | Tercer parámetro: `altura_maxima` (recomendado) vs `densidad`. **Bloquea T1.1**, o sea el arranque de la iteración 1 |
 | **Titularidad normativa** | Sin verificar el artículo de la Ley 17.336 que excluye textos oficiales de protección. Bloquea fijar la licencia definitiva del corpus, no el desarrollo |
 
-**Deuda de higiene:** T0.1 quedó en dos commits (`6c55cd3` + `d8064b8`), lo que viola la regla "un
+**Deuda de higiene:** T0.1 quedó en dos commits (`64bdcdd`), lo que viola la regla "un
 commit por tarea" de `00-METODOLOGIA.md`. Pendiente decidir si se squashan.
 
 ## Decisiones recientes
