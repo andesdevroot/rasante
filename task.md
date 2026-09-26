@@ -62,7 +62,7 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | # | Tarea | Estado |
 |---|---|---|
 | T1.1 | Dominio: modelos e invariante de cita | ✅ | `[T1.1]` |
-| T1.2 | Dominio: motor de evaluación | ⬜ |
+| T1.2 | Dominio: motor de evaluación | ✅ | `[T1.2]` |
 | T1.3 | Corpus: cargador y validación de YAML | ⬜ |
 | T1.4 | Geo: reproyección e índice espacial | ⬜ |
 | T1.5 | Resolución coordenada → zona | ⬜ |
@@ -77,17 +77,11 @@ tres enums. Los tres invariantes son de construcción, no de convención: sin `C
 coincida con su parámetro es rechazada. `LEYENDA` está hardcodeada porque el dominio no puede leer
 YAML (D2); un test la contrasta contra `corpus/ddu/514.yaml` para que no se separen. 24 tests.
 
-### ⬜ T1.2 — Dominio: motor de evaluación
-
-- **Test primero:** tabla de casos por parámetro — valor proyecto < norma → `C`; > norma → `NC`;
-  parámetro en `desconocido`/`no_aplica` → `P`/`NP` **nunca `C`**; dato de proyecto faltante → `P`.
-  Un test por artículo citado.
-- **Ojo (A3 cerrada):** `densidad` es la **única regla derivada**, no una comparación directa:
-  `numero_viviendas / (superficie_predio_m2 / 10_000)` en viv/ha. Los casos de test deben cubrir el
-  cálculo, no solo la comparación. Es lo que obliga a que `evaluar` reciba el `Proyecto` completo.
-- **Entregable:** `dominio/motor.py` — `evaluar(proyecto, zona) -> list[Veredicto]`.
-- **Aceptación:** el caso "norma desconocida" da `P`, jamás `C`. Es el invariante más importante.
-- **Commit:** `feat(dominio): motor de evaluacion de parametros urbanisticos [T1.2]`
+**T1.2 — Dominio: motor de evaluación.** ✅ `dominio/motor.py` — `evaluar(proyecto, zona)`. Una
+**tabla única** (`DERIVACIONES`) dice qué parámetros conocemos y cómo se obtiene su valor: estar en
+la tabla significa "sé calcularlo y sé que es un máximo". Un parámetro fuera de la tabla da `P`, no
+se asume nada. Tres caminos separados hacia `P`: norma desconocida, dato del proyecto faltante, y
+parámetro que no sabemos comparar. 31 tests.
 
 ### ⬜ T1.3 — Corpus: cargador YAML
 

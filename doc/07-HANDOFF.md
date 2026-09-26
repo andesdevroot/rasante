@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 1 — Vertical slice, en curso.** T1.1 cerrada (iteración 0 completa: T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1 y T1.2 cerradas (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.2** (motor de evaluación) |
-| Código | `dominio/modelos.py` · `geo/arcgis.py` · `corpus/ingesta.py` · `corpus/` (8 normas citadas) |
-| Tests | **96 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tarea en curso | ninguna. Siguiente: **T1.3** (cargador del corpus) |
+| Código | `dominio/modelos.py` · `dominio/motor.py` · `geo/arcgis.py` · `corpus/ingesta.py` · `corpus/` |
+| Tests | **127 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | `pytest` verde, sin saltados · `ruff` limpio · `mypy --strict` limpio |
 | Árbol git | limpio — todo commiteado |
 
@@ -24,6 +24,7 @@ Reestructuración a `doc/` aplicada el 2026-09-26: `01-VISION.md`, `03-DISENO.md
 ## Último commit
 
 ```
+[T1.2]    feat(dominio): motor de evaluacion de parametros urbanisticos
 [T1.1]    feat(dominio): modelos de dominio e invariante de cita obligatoria
 [T0.6]    feat(corpus): corpus curado de OGUC y DDU 514 con citas
 [T0.5]    feat(corpus): troceador determinista de la OGUC por articulo
@@ -41,15 +42,13 @@ Una tarea, un commit: T0.1 quedó consolidada en `64bdcdd` tras el squash.
 
 ## Siguiente tarea
 
-**T1.2 — Dominio: motor de evaluación** (`src/rasante/dominio/motor.py`).
+**T1.3 — Corpus: cargador YAML** (`src/rasante/corpus/cargador.py`).
 
-`evaluar(proyecto, zona) -> list[Veredicto]`. **Es la tarea más delicada de la iteración**: el
-invariante que importa es que un dato desconocido dé `P`, **jamás `C`**. Y `densidad` es la única
-regla derivada (`numero_viviendas / superficie_predio_ha`), así que el motor recibe el `Proyecto`
-completo, no un número suelto.
-
-Reglas en `corpus/oguc/`: `2.1.22` (densidad bruta hab/ha, conversión /4), `2.1.23` (3,50 m por
-piso), `5.1.10`/`5.1.11` (cómputo del cos), `5.1.12` (subterráneo fuera del cus).
+Convierte `corpus/prc/<region>/<comuna>/zonas/*.yaml` en `Zona` del dominio. Debe manejar la
+**coma decimal** de las ordenanzas (`0,6` mal parseado se vuelve `6`) y **rechazar claves de
+parámetro duplicadas**: PyYAML no lo detecta y descartaría una regla en silencio. Es el puente
+entre el corpus (dato) y el dominio (puro), así que no puede importar nada de `dominio` hacia
+arriba.
 
 ## Blockers
 
@@ -66,6 +65,11 @@ Sin blockers de alcance: A1, A2 y A3 están cerradas.
 - **La leyenda de veredictos viene de la respuesta ministerial a la consulta pública**, no del
   Formato Tipo oficial. Aceptada como provisional por el usuario; reemplazar cuando se obtenga el
   oficial de MINVU.
+- **`Veredicto.cita` es singular, pero D13 pide dos citas.** La OGUC da la regla y el PRC el valor:
+  un veredicto de densidad debería citar las dos. Hoy lleva solo la norma que fija el valor. Añadir
+  la cita de la regla es aditivo, y toca hacerlo cuando el informe la necesite (iteración 3).
+- **`Decimal` sale en notación científica al dividir** (`1E+2` en vez de `100`). La comparación es
+  correcta porque `Decimal` compara numéricamente, pero el informe necesita formatearlo.
 
 ## Decisiones recientes
 
@@ -95,5 +99,10 @@ Sin blockers de alcance: A1, A2 y A3 están cerradas.
 | 2026-09-26 | **Los invariantes del dominio son de construcción, no de convención.** `Veredicto` sin `Cita` levanta `ErrorDominio`; un `float` en cualquier valor normativo levanta error; una clave de `Zona` que no coincida con su `Parametro.clave` es rechazada. No se puede construir un modelo inválido |
 | 2026-09-26 | **`LEYENDA` está hardcodeada en el dominio porque no puede leer YAML (D2).** Un test la contrasta contra `corpus/ddu/514.yaml`, que es lo que impide que las dos se separen en silencio |
 | 2026-09-26 | **`clave_compuesta()` es la única definición de la clave.** `Parametro`, `Veredicto` y (en T1.3) el cargador del corpus deben coincidir, o dos reglas se pisan en el mapping |
+| 2026-09-26 | **El motor usa UNA tabla, no dos listas.** `DERIVACIONES` dice a la vez qué parámetros conocemos y cómo se deriva su valor: estar en la tabla significa "sé calcularlo y sé que es un máximo". Antes tenía `_derivar` y `_MAXIMOS` por separado, y podían divergir en silencio |
+| 2026-09-26 | **Un parámetro fuera de la tabla da `P`, no se asume que sea un máximo.** Suponerlo y compararlo produciría un `(C)` o `(NC)` sin fundamento |
+| 2026-09-26 | **T1.2 encontró un hueco en el modelo de T1.1:** `Proyecto` no tenía la superficie del primer piso, sin la cual `cos` no se puede derivar. Se agregó `superficie_primer_piso_m2` de forma **aditiva** (T1.1 no se rompió) |
+| 2026-09-26 | **`Parametro.id` rechaza el punto.** Bug real de T1.2: pasar `"densidad.bruta"` como `id` *y* `"bruta"` como calificador producía la clave `densidad.bruta.bruta`. El modelo lo aceptaba en silencio; ahora lo rechaza |
+| 2026-09-26 | **El motor no redondea antes de comparar.** Redondear en el límite puede convertir un `(NC)` en un `(C)`. El redondeo es del informe, no del veredicto |
 
 Detalle completo de cada una en `04-DECISIONES.md`.

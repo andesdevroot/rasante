@@ -127,6 +127,11 @@ class Parametro:
     def __post_init__(self) -> None:
         if not self.id.strip():
             raise ErrorDominio("un Parametro necesita 'id' no vacío")
+        if "." in self.id:
+            raise ErrorDominio(
+                f"'{self.id}': el 'id' no lleva calificador. Usa id y calificador por separado, "
+                "no la clave compuesta: si no, la clave sale duplicada ('densidad.bruta.bruta')"
+            )
         if self.valor is not None and not isinstance(self.valor, Decimal):
             tipo = type(self.valor).__name__
             raise ErrorDominio(f"'{self.id}': el valor debe ser Decimal o None, no {tipo}")
@@ -219,6 +224,7 @@ class Proyecto:
     superficie_predio_m2: Decimal
     numero_viviendas: int
     superficie_edificada_m2: Decimal | None = None
+    superficie_primer_piso_m2: Decimal | None = None
     altura_m: Decimal | None = None
 
     def __post_init__(self) -> None:
@@ -228,12 +234,10 @@ class Proyecto:
             raise ErrorDominio("'superficie_predio_m2' debe ser mayor que cero")
         if self.numero_viviendas < 0:
             raise ErrorDominio("'numero_viviendas' no puede ser negativo")
-        if self.superficie_edificada_m2 is not None and not isinstance(
-            self.superficie_edificada_m2, Decimal
-        ):
-            raise ErrorDominio("'superficie_edificada_m2' debe ser Decimal o None")
-        if self.altura_m is not None and not isinstance(self.altura_m, Decimal):
-            raise ErrorDominio("'altura_m' debe ser Decimal o None")
+        opcionales = ("superficie_edificada_m2", "superficie_primer_piso_m2", "altura_m")
+        for nombre in opcionales:
+            if getattr(self, nombre) is not None and not isinstance(getattr(self, nombre), Decimal):
+                raise ErrorDominio(f"'{nombre}' debe ser Decimal o None")
 
 
 @dataclass(frozen=True, slots=True)

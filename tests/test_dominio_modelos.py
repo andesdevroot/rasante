@@ -137,6 +137,19 @@ def test_clave_compuesta_es_la_unica_definicion() -> None:
     assert clave_compuesta("densidad", "bruta") == "densidad.bruta"
 
 
+def test_un_parametro_rechaza_un_id_que_ya_trae_el_calificador() -> None:
+    """Bug real de T1.2: pasar la clave compuesta como `id` producía `densidad.bruta.bruta`."""
+    with pytest.raises(ErrorDominio, match="calificador"):
+        Parametro(
+            id="densidad.bruta",
+            valor=Decimal("50"),
+            unidad="hab/ha",
+            estado=EstadoParametro.APLICABLE,
+            cita=cita(),
+            calificador="bruta",
+        )
+
+
 def test_clave_con_calificador_es_compuesta() -> None:
     p = Parametro(
         id="cos", valor=Decimal("0.6"), unidad="adimensional", estado=EstadoParametro.APLICABLE,
