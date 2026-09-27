@@ -11,7 +11,7 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.14** (resto de las zonas de Ñuñoa) |
+| Tarea en curso | ninguna. Siguiente: **T1.14b** (prosa normativa), luego T1.14 (más zonas) |
 | Código | `corpus/zonas/nunoa/Z-2.yaml` (nuevo) · `puente.py` · `clasificacion/{contrato,porteria,proveedor}.py` · `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
 | Tests | **418 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | **`./gate.sh`** en verde (`set -euo pipefail`): pytest, ruff y mypy sobre `src` **y** `tests` |
@@ -27,9 +27,10 @@ El más reciente es el que trae este archivo. **Un archivo no puede contener su 
 lo invalida el mismo `commit` que lo guarda, y un `amend` lo deja mintiendo. Por eso la lista
 arranca en el commit anterior.
 
-Historia completa (**30 commits**), del más nuevo al más viejo:
+Historia completa (**31 commits**), del más nuevo al más viejo:
 
 ```
+9880c69 feat(corpus): primera zona real, Z-2 de Nunoa, con citas verificadas [T1.14a]
 62e5664 feat(dominio): excepciones de aplicacion general con factor (D20, D21)
 b4395cd docs(readme): README real para el repositorio open source
 e704415 docs: sincroniza los md con el estado real y elimina referencias muertas

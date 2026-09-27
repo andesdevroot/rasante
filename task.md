@@ -77,8 +77,11 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.12 | Resolución coordenada → zona | ⬜ |
 | T1.13 | CLI | ⬜ |
 | T1.14a | Corpus real: Zona Z-2 de Ñuñoa (primera zona transcrita) | ✅ | `[T1.14a]` |
+| T1.14b | La prosa normativa del cuadro (decisión de diseño) | ⬜ |
+| T1.14c | Hechos de agrupamiento (la altura cambia según el tipo) | ⬜ |
 | T1.14 | Corpus real: resto de las zonas de la comuna piloto | ⬜ |
 | T1.15 | Validación contra predios reales | ⬜ |
+| T1.16 | CI en GitHub Actions (barato, fuera del camino crítico) | ⬜ |
 
 > **T1.3–T1.6 se insertaron el 2026-09-26**, al detectar tres gaps encadenados: el motor no
 > ejecutaba el corpus (D14), evaluaba parámetros acoplados como si fueran independientes (D15), y no
@@ -194,6 +197,75 @@ pendiente— y `factibilidad` dice **qué** falta.
    `hechos_externos`, y peor: un `frozenset` no puede expresar "no se sabe", así que no puede
    alimentar un `P`. `hechos_externos` lo supersede.
 
+### ✅ T1.14a — Primera zona real: Z-2 de Ñuñoa
+
+`corpus/zonas/nunoa/Z-2.yaml`: los 12 renglones del cuadro normativo del Artículo 26, cada uno con su
+cita literal. El fixture `tests/fixtures/nunoa_zonas.json` guarda el texto tal como salió de `pypdf`
+más el sha256 del PDF, y `tests/test_corpus_nunoa.py` exige que **cada cita sea un fragmento literal**
+de ese texto: si alguien inventa un número, ese test lo caza.
+
+**La extracción automática queda descartada con datos.** El cuadro sale limpio, pero con las notas al
+pie inyectadas dentro (`92 Modifíquese el Artículo 26º…`) y los rótulos partidos en cuatro líneas con
+el valor lejos de su etiqueta —el `60%` de un renglón aparece cuatro líneas después de su rótulo—. Un
+parser heurístico se equivoca en silencio. La transcripción a mano de iteración 1 queda validada.
+
+**Cuatro cosas que el esquema no sabía**, ninguna visible en tests sintéticos:
+
+1. **La altura se escribe con un "y"**: `"10 pisos y 28,00 m"`. Dos cotas superiores simultáneas en
+   unidades distintas, y `_limite_vigente` elige **una**. El "y" no es un operador lógico: son dos
+   parámetros, `altura_maxima` y `pisos_maximos`, y ambos deben cumplirse. El informe gana precisión,
+   porque dice **cuál** de las dos se incumplió.
+2. **Una celda puede contener una remisión**: `"Adosamiento: Según OGUC"`. El esquema ahora admite un
+   parámetro sin límites **si y solo si** declara `estado: desconocido`. Omitirlo lo hacía desaparecer
+   del informe en silencio.
+3. **`NORMADOS` desapareció**: una zona real declara `superficie_predial_minima` como parámetro, así
+   que el conjunto de un elemento que lo separaba no tenía razón de ser.
+4. **`1.600` no se puede transcribir literal**: `decimal_de` lo rechaza como ambiguo y obliga a
+   `1600`. El corpus guarda la cita literal y el valor sin ambigüedad.
+
+**Estado del cálculo.** Firmada, Z-2 da `C`/`NC` en 6 de sus 12 parámetros —superficie predial mínima,
+`cos`, `cus`, altura, pisos y densidad— y `P` en los otros 6, **nombrados**: rasante, antejarín,
+distanciamiento, cuerpos salientes, adosamiento y agrupamiento. Sin firmar da todo `P` más un
+`FUENTE_SIN_REVISAR`: la zona viaja en `borrador` porque la transcribió un programa con supervisión
+humana, y eso no es una firma.
+
+**Deuda de proceso, declarada.** `T1.14` pide presentar cada extracción para validación **antes** del
+commit, y esta se commiteó primero. El test de literalidad protege contra inventar un número, **no
+contra leer mal el cuadro**: la revisión humana sigue pendiente.
+
+### ⬜ T1.14b — La prosa normativa del cuadro (decidir antes de transcribir)
+
+Z-2 no termina en el cuadro. Debajo hay dos párrafos que **no son filas**:
+
+> *"En todos los Conjuntos Habitacionales cuya altura sean mayores a tres pisos, deberá destinarse un
+> 30% del total del terreno a Área Libre de Esparcimiento…"*
+> *"Los espacios a ocuparse en el subsuelo, podrán acercarse hasta una distancia de 2,5 m del deslinde
+> predial…"*
+
+No caben en `parametros:` con `limites:`: son **condiciones sobre el proyecto** que no son un tope.
+Hay que decidir si se modelan como hechos, como un tipo nuevo de regla, o como parámetros derivados
+—área libre como `superficie_libre_m2 / superficie_predio_m2`—.
+
+**Por qué antes de la zona 3:** la misma prosa se repite en casi todas las zonas. Decidirlo en la
+zona 20 obliga a rehacer 19 transcripciones.
+
+### ⬜ T1.14c — Hechos de agrupamiento
+
+`Z-1` no tiene una altura máxima: tiene **tres**, según el tipo de agrupamiento.
+
+```
+edificación continua .................. 17,50 m y 6 pisos
+aislada sobre continua ................ 25,50 m y 9 pisos
+edificación (general) ................. 44,00 m y 15 pisos
+```
+
+El mecanismo existe (`cuando: [hecho]`), pero el hecho no: `agrupamiento` es hoy un parámetro
+`desconocido` en Z-2, porque el modelo no sabe expresar "uno de estos tipos". Hay que decidir si el
+agrupamiento se **clasifica** (JEV, como `dimension_b`) o se **declara** en el expediente.
+
+Confirma que borrar `CONDICIONES` en T1.10b fue correcto —era un `frozenset` decorativo— pero que el
+caso de uso es real y necesita hechos del corpus.
+
 ### ⬜ T1.11 — Geo: reproyección e índice espacial
 
 ### ⬜ T1.12 — Resolución de zona
@@ -213,20 +285,37 @@ pendiente— y `factibilidad` dice **qué** falta.
 - **Aceptación:** `uv run rasante zona --lat -33.45 --lon -70.61 --json` devuelve JSON válido.
 - **Commit:** `feat(cli): comandos zona y evaluar con salida JSON [T1.13]`
 
-### ⬜ T1.14 — Corpus real de la comuna piloto
+### ⬜ T1.14 — Corpus real: el resto de las zonas de Ñuñoa
 
-- **Desbloqueada: A2 = Ñuñoa.** Entregable: 3–5 zonas con los **4 parámetros** extraídos **a mano**
-  de la ordenanza, revisados y citados, **en el esquema de T1.3**. Empezar por las zonas que el texto
-  refundido expone limpiamente (`Z-1`…`Z-8` y variantes).
+- **Desbloqueada: A2 = Ñuñoa.** Entregable: 3–5 zonas transcritas **a mano** de la ordenanza,
+  citadas y revisadas. Z-2 ya está (T1.14a); seguir con las que el texto refundido expone limpiamente
+  (`Z-3`, `Z-3A`, `Z-4`, `Z-5`, `Z-6`).
+- **Ojo (T1.14b):** decidir la prosa normativa **antes** de la tercera zona, o se rehacen las
+  transcripciones.
+- **Ojo (T1.14c):** `Z-1` y sus variantes necesitan los hechos de agrupamiento. Se puede esquivar
+  transcribiendo primero las zonas de un solo régimen de altura.
 - **Ojo (A3):** para `densidad` hay que declarar si la zona usa densidad **bruta** o **neta**. Sin
   eso el cálculo es ambiguo y el veredicto queda sin fundamento. Lo mismo con el calificador de `cos`.
-- **Ojo (T1.3):** Ñuñoa tiene límites **simultáneos** (`"44,00 m y 15 pisos"`) y variantes por
-  `continua`/`aislada`. Es el primer corpus real que ejercita el esquema nuevo.
+- **Resuelto en T1.14a:** los límites simultáneos (`"10 pisos y 28,00 m"`) se modelan como **dos
+  parámetros**, no como un operador. El esquema ya no lo tiene pendiente; el agrupamiento sí
+  (T1.14c).
 - **Test primero:** test de integración que carga las zonas reales y verifica que cada parámetro
   tiene cita y que la procedencia tiene `hash_fuente`.
 - **Aceptación:** cada valor trazable a un artículo de la ordenanza. `estado: revisado` con
   `revisado_por` poblado. **Se presenta cada extracción para validación antes del commit.**
 - **Commit:** `feat(corpus): zonas iniciales de <comuna> con parametros citados [T1.14]`
+
+### ⬜ T1.16 — CI en GitHub Actions
+
+`gate.sh` ya existe; el workflow son diez líneas. El repo es público y hoy **no hay ninguna señal de
+que los tests pasen**: sin CI ni badge, un visitante no tiene cómo saberlo. No está en el camino
+crítico y no desbloquea nada, pero es lo más barato del proyecto y protege todo lo demás.
+
+**Ojo:** `cache/` está en `.gitignore`, así que el CI corre **solo offline** — que es exactamente lo
+que ya hace `pytest` por defecto (`-m 'not integracion'`).
+
+- **Entregable:** `.github/workflows/gate.yml` que corre `./gate.sh`.
+- **Commit:** `ci: corre gate.sh en cada push y pull request [T1.16]`
 
 ### ⬜ T1.15 — Validación contra predios reales
 
