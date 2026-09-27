@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any, cast
 
 import httpx
 import pytest
@@ -18,15 +19,17 @@ from rasante.geo.arcgis import ArcGIS, ErrorArcGIS
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
-def fixture(nombre: str) -> dict:
-    return json.loads((FIXTURES / nombre).read_text(encoding="utf-8"))
+def fixture(nombre: str) -> dict[str, Any]:
+    return cast("dict[str, Any]", json.loads((FIXTURES / nombre).read_text(encoding="utf-8")))
 
 
 class ServidorFalso:
     """Sirve fixtures y registra las peticiones recibidas."""
 
     def __init__(
-        self, catalogo: dict | None = None, paginas: dict[int, dict] | None = None
+        self,
+        catalogo: dict[str, Any] | None = None,
+        paginas: dict[int, dict[str, Any]] | None = None,
     ) -> None:
         self.catalogo = catalogo or {}
         self.paginas = paginas or {}

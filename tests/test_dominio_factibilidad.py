@@ -63,7 +63,9 @@ def procedencia() -> Procedencia:
     )
 
 
-def parametro(id_: str, valor: str, calificador: str | None = None, unidad: str = "adimensional"):
+def parametro(
+    id_: str, valor: str, calificador: str | None = None, unidad: str = "adimensional"
+) -> Parametro:
     return Parametro(
         id=id_,
         limites=(Limite(TipoLimite.BASE, Decimal(valor), unidad, CITA),),

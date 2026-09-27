@@ -73,7 +73,9 @@ def limite(valor: str, tipo: TipoLimite = TipoLimite.BASE, cuando: tuple[str, ..
     )
 
 
-def parametro(id_: str, *limites: Limite, calificador: str | None = None):
+def parametro(
+    id_: str, *limites: Limite, calificador: str | None = None
+) -> Parametro:
     return Parametro(
         id=id_,
         limites=limites,

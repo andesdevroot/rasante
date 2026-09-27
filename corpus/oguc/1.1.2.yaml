@@ -1,8 +1,12 @@
 norma_id: oguc
 articulo: 1.1.2
 materia: Definiciones
-cita: Artículo 1.1.2. Definiciones. Se transcriben solo las entradas que la iteración 1 necesita, no las
-  209 del artículo completo.
+cita: 'Definiciones. Los siguientes vocablos tienen en esta Ordenanza el significado que se expresa: “Accesibilidad
+  universal”: la condición que deben cumplir los entornos, procesos, bienes, productos y servicios, así
+  como los objetos o instrumentos, herramientas y dispositivos, para ser comprensibles, utilizables y
+  practicables por todas las personas, en condiciones de seguridad y comodidad, de la forma más autónoma
+  y natural posible.4 "Acera": parte de una vía destinada principalmente para circulación de peatones,
+  separada de la circulación de vehículos.'
 definiciones:
   Coeficiente de constructibilidad: número que multiplicado por la superficie total del predio, descontadas
     de esta última las áreas declaradas de utilidad pública, fija el máximo de metros cuadrados posibles
@@ -75,3 +79,4 @@ relaciones:
   cita:
     norma_id: oguc
     articulo: 1.1.2
+nota: Se transcriben solo las 8 entradas que la iteración 1 necesita, de las 209 del artículo.

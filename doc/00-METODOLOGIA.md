@@ -31,6 +31,29 @@ leer doc/ → escribir test → uv run pytest (RED) → implementar
 - Si una tarea no cabe en un commit, **se divide en tareas más pequeñas** — no se parte el commit.
 - La spec puede ir en el mismo commit o en uno previo.
 
+## Verificación
+
+**El gate es un solo comando: `./gate.sh`.** Corre pytest, ruff y mypy con `set -euo pipefail`, y o
+sale en verde o no sale. **No se commitea si el gate no pasa.**
+
+`set -o pipefail` no es decorativo: sin él, `ruff | tail` devuelve el código de salida de `tail`, y
+un gate en rojo pasa desapercibido. Ya ocurrió dos veces.
+
+**`mypy` cubre `src` y `tests`.** Los tests también se type-chequean: un `.valor` que dejó de existir
+tras cambiar el modelo debe ser **un** error de mypy, no cuatro fallos de test descubiertos de a uno.
+
+**Antes de un cambio transversal, se leen los puntos de uso.** Renombrar un atributo o cambiar la
+forma de un modelo exige buscar todos los llamadores *antes* de tocar. Suponer la forma del código
+existente es la causa más frecuente de reintentos.
+
+**Toda afirmación normativa cita la fuente, y las citas son literales.** `tests/test_realidad_corpus.py`
+comprueba que cada `cita` del corpus aparezca **literalmente** en el artículo real y hash-verificado.
+Una cita parafraseada no respalda nada; ya cazó tres. Un corpus que no se contrasta con su fuente es
+un corpus que se cree a sí mismo — y en T0.5 un bug que fusionaba dos artículos distintos pasó los
+27 tests sintéticos.
+
+**Los invariantes transversales viven en `tests/test_consistencia.py`**, no dispersos por tarea.
+
 ## Regla de oro
 
 > **Nunca hacer commit con tests rojos.** El verde es requisito previo de cada commit.

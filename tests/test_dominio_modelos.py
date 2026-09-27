@@ -115,8 +115,12 @@ def test_decimal_se_preserva_sin_perdida() -> None:
     p = par(
         id="cus", valor=valor, unidad="adimensional", estado=EstadoParametro.APLICABLE, cita=cita()
     )
-    assert p.base is not None and p.base.valor == valor
-    assert p.base is not None and str(p.base.valor) == "3.6", (
+    base = p.base
+    assert base is not None
+    assert base.valor == valor
+    base = p.base
+    assert base is not None
+    assert str(base.valor) == "3.6", (
         "el roundtrip no debe reintroducir notación científica"
     )
 
@@ -132,7 +136,7 @@ def test_un_parametro_rechaza_valores_que_no_son_decimal(malo: object) -> None:
     with pytest.raises(ErrorDominio, match="Decimal"):
         par(
             id="cos",
-            valor=malo,  # type: ignore[arg-type]
+            valor=malo,
             unidad="adimensional",
             estado=EstadoParametro.APLICABLE,
             cita=cita(),
@@ -199,8 +203,13 @@ def test_dos_variantes_del_mismo_parametro_conviven_en_una_zona() -> None:
         vigencia=Vigencia(), procedencia=procedencia(),
     )
     assert len(zona.parametros) == 2, "las dos variantes deben sobrevivir, no pisarse"
-    assert zona.parametro("cos.primer_piso").base.valor == Decimal("0.6")
-    assert zona.parametro("cos.pisos_superiores").base.valor == Decimal("0.4")
+    recuperado_pp = zona.parametro("cos.primer_piso")
+    recuperado_sup = zona.parametro("cos.pisos_superiores")
+    assert recuperado_pp is not None and recuperado_sup is not None
+    base_pp, base_sup = recuperado_pp.base, recuperado_sup.base
+    assert base_pp is not None and base_sup is not None
+    assert base_pp.valor == Decimal("0.6")
+    assert base_sup.valor == Decimal("0.4")
 
 
 def test_la_zona_rechaza_una_clave_que_no_coincide_con_su_parametro() -> None:
@@ -293,7 +302,6 @@ def test_los_modelos_son_inmutables(objeto: object, campo: str) -> None:
 
 def test_los_estados_de_parametro_son_tres_y_distintos() -> None:
     assert {e.value for e in EstadoParametro} == {"aplicable", "no_aplica", "desconocido"}
-    assert EstadoParametro.DESCONOCIDO is not EstadoParametro.APLICABLE
 
 
 def test_los_estados_de_revision_son_tres() -> None:

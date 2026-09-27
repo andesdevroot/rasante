@@ -1,12 +1,10 @@
 norma_id: oguc
 articulo: 2.6.4
 materia: 'Conjunto Armónico: condiciones para tener esa calidad'
-cita: 'Artículo 2.6.4. Un proyecto tiene la calidad de Conjunto Armónico cuando cumple alguna de las condiciones
-  que se señalan y las exigencias que para cada caso se establecen. 1.- Condición de dimensión: a) terreno
-  cuya superficie total sea igual o superior a 5 veces la superficie predial mínima del Plan Regulador,
-  siempre que la superficie total no sea inferior a 5.000 m2; b) terreno que constituya en sí una manzana
-  existente; c) terreno resultante de una fusión predial, siempre que su superficie no sea inferior a
-  2.500 m2.'
+cita: Para los efectos previstos en los artículos 107, 108 y 109 de la Ley General de Urbanismo y Construcciones,
+  se considerará que un proyecto tiene la calidad de Conjunto Armónico, cuando cumple con alguna de las
+  condiciones que se señalan a continuación y con las exigencias que para cada caso se establecen, sin
+  perjuicio de lo prescrito en los artículos 2.6.15.
 hechos:
   dimension_a:
     expresion: superficie_predio_m2 >= 5 * superficie_predial_minima and superficie_predio_m2 >= 5000

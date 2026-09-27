@@ -35,4 +35,14 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 [tool.mypy]
 python_version = "3.13"
 strict = true
-files = ["src"]
+files = ["src", "tests"]
+
+# Los tests **sí** se type-chequean: los errores mecánicos de hoy (`.valor` tras cambiar el modelo,
+# `id_` vs `id`, un `unidad=` que ya no existe) se descubrieron como fallos de test uno por uno en
+# vez de en una sola corrida de mypy. Se relaja solo lo que en un test es legítimo: funciones sin
+# anotar y pasar a propósito tipos incorrectos para comprobar que el modelo los rechaza.
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+warn_unused_ignores = false

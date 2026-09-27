@@ -1,9 +1,9 @@
 norma_id: oguc
 articulo: 2.6.5
 materia: 'Conjunto Armónico: excepción al coeficiente de constructibilidad'
-cita: Artículo 2.6.5. Los proyectos que cumplan la condición de dimensión a que se refieren las letras
-  a) o b) del número 1 del artículo 2.6.4 podrán exceder hasta en un 50% el coeficiente de constructibilidad
-  establecido por el Plan Regulador. Los que cumplan la letra c) podrán exceder hasta un 30%.
+cita: Los proyectos que cumplan con la condición de dimensión a que se refieren las letras a) o b) del
+  número 1. del artículo 2.6.4., podrán exceder hasta en un 50% el coeficiente de constructibilidad establecido
+  por el Plan Regulador respectivo.
 excepcion:
   parametro: cus
   hecho: dimension_a

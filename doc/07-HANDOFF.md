@@ -13,8 +13,8 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 |---|---|
 | Tarea en curso | ninguna. Siguiente: **T1.8** (índice espacial) |
 | Código | `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
-| Tests | **254 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
-| Gate | `pytest` verde, sin saltados · `ruff` limpio · `mypy --strict` limpio |
+| Tests | **262 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Gate | **`./gate.sh`** en verde (`set -euo pipefail`): pytest, ruff y mypy sobre `src` **y** `tests` |
 | Árbol git | limpio — todo commiteado |
 
 Reestructuración a `doc/` aplicada el 2026-09-26: `01-VISION.md`, `03-DISENO.md`,
@@ -120,3 +120,17 @@ Sin blockers de alcance: A1, A2 y A3 están cerradas.
 | 2026-09-26 | **No hay gap de rendimiento.** El motor evalúa 8 escalares: O(n) con n≈8, microsegundos. El gap es de **corrección**: el motor aprueba proyectos imposibles |
 
 Detalle completo de cada una en `04-DECISIONES.md`.
+
+## Proceso (2026-09-26)
+
+Se incorporaron tres arreglos que **reducen fallos y tiempo a la vez**, más dos suites:
+
+| | |
+|---|---|
+| `./gate.sh` | gate único con `pipefail`. Los dos commits con gate en rojo de esa tarde fueron por leer `ruff \| tail` |
+| `mypy` sobre `tests` | los errores mecánicos (`.valor` tras cambiar el modelo, `id_` vs `id`) pasan a ser **una** corrida de mypy en vez de cuatro fallos de test |
+| Leer antes de renombrar | buscar los llamadores antes de un cambio transversal |
+| `tests/test_realidad_corpus.py` | contrasta cada cita contra el artículo real y hash-verificado. **Ya cazó tres citas parafraseadas** (`1.1.2`, `2.6.4`, `2.6.5`) |
+| `tests/test_consistencia.py` | invariantes transversales en un sitio: vocabulario, derivaciones vs `MAXIMOS`, `cuando` vs hechos, leyenda, y que nada afirme cumplimiento sin norma ni cita |
+
+El detalle y el porqué están en `00-METODOLOGIA.md`.
