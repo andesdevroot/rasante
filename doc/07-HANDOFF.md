@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 1 — Vertical slice, en curso.** T1.1–T1.10b cerradas (más T1.7b y T1.14a) (iteración 0 completa: T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1–T1.11 cerradas (más T1.7b y T1.14a) (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.14b** (prosa normativa), luego T1.14 (más zonas) |
+| Tarea en curso | ninguna. Siguiente: **T1.12** (resolución coordenada → zona) |
 | Código | `corpus/prc/RM/nunoa/zonas/Z-2.yaml` (nuevo) · `puente.py` · `clasificacion/{contrato,porteria,proveedor}.py` · `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
-| Tests | **432 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tests | **453 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | **`./gate.sh`** en verde (`set -euo pipefail`): pytest, ruff y mypy sobre `src` **y** `tests` |
 | Árbol git | limpio — todo commiteado |
 
@@ -27,9 +27,11 @@ El más reciente es el que trae este archivo. **Un archivo no puede contener su 
 lo invalida el mismo `commit` que lo guarda, y un `amend` lo deja mintiendo. Por eso la lista
 arranca en el commit anterior.
 
-Historia completa (**32 commits**), del más nuevo al más viejo:
+Historia completa (**34 commits**), del más nuevo al más viejo:
 
 ```
+5ef357f docs: alinea el arbol de zonas con el diseno y reescribe el esquema obsoleto
+26aa067 fix(corpus): cierra el agujero de verificacion de la zona Z-2
 c8d7b3f docs(task): cierra T1.14a y abre los huecos que dejo la primera zona real
 9880c69 feat(corpus): primera zona real, Z-2 de Nunoa, con citas verificadas [T1.14a]
 62e5664 feat(dominio): excepciones de aplicacion general con factor (D20, D21)
@@ -78,10 +80,15 @@ ninguna parte. Es un segundo mecanismo para lo que ahora hace `hechos_externos`,
 limitación de fondo: un `frozenset` no puede expresar «no se sabe», así que nunca podría alimentar
 un `P`. La decisión es **eliminarlo**, no mantenerlo.
 
-Después: **T1.11 — Geo: reproyección e índice espacial** (`src/rasante/geo/indices.py`).
-`IndiceZonas.buscar(lat, lon) -> str | None` sobre las capas PRC cacheadas en T0.2: reproyectar
-EPSG:4326 → 3857 con `pyproj` y point-in-polygon con `shapely`. Las dos entran como dependencias
-nuevas, en `rasante.geo`, **nunca** en `rasante.dominio` (D2).
+Después: **T1.12 — Resolución coordenada → zona** (`src/rasante/geo/resolver.py`).
+T1.11 ya deja `IndiceZonas.buscar(lat=..., lon=...)` funcionando; falta unir el código de zona que
+devuelve el índice con la `Zona` del corpus, distinguiendo **dos fallos operacionales distintos**:
+coordenada sin zona (`SinZonaError`) y zona del PRC que no está en el corpus (`ZonaSinCorpusError`).
+
+**Ojo, hallazgo de T1.11:** el servicio devuelve 3 de 40 códigos con espaciado irregular (`'MH- 1'`,
+`'ZCH- 1'`). El índice los devuelve tal cual, a propósito. Decidir cómo se reconcilian con el corpus
+es de T1.12 y necesita su propio test: normalizar en silencio escondería que el servicio y el corpus
+no coinciden.
 
 ## Blockers
 

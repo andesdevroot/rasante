@@ -73,7 +73,7 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.9 | El sentido lo declara el corpus, no el motor | ✅ | `[T1.9]` |
 | T1.10 | El puente: de las preguntas a los hechos | ✅ | `[T1.10]` |
 | T1.10b | Excepciones de aplicación general: factor y acogerse | ✅ | `[T1.10b]` |
-| T1.11 | Geo: reproyección e índice espacial | ⬜ |
+| T1.11 | Geo: índice espacial de zonas (sin reproyección) | ✅ | `[T1.11]` |
 | T1.12 | Resolución coordenada → zona | ⬜ |
 | T1.13 | CLI | ⬜ |
 | T1.14a | Corpus real: Zona Z-2 de Ñuñoa (primera zona transcrita) | ✅ | `[T1.14a]` |
@@ -271,7 +271,37 @@ agrupamiento se **clasifica** (JEV, como `dimension_b`) o se **declara** en el e
 Confirma que borrar `CONDICIONES` en T1.10b fue correcto —era un `frozenset` decorativo— pero que el
 caso de uso es real y necesita hechos del corpus.
 
-### ⬜ T1.11 — Geo: reproyección e índice espacial
+### ✅ T1.11 — Geo: índice espacial de zonas
+
+`geo/indices.py`: `IndiceZonas.buscar(lat=..., lon=...)` responde la pregunta que separa una
+coordenada de un veredicto. Con `shapely` (y `STRtree`, no un barrido lineal).
+
+**`pyproj` se descartó, y eso es lo importante de esta tarea.** El diseño pedía reproyectar
+EPSG:4326 → 3857, pero al mirar el dato: el servicio de MINVU **devuelve GeoJSON en 4326** y el
+ingestor no pide `outSR`, así que el polígono y el punto ya están en el mismo CRS. Point-in-polygon
+es exacto en cualquier CRS —no hay áreas ni distancias— así que reproyectar era una dependencia
+pesada a cambio de nada. Si alguna capa llega proyectada, se reproyecta en la **ingesta**, no en cada
+consulta.
+
+**Tres decisiones que el código deja escritas:**
+
+1. **`lat`/`lon` son keyword-only.** GeoJSON escribe `(lon, lat)` y esta API pide `(lat, lon)`.
+   Invertirlos **no se puede atrapar con validación**: `-70,6` es una latitud válida (la Antártida),
+   así que la consulta devolvería `None` y parecería que el predio está fuera del PRC. La única
+   defensa real es obligar a nombrarlos.
+2. **El índice no decide en los bordes.** Un punto sobre el límite entre dos zonas intersecta las
+   dos: `buscar` devuelve una en orden determinista y `buscar_todas` expone la ambigüedad. Quien
+   deba resolverla es T1.12.
+3. **La reparación de geometría se registra.** Un anillo inválido es común en datos municipales;
+   `make_valid` lo arregla pero **descarta área**. `IndiceZonas.reparadas` dice qué zonas se
+   tocaron, para que no se pierda cobertura en silencio.
+
+**Verificado sobre datos reales:** el fixture grabado de la API, y para cada polígono su propio
+centro cae en su propia zona.
+
+**Hallazgo para T1.12:** el servicio devuelve **3 de 40 códigos de zona con espaciado irregular**
+(`'MH- 1'`, `'ZCH- 1'`). El índice los devuelve tal cual —normalizarlos escondería que el corpus y el
+servicio no coinciden— y la reconciliación es de T1.12, con su propio test.
 
 ### ⬜ T1.12 — Resolución de zona
 

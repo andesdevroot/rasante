@@ -299,7 +299,7 @@ procedencia:
 | Dimensión | Python | Rust |
 |---|---|---|
 | Tu curva de aprendizaje | **~0** | semanas (borrow checker, lifetimes, async) |
-| Geometría / GIS | **`shapely` + `pyproj`**, ecosistema dominante | `geo` + `proj4rs`, más delgado |
+| Geometría / GIS | **`shapely`**, ecosistema dominante (y `pyproj` si hiciera falta) | `geo` + `proj4rs`, más delgado |
 | Extracción de PDF | **`pypdf`, `pdfminer.six`**, los mejores del rubro | `pdfium-render`, binding a la misma lib C++ |
 | Ecosistema LLM | **el de referencia** | SDKs comunitarios |
 | Aritmética decimal | **`decimal` en stdlib**, precisión arbitraria | `rust_decimal` (128 bits) |
@@ -317,9 +317,9 @@ procedencia:
 ### 5.2 Mitigaciones concretas (no son opcionales)
 
 1. **`uv` para todo.** Instalación reproducible y rápida: `uv tool install rasante`. Fija la versión de Python y resuelve dependencias en segundos. Es lo que hace que "instalar y arrancar rápido" sea cierto del lado del usuario.
-2. **Evitar el stack geoespacial pesado.** Usa **`shapely` + `pyproj`** (wheels con librerías nativas incluidas), **no** `geopandas`/`fiona`/`rasterio`/GDAL. Para leer GeoJSON no necesitas GDAL: `orjson` + `shapely.geometry.shape()`. Esto solo baja el bundle de ~300 MB a ~80 MB.
+2. **Evitar el stack geoespacial pesado.** Usa **`shapely`** (wheel con la librería nativa incluida), **no** `geopandas`/`fiona`/`rasterio`/GDAL. Para leer GeoJSON no necesitas GDAL: `shapely.geometry.shape()`. Esto baja el bundle de ~300 MB. **`pyproj` se descartó en T1.11**: el servicio de MINVU ya devuelve EPSG:4326 y el punto de consulta llega en el mismo CRS.
 3. **`polars`, no `pandas`.** Import más liviano, mucho más rápido, backend en Rust.
-4. **Imports perezosos, medidos.** `python -X importtime` en CI. `shapely`/`pyproj` se importan solo al hacer geometría, no al arrancar. Es la diferencia entre 700 ms y 200 ms.
+4. **Imports perezosos, medidos.** `python -X importtime` en CI. `shapely` se importa solo al hacer geometría, no al arrancar. Es la diferencia entre 700 ms y 200 ms.
 5. **Nuitka, no PyInstaller.** Compila a C, arranque bastante mejor y menos falsos positivos de antivirus.
 6. **UI como estáticos.** Build de SvelteKit servido por el proceso local. Sin cambios respecto al plan original.
 7. **`sqlite3` de stdlib** (o `apsw` si necesitas más control). Cero instalación de DB.
@@ -347,7 +347,7 @@ Y al revés: si dejas que los `DataFrame` de pandas se filtren al motor, quedas 
 | Core / motor de reglas | **Python 3.13 · módulo puro, solo stdlib** | ver §5.3 — sin excepciones |
 | Aritmética | `decimal` (stdlib) | nunca `float` en normativa |
 | Geometría | `shapely` | point-in-polygon: predio → zona |
-| Proyecciones | `pyproj` | ArcGIS da EPSG:3857; CIP usa UTM 18S/19S |
+| Proyecciones | ~~`pyproj`~~ | **Descartado en T1.11.** Este documento afirmaba que ArcGIS da EPSG:3857: **es falso**, da EPSG:4326, y el punto de consulta llega en el mismo CRS. Si alguna capa llegara proyectada, se reproyecta en la ingesta |
 | JSON rápido | `orjson` | lectura de GeoJSON |
 | Persistencia | `sqlite3` (stdlib) | cero instalación de DB |
 | HTTP local | **FastAPI** + `uvicorn` | API local |

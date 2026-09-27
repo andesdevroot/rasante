@@ -6,7 +6,12 @@ readme = "README.md"
 requires-python = ">=3.13"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-dependencies = ["httpx>=0.28", "pypdf>=6", "pyyaml>=6"]
+dependencies = [
+    "httpx>=0.28",
+    "pypdf>=6",
+    "pyyaml>=6",
+    "shapely>=2",
+]
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff", "mypy", "types-PyYAML"]
@@ -46,3 +51,10 @@ module = "tests.*"
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
 warn_unused_ignores = false
+
+# `shapely` no publica `py.typed`, así que mypy no puede revisar sus llamadas. Se declara explícito
+# en vez de bajar el listón para todo el proyecto: lo que sí se revisa —nuestro código— se sigue
+# revisando entero.
+[[tool.mypy.overrides]]
+module = ["shapely", "shapely.*"]
+ignore_missing_imports = true

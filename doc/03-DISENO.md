@@ -24,7 +24,7 @@ determinísticamente y emite el Formato Tipo MINVU (Circular DDU 514).
 | D5 | **Corpus normativo como repositorio Git versionado** | Foso y flywheel comunitario. La validación humana por PR es el activo escaso |
 | D6 | **Decimal, nunca float** para normativa | Constructibilidad y superficies con error binario son inaceptables en un informe firmado |
 | D7 | **`pypdf`/`pdfminer.six`, no PyMuPDF** | PyMuPDF es AGPL-3.0: contamina Apache-2.0 y alcanza servicios en red |
-| D8 | **Sin GDAL** — `shapely` + `pyproj`, no geopandas/fiona/rasterio | Bundle de ~80 MB en vez de ~300 MB |
+| D8 | **Sin GDAL** — `shapely`, no geopandas/fiona/rasterio. **Sin `pyproj`**: el servicio ya devuelve EPSG:4326 (T1.11) | Bundle de ~300 MB menos |
 | D9 | **GeoJSON cacheado en disco local** | Reproducibilidad: los tests no dependen de la red ni de que MINVU esté arriba |
 | D10 | Código `Apache-2.0`, corpus `CC-BY-4.0` con atribución municipal | — |
 | D11 | **La iteración 1 entra por coordenada (lat/lon)**, no por rol ni CIP | El rol de avalúo no tiene geometría pública masiva; la del predio vive en el CIP y parsearlo requiere LLM (iteración 2) |
@@ -660,8 +660,8 @@ hallazgos pidiéndole al revisor un dato que ya no cambiaba el veredicto. Correg
 
 ```
 coordenada (lat, lon)
-  → reproyectar EPSG:4326 → EPSG:3857          [pyproj]
   → point-in-polygon contra capas PRC cacheadas [shapely STRtree]
+    (sin reproyectar: el servicio ya entrega EPSG:4326)
   → código de zona
   → lookup en corpus YAML                       [cargador]
   → Zona
@@ -676,10 +676,11 @@ coordenada (lat, lon)
 | Dominio (L1) | `rasante.dominio` | **solo stdlib** |
 | Corpus | `rasante.corpus` | `pyyaml` |
 | Clasificación (L0) | `rasante.clasificacion` | `httpx` — el proveedor es un **protocolo**: JEV, DeepSeek, un modelo local o uno guionizado |
-| Geo (L0) | `rasante.geo` | `shapely`, `pyproj`, `httpx` |
+| Geo (L0) | `rasante.geo` | `shapely`, `httpx` — **sin `pyproj`**: el servicio ya devuelve EPSG:4326 |
 | CLI | `rasante.cli` | `typer` |
 
-Instalado hoy: `httpx`, `pypdf`, `pyyaml`. `shapely` y `pyproj` llegan con T1.11. El resto se agrega
+Instalado hoy: `httpx`, `pypdf`, `pyyaml`. `shapely` llegó con T1.11. **`pyproj` se descartó**: el servicio devuelve EPSG:4326 y el punto de
+consulta llega en el mismo CRS, así que reproyectar sería una dependencia pesada a cambio de nada. El resto se agrega
 en la tarea que lo necesite: así cada commit queda atómico y sin dependencias ociosas.
 
 **`rasante.clasificacion` está fuera de `rasante.dominio` a propósito**: habla por red, y el dominio
