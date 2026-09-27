@@ -67,7 +67,7 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.4 | Dominio: intérprete de reglas | ✅ | `[T1.4]` |
 | T1.5 | Dominio: verificador de factibilidad | ✅ | `[T1.5]` |
 | T1.6 | Hechos y selección de límites condicionales | ✅ | `[T1.6]` |
-| T1.7 | Corpus: cargador y validación de YAML | ⬜ |
+| T1.7 | Corpus: cargador y validación de YAML | ✅ | `[T1.7]` |
 | T1.8 | Geo: reproyección e índice espacial | ⬜ |
 | T1.9 | Resolución coordenada → zona | ⬜ |
 | T1.10 | CLI | ⬜ |
@@ -116,19 +116,21 @@ normativo (`cus` que excede el máximo alcanzable con `cos`, `cos` de pisos supe
 3,50 m/piso de la OGUC `2.1.23`). Sin `numero_pisos`, sin superficies o sin altura, **no se afirma
 nada** — igual que el `P` del motor. Sin cita no se emite hallazgo. 19 tests.
 
-### ⬜ T1.7 — Corpus: cargador YAML
+**T1.7 — Corpus: cargador de zonas.** ✅ `cargar_zona()`, `cargar_zonas()` y `decimal_de()`.
+Pasa el YAML al esquema de T1.3 y de ahí al dominio.
 
-- **Test primero:** cargar una zona de fixture; esquema inválido (falta `procedencia`, falta `cita`,
-  `unidad` desconocida) levanta error con mensaje claro.
-- **Ojo (hallazgo de T0.3):** las ordenanzas escriben **coma decimal** (`0,6`, `3,6`). Si el cargador
-  no lo maneja, `0,6` se vuelve `6`. Debe exigir separador decimal explícito y tener un test para
-  `"0,6"` y `"0.6"`.
-- **Ojo (A3 cerrada):** debe **rechazar claves de parámetro duplicadas**. Con `cos` y `densidad`
-  teniendo variantes, un YAML con dos claves `cos` es válido sintácticamente y pierde una regla sin
-  avisar. Test explícito para eso — PyYAML no lo detecta por defecto.
-- **Entregable:** `corpus/cargador.py`. Carga al esquema de T1.3, no al viejo.
-- **Aceptación:** un YAML sin `hash_fuente` o sin `cita` por límite es rechazado.
-- **Commit:** `feat(corpus): cargador y validacion de esquema de zonas [T1.7]`
+**La coma decimal, que era la trampa anunciada:** `0,6` → `Decimal("0.6")`. La regla es explícita:
+con coma, la coma es decimal y los puntos son de miles (`1.234,56` → 1234.56); sin coma, el punto es
+decimal (`0.6`, `3.50`) **salvo** que le sigan exactamente 3 dígitos con entero distinto de cero
+(`1.234`, `5.000`), que es **ambiguo y se rechaza**. Se exige escribirlo inequívoco: `1234` o
+`1,234`. `0.600` sí se acepta, porque nadie escribe 0.600 para decir 600.
+
+**Claves duplicadas:** un `SafeLoader` propio falla ante una clave repetida. PyYAML se queda con la
+última y descarta la otra **en silencio** — con `cos` teniendo variantes, eso perdía una regla.
+
+**Corrección al esquema:** `cuando` nombra **hechos** desde D16, no las condiciones de clasificación
+de T1.3; la validación quedó vieja. Ahora `validar_documento` solo comprueba la forma, y
+`validar_corpus` comprueba entre archivos que el hecho exista. 21 tests.
 
 ### ⬜ T1.8 — Geo: reproyección e índice espacial
 

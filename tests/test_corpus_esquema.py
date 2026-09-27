@@ -199,15 +199,64 @@ def test_acepta_un_limite_condicional() -> None:
     validar_documento(documento)
 
 
-def test_rechaza_una_condicion_desconocida() -> None:
-    documento = zona(cus={"id": "cus", "unidad": "adimensional", "limites": [
-        {"valor": "6", "cuando": ["porque_yo_lo_digo"], "cita": CITA},
-    ]})
-    with pytest.raises(ErrorEsquema, match="cuando"):
-        validar_documento(documento)
+def test_validar_corpus_rechaza_un_cuando_sin_hecho_definido(tmp_path: Path) -> None:
+    """`cuando` nombra **hechos** (D16). Si ningun articulo los define, ese limite nunca aplicaria.
+
+    La comprobacion es **entre archivos**: un articulo nacional no puede saber que hechos define
+    otro. Por eso no la hace `validar_documento` sino `validar_corpus`.
+    """
+    documento = zona(
+        cus={
+            "id": "cus",
+            "unidad": "adimensional",
+            "limites": [
+                {"tipo": "base", "valor": "4", "cita": CITA},
+                {
+                    "tipo": "excepcion",
+                    "valor": "6",
+                    "cuando": ["hecho_que_nadie_define"],
+                    "cita": CITA,
+                },
+            ],
+        }
+    )
+    (tmp_path / "zona.yaml").write_text(
+        yaml.safe_dump(documento, allow_unicode=True), encoding="utf-8"
+    )
+    with pytest.raises(ErrorEsquema, match="hecho"):
+        validar_corpus(tmp_path)
 
 
-# --- expresiones: el invariante del vocabulario cerrado ---
+def test_acepta_un_cuando_cuyo_hecho_esta_definido(tmp_path: Path) -> None:
+    """El mismo `cuando`, con su hecho definido en el corpus, se acepta."""
+    cita_hecho = {"norma_id": "oguc", "articulo": "2.6.4"}
+    (tmp_path / "hechos.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "norma_id": "oguc",
+                "articulo": "2.6.4",
+                "cita": "condicion de dimension",
+                "hechos": {"un_hecho": {"expresion": "numero_pisos >= 1", "cita": cita_hecho}},
+                "procedencia": PROCEDENCIA,
+            },
+            allow_unicode=True,
+        ),
+        encoding="utf-8",
+    )
+    documento = zona(
+        cus={
+            "id": "cus",
+            "unidad": "adimensional",
+            "limites": [
+                {"tipo": "base", "valor": "4", "cita": CITA},
+                {"tipo": "excepcion", "valor": "6", "cuando": ["un_hecho"], "cita": CITA},
+            ],
+        }
+    )
+    (tmp_path / "zona.yaml").write_text(
+        yaml.safe_dump(documento, allow_unicode=True), encoding="utf-8"
+    )
+    validar_corpus(tmp_path)
 
 
 def test_acepta_una_expresion_con_nombres_del_vocabulario() -> None:

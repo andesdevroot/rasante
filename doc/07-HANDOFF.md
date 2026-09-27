@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 1 — Vertical slice, en curso.** T1.1–T1.6 cerradas (iteración 0 completa: T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1–T1.7 cerradas (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.7** (cargador de zonas) |
+| Tarea en curso | ninguna. Siguiente: **T1.8** (índice espacial) |
 | Código | `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
-| Tests | **233 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tests | **254 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | `pytest` verde, sin saltados · `ruff` limpio · `mypy --strict` limpio |
 | Árbol git | limpio — todo commiteado |
 
@@ -46,13 +46,17 @@ Una tarea, un commit: T0.1 quedó consolidada en `64bdcdd` tras el squash.
 
 ## Siguiente tarea
 
-**T1.7 — Corpus: cargador de zonas** (`src/rasante/corpus/cargador.py`, que ya tiene
-`cargar_reglas`).
+**T1.8 — Geo: reproyección e índice espacial** (`src/rasante/geo/indices.py`).
 
-Convierte `corpus/prc/<region>/<comuna>/zonas/*.yaml` en `Zona`, al esquema de T1.3: `limites` con
-`tipo` y `cuando`, coma decimal de las ordenanzas y rechazo de claves duplicadas.
+`IndiceZonas.buscar(lat, lon) -> str | None` sobre las capas PRC cacheadas en T0.2: reproyectar
+EPSG:4326 → 3857 con `pyproj` y point-in-polygon con `shapely`.
 
-**Desbloqueada:** el modelo ya tiene `Parametro.limites` y el motor ya sabe elegir el límite vigente.
+**Ojo:** `shapely` y `pyproj` entran como dependencias nuevas. Van en `rasante.geo`, nunca en
+`rasante.dominio` (D2).
+
+**Deuda registrada:** `Proyecto.clasificaciones` existe y se valida, pero **nadie lo usa todavía**:
+`clasificar` evalúa hechos por expresión. Es el mecanismo previsto para lo que no se deduce de
+números, como la fusión predial de la condición 1.c) del 2.6.4.
 
 ## Blockers
 

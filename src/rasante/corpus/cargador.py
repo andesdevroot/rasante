@@ -9,13 +9,25 @@ Acá vive la lectura de `derivaciones` y `relaciones` (T1.4). La lectura de zona
 
 from __future__ import annotations
 
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any
 
 import yaml
 
-from rasante.dominio.modelos import Cita
+from rasante.corpus.esquema import ErrorEsquema, validar_documento
+from rasante.dominio.modelos import (
+    Cita,
+    EstadoParametro,
+    EstadoRevision,
+    Limite,
+    Parametro,
+    Procedencia,
+    TipoLimite,
+    Vigencia,
+    Zona,
+)
 from rasante.dominio.reglas import Derivacion, Hecho, Reglas, Relacion
 
 
@@ -64,9 +76,159 @@ def cargar_reglas(raiz: Path) -> Reglas:
     )
 
 
+class _SinDuplicados(yaml.SafeLoader):
+    """Un `SafeLoader` que **falla** ante una clave repetida.
+
+    PyYAML no las detecta: se queda con la última y descarta la otra en silencio. Con `cos` teniendo
+    variantes, eso perdería una regla sin que nadie se entere.
+    """
+
+
+def _mapeo_sin_duplicados(
+    loader: _SinDuplicados, nodo: yaml.MappingNode, deep: bool = False
+) -> dict[Any, Any]:
+    vistos: set[Any] = set()
+    for clave_nodo, _ in nodo.value:
+        clave = loader.construct_object(clave_nodo, deep=deep)
+        if clave in vistos:
+            raise ErrorCarga(f"clave duplicada en el YAML: {clave!r}")
+        vistos.add(clave)
+    return yaml.SafeLoader.construct_mapping(loader, nodo, deep)
+
+
+_SinDuplicados.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _mapeo_sin_duplicados
+)
+
+
+def decimal_de(texto: Any) -> Decimal:
+    """Convierte el texto de una ordenanza a `Decimal` sin adivinar.
+
+    La ordenanza de Ñuñoa escribe `0,6`. Un `float(texto)` o un `Decimal` ingenuo sobre `"0,6"`
+    fallaría, y peor: tratar la coma como separador de miles daría `6`, diez veces el coeficiente.
+    Por eso el caso ambiguo **no se resuelve: se rechaza**.
+    """
+    limpio = str(texto).strip().replace(" ", "")
+    if not limpio:
+        raise ErrorCarga("valor vacío")
+    if "," in limpio:
+        entero, _, decimales = limpio.rpartition(",")
+        if "," in entero:
+            raise ErrorCarga(f"{limpio!r}: más de una coma")
+        limpio = entero.replace(".", "") + "." + decimales
+    elif limpio.count(".") == 1:
+        entero, _, decimales = limpio.partition(".")
+        if len(decimales) == 3 and entero.isdigit() and entero != "0":
+            raise ErrorCarga(
+                f"{limpio!r} es ambiguo: ¿{entero}{decimales} (miles) o {entero} coma {decimales}? "
+                f"Escribe '{entero}{decimales}' o '{entero},{decimales}'."
+            )
+    elif limpio.count(".") > 1:
+        limpio = limpio.replace(".", "")
+    try:
+        return Decimal(limpio)
+    except InvalidOperation as error:
+        raise ErrorCarga(f"{limpio!r} no es un número válido") from error
+
+
+def cargar_zona(archivo: Path) -> Zona:
+    """Convierte un YAML de zona al modelo del dominio."""
+    archivo = Path(archivo)
+    datos = _leer(archivo)
+    try:
+        validar_documento(datos, origen=archivo.name)
+    except ErrorEsquema as error:
+        raise ErrorCarga(str(error)) from error
+    if "zona" not in datos:
+        raise ErrorCarga(f"{archivo.name}: no es un documento de zona")
+
+    parametros: dict[str, Parametro] = {}
+    for clave, bruto in (datos.get("parametros") or {}).items():
+        parametro = _parametro(clave, bruto, datos, archivo)
+        parametros[parametro.clave] = parametro
+    return Zona(
+        codigo=str(datos["zona"]),
+        nombre=str(datos.get("nombre") or datos["zona"]),
+        comuna=str(datos.get("comuna") or ""),
+        parametros=MappingProxyType(parametros),
+        vigencia=_vigencia(datos.get("vigencia")),
+        procedencia=_procedencia(datos["procedencia"]),
+    )
+
+
+def cargar_zonas(raiz: Path) -> list[Zona]:
+    """Todas las zonas del corpus bajo `raiz`, en orden determinista."""
+    return [cargar_zona(a) for a in sorted(Path(raiz).rglob("zonas/*.yaml"))]
+
+
+def _parametro(
+    clave: str, bruto: dict[str, Any], datos: dict[str, Any], archivo: Path
+) -> Parametro:
+    limites = tuple(
+        _limite(limite, datos, archivo) for limite in (bruto.get("limites") or [])
+    )
+    estado = EstadoParametro(str(bruto.get("estado") or "aplicable"))
+    if not limites and estado is EstadoParametro.APLICABLE:
+        # Sin límites no hay nada que comparar: es un dato que aún no tenemos.
+        estado = EstadoParametro.DESCONOCIDO
+    return Parametro(
+        id=str(bruto.get("id") or clave),
+        limites=limites,
+        estado=estado,
+        cita=_cita_de_parametro(bruto, datos, archivo),
+        calificador=bruto.get("calificador"),
+    )
+
+
+def _cita_de_parametro(bruto: dict[str, Any], datos: dict[str, Any], archivo: Path) -> Cita:
+    """La cita del parámetro; si no trae una propia, la del documento.
+
+    Un parámetro sin cita propia no es un dato huérfano: hereda la del artículo de la ordenanza que
+    lo fija. Un **límite** sin cita sí es un error, y lo rechaza el esquema.
+    """
+    if isinstance(bruto.get("cita"), dict):
+        return _cita(bruto["cita"], datos, archivo)
+    norma_id = str(datos.get("norma_id") or "")
+    articulo = str(datos.get("zona") or datos.get("articulo") or "")
+    texto = str(datos.get("cita") or "")
+    if not norma_id or not articulo or not texto:
+        raise ErrorCarga(f"{archivo.name}: el parámetro '{bruto.get('id', '?')}' no tiene cita")
+    return Cita(norma_id=norma_id, articulo=articulo, texto=texto)
+
+
+def _limite(bruto: dict[str, Any], datos: dict[str, Any], archivo: Path) -> Limite:
+    return Limite(
+        tipo=TipoLimite(str(bruto.get("tipo") or "base")),
+        valor=decimal_de(bruto["valor"]),
+        unidad=str(bruto.get("unidad") or ""),
+        cita=_cita(bruto.get("cita"), datos, archivo),
+        cuando=frozenset(bruto.get("cuando") or ()),
+    )
+
+
+def _vigencia(bruto: Any) -> Vigencia:
+    if not isinstance(bruto, dict):
+        return Vigencia()
+    return Vigencia(
+        desde=bruto.get("desde"), hasta=bruto.get("hasta"), nota=bruto.get("nota")
+    )
+
+
+def _procedencia(bruto: dict[str, Any]) -> Procedencia:
+    return Procedencia(
+        url_fuente=str(bruto["url_fuente"]),
+        hash_fuente=str(bruto["hash_fuente"]),
+        consolidado_por=str(bruto["consolidado_por"]),
+        extraido=str(bruto["extraido"]),
+        extraido_por=bruto.get("extraido_por"),
+        revisado_por=bruto.get("revisado_por"),
+        estado=EstadoRevision(str(bruto.get("estado") or "borrador")),
+    )
+
+
 def _leer(archivo: Path) -> dict[str, Any]:
     try:
-        datos = yaml.safe_load(archivo.read_text(encoding="utf-8"))
+        datos = yaml.load(archivo.read_text(encoding="utf-8"), Loader=_SinDuplicados)
     except yaml.YAMLError as error:
         raise ErrorCarga(f"{archivo.name}: YAML inválido: {error}") from error
     return datos if isinstance(datos, dict) else {}

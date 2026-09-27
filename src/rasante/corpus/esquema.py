@@ -22,7 +22,6 @@ import yaml
 
 from rasante.dominio.modelos import clave_compuesta
 from rasante.dominio.vocabulario import (
-    CONDICIONES,
     PARAMETROS,
     VOCABULARIO,
     ErrorVocabulario,
@@ -152,9 +151,10 @@ def _validar_limite(limite: Any, donde: str) -> None:
     if cuando is not None:
         if not isinstance(cuando, list) or not cuando:
             raise ErrorEsquema(f"{donde}: 'cuando' debe ser una lista no vacía")
-        desconocidas = [c for c in cuando if c not in CONDICIONES]
-        if desconocidas:
-            raise ErrorEsquema(f"{donde}: 'cuando' tiene condiciones desconocidas: {desconocidas}")
+        # `cuando` nombra **hechos** (D16). Que existan se comprueba entre archivos, en
+        # `validar_corpus`: un artículo nacional no puede saber qué hechos define otro.
+        if any(not isinstance(c, str) or not c.strip() for c in cuando):
+            raise ErrorEsquema(f"{donde}: 'cuando' debe ser una lista de nombres")
 
 
 def _validar_derivaciones(datos: dict[str, Any], prefijo: str) -> None:
