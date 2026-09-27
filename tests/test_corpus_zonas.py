@@ -199,9 +199,12 @@ def test_cargar_zonas_sobre_una_carpeta_sin_zonas_da_lista_vacia(tmp_path: Path)
 
 
 def test_las_zonas_del_corpus_son_cargables() -> None:
-    """Todavía no hay zonas en el corpus (llegan en T1.11), pero el recorrido no debe fallar."""
+    """El recorrido encuentra las zonas reales bajo `corpus/zonas/<comuna>/` (T1.14)."""
     from pathlib import Path as P
 
     raiz = P(__file__).resolve().parents[1] / "corpus"
-    for zona in cargar_zonas(raiz):
+    zonas = cargar_zonas(raiz)
+    assert zonas, "el corpus ya tiene la Zona Z-2 de Ñuñoa"
+    for zona in zonas:
         assert zona.codigo
+        assert zona.comuna

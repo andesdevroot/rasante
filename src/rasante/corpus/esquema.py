@@ -176,7 +176,17 @@ def _validar_parametros(datos: dict[str, Any], prefijo: str) -> None:
             )
         limites = _lista(parametro.get("limites"), "limites", f"{prefijo}'{clave}': ")
         if not limites:
-            raise ErrorEsquema(f"{prefijo}'{clave}': 'limites' no puede estar vacío")
+            # Un parámetro **sin límites** solo se admite si su estado dice que no sabemos su valor.
+            # Es el caso real de Ñuñoa Z-2: *"Adosamiento: Según OGUC"*. La celda de la ordenanza no
+            # contiene un número, contiene una remisión. Declararla `desconocido` deja el parámetro
+            # **visible y citado** en el informe con un `P`; omitirlo lo haría desaparecer en
+            # silencio, que es justo lo que este proyecto no hace.
+            if parametro.get("estado") != "desconocido":
+                raise ErrorEsquema(
+                    f"{prefijo}'{clave}': 'limites' no puede estar vacío salvo que el parámetro "
+                    "declara 'estado: desconocido'"
+                )
+            continue
         for indice, limite in enumerate(limites):
             _validar_limite(limite, f"{prefijo}'{clave}'.limites[{indice}]")
         _validar_tipos_de_limite(limites, clave, prefijo)

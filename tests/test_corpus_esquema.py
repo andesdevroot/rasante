@@ -102,14 +102,19 @@ def test_toda_derivacion_del_corpus_cabe_en_el_vocabulario() -> None:
 
 
 def test_el_corpus_solo_usa_unidades_conocidas() -> None:
-    """Las unidades del corpus deben ser las que el dominio sabe manejar."""
+    """Las unidades del corpus deben ser las que el dominio sabe manejar.
+
+    La lista es un guardia contra erratas (`mt`, `metros`, un espacio de más), no una teoría: crece
+    cuando una ordenanza real trae una unidad nueva. `grados` y `m²` entraron con la Zona Z-2 de
+    Ñuñoa (T1.14), que fija rasante en grados y superficie predial mínima en metros cuadrados.
+    """
     unidades = set()
     for archivo in CORPUS.rglob("*.yaml"):
         datos = yaml.safe_load(archivo.read_text(encoding="utf-8"))
         for parametro in (datos.get("parametros") or {}).values():
             for limite in parametro.get("limites", []):
                 unidades.add(limite.get("unidad") or parametro.get("unidad"))
-    assert unidades <= {"adimensional", "m", "pisos", "hab/ha", None}
+    assert unidades <= {"adimensional", "m", "m²", "pisos", "hab/ha", "grados", None}
 
 
 def test_el_vocabulario_no_hardcodea_condiciones() -> None:

@@ -7,7 +7,7 @@ auditable**, y apunta a emitir el Formato Tipo oficial de informe del revisor in
 (Circular DDU 514). El LLM **clasifica y redacta; nunca calcula ni dictamina.**
 
 > ⚠️ **Estado: iteración 1 en curso.** El motor, el corpus ejecutable y la capa de clasificación
-> están construidos y probados (391 tests). **Todavía no emite el Formato Tipo de punta a punta**:
+> están construidos y probados (418 tests). **Todavía no emite el Formato Tipo de punta a punta**:
 > faltan el índice espacial, la CLI y el corpus real de la comuna piloto. Ver [Estado](#estado).
 
 ---
@@ -135,7 +135,8 @@ troceador de la OGUC, corpus curado con citas y hashes).
 | ✅ | **Excepciones de aplicación general**: el +50 % y el +30 % de `cus` del Conjunto Armónico (OGUC 2.6.5) llegan al motor como factor sobre el valor que fija cada PRC |
 | ⬜ | Índice espacial (reproyección + point-in-polygon) |
 | ⬜ | CLI |
-| ⬜ | Corpus real de la comuna piloto |
+| ✅ | **Primera zona real transcrita**: Z-2 de Ñuñoa, con cada cita verificada contra el PDF de la ordenanza |
+| ⬜ | Resto de las zonas de la comuna piloto |
 | ⬜ | Validación contra expedientes reales |
 
 **Lo que esto significa hoy, sin adornos:** el motor calcula y el corpus manda, pero todavía no hay

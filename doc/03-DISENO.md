@@ -240,6 +240,36 @@ procedencia:
 `estado: desconocido` es un valor legítimo y **debe propagarse como `(P)` pendiente, nunca como
 cumple**. Un dato que no tenemos no puede convertirse en un aprobado.
 
+### Lo que enseñó la primera zona real (T1.14a)
+
+La Zona Z-2 de Ñuñoa es el primer documento **municipal** del corpus. Trajo cuatro cosas que el
+esquema no sabía:
+
+**1. La altura se escribe con un "y".** *"Altura máxima de edificación. 10 pisos y 28,00 m"*. Son
+dos cotas superiores simultáneas en unidades distintas, y `_limite_vigente` elige **un** límite. El
+"y" de la ordenanza **no es un operador lógico**: son dos parámetros, `altura_maxima` y
+`pisos_maximos`, y ambos deben cumplirse. El informe gana además precisión: dice **cuál** de las dos
+se incumplió.
+
+**2. Una celda puede contener una remisión, no un valor.** *"Adosamiento: Según OGUC"*, y el tramo
+bajo del distanciamiento remite al *"Art. 2.6.3 de OGUC"*. El esquema ahora admite un parámetro sin
+límites **si y solo si** declara `estado: desconocido`. Omitirlo lo haría desaparecer del informe en
+silencio; declararlo deja el parámetro visible y citado con un `P`.
+
+**3. `NORMADOS` desapareció.** Era un conjunto de un elemento para `superficie_predial_minima`, "un
+valor que fija el PRC que un hecho puede citar, pero que no es primitiva del proyecto". Una zona real
+lo declara como **parámetro** —el predio debe cumplir la superficie predial mínima— así que el
+concepto se disolvió.
+
+**4. La transcripción automática no es viable.** El texto trae las notas al pie inyectadas dentro
+del cuadro (`92 Modifíquese el Artículo 26º…`) y etiquetas partidas en cuatro líneas con el valor
+lejos de su rótulo. Un parser heurístico se equivoca en silencio. La decisión de iteración 1
+—transcribir a mano— queda **validada con datos**.
+
+Y una que el esquema ya soportaba pero conviene registrar: `1.600` de densidad **no se puede
+transcribir literal**. `decimal_de` lo rechaza como ambiguo (¿mil seiscientos o uno coma seis?) y
+obliga a escribir `1600`. El corpus guarda la cita literal, el valor sin ambigüedad.
+
 ## 2.3 Por qué `P_DO` no sirve como vigencia (D12)
 
 `P_DO` es **un único valor para toda la capa**, no por polígono: Las Condes 30/05/1994 (424/424

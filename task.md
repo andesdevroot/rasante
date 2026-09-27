@@ -76,7 +76,8 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.11 | Geo: reproyección e índice espacial | ⬜ |
 | T1.12 | Resolución coordenada → zona | ⬜ |
 | T1.13 | CLI | ⬜ |
-| T1.14 | Corpus real de la comuna piloto | ⬜ |
+| T1.14a | Corpus real: Zona Z-2 de Ñuñoa (primera zona transcrita) | ✅ | `[T1.14a]` |
+| T1.14 | Corpus real: resto de las zonas de la comuna piloto | ⬜ |
 | T1.15 | Validación contra predios reales | ⬜ |
 
 > **T1.3–T1.6 se insertaron el 2026-09-26**, al detectar tres gaps encadenados: el motor no

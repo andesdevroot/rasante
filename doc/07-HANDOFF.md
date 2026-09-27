@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 1 — Vertical slice, en curso.** T1.1–T1.10b cerradas (más T1.7b) (iteración 0 completa: T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1–T1.10b cerradas (más T1.7b y T1.14a) (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.11** (índice espacial) |
-| Código | `puente.py` (nuevo) · `clasificacion/{contrato,porteria,proveedor}.py` · `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
-| Tests | **391 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tarea en curso | ninguna. Siguiente: **T1.14** (resto de las zonas de Ñuñoa) |
+| Código | `corpus/zonas/nunoa/Z-2.yaml` (nuevo) · `puente.py` · `clasificacion/{contrato,porteria,proveedor}.py` · `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
+| Tests | **418 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | **`./gate.sh`** en verde (`set -euo pipefail`): pytest, ruff y mypy sobre `src` **y** `tests` |
 | Árbol git | limpio — todo commiteado |
 
@@ -27,9 +27,10 @@ El más reciente es el que trae este archivo. **Un archivo no puede contener su 
 lo invalida el mismo `commit` que lo guarda, y un `amend` lo deja mintiendo. Por eso la lista
 arranca en el commit anterior.
 
-Historia completa (**29 commits**), del más nuevo al más viejo:
+Historia completa (**30 commits**), del más nuevo al más viejo:
 
 ```
+62e5664 feat(dominio): excepciones de aplicacion general con factor (D20, D21)
 b4395cd docs(readme): README real para el repositorio open source
 e704415 docs: sincroniza los md con el estado real y elimina referencias muertas
 597b70f feat(puente): el corpus pregunta y el motor recibe hechos externos [T1.10]
@@ -200,3 +201,33 @@ Cargar `2.6.5` destapó dos cosas que ninguna prueba sintética habría mostrado
    como duda y generaba hallazgos pidiéndole al revisor un dato que ya no cambiaba el veredicto.
 
 15 tests existentes se cayeron al cargar `2.6.5`, y los 15 por la razón correcta.
+
+## Primera zona real (2026-09-27, T1.14a)
+
+`corpus/zonas/nunoa/Z-2.yaml`: los 12 renglones del cuadro normativo de la Zona Z-2, cada uno con su
+cita literal verificada contra el PDF de la ordenanza (fixture `nunoa_zonas.json` + sha256).
+
+**Los parámetros numéricos sí están en el texto extraído.** El spike previo fue concluyente:
+`pypdf` saca el cuadro limpio, pero con las notas al pie inyectadas dentro y los rótulos partidos en
+cuatro líneas, con el valor lejos de su etiqueta. **La extracción automática queda descartada con
+datos**, y la decisión de transcribir a mano en iteración 1 queda validada.
+
+Cargar una zona real rompió el esquema en cuatro sitios — y los cuatro eran hallazgos, no fricción:
+
+1. **La altura se escribe con un "y"**: *"10 pisos y 28,00 m"*. Dos cotas simultáneas en unidades
+   distintas, y el motor elige **un** límite. El "y" no es un operador: son dos parámetros.
+2. **Una celda puede contener una remisión**: *"Adosamiento: Según OGUC"*. El esquema ahora admite un
+   parámetro sin límites solo si declara `estado: desconocido` — antes lo omitía en silencio.
+3. **`NORMADOS` desapareció**: una zona real declara `superficie_predial_minima` como parámetro, así
+   que el conjunto de un elemento que lo separaba no tenía razón de ser.
+4. **`1.600` no se puede transcribir literal**: `decimal_de` lo rechaza como ambiguo y obliga a
+   `1600`. El corpus guarda la cita literal y el valor sin ambigüedad.
+
+La zona viaja en `borrador`: la transcribió un programa con supervisión humana, y **eso no es una
+firma**. D18 hace que de ahí salga todo `P` más un `FUENTE_SIN_REVISAR`. Hay tests que la firman
+explícitamente para probar el cálculo, y tests que verifican que sin firma no afirma nada.
+
+**Lo que un revisor vería hoy en Z-2, firmada:** `C` o `NC` en superficie predial mínima, `cos`,
+`cus`, altura, pisos y densidad; y `P` en rasante, antejarín, distanciamiento, cuerpos salientes,
+adosamiento y agrupamiento — porque el proyecto todavía no declara esos datos. Seis de doce
+evaluables, y **los seis `P` nombrados**, no desaparecidos.

@@ -49,18 +49,29 @@ PARAMETROS: frozenset[str] = frozenset(
         "densidad",
         "densidad.bruta",
         "densidad.neta",
+        # Los que exige la primera zona real transcrita (Ñuñoa Z-2, T1.14). `pisos_maximos` existe
+        # porque la ordenanza escribe la altura como "10 pisos **y** 28,00 m": son dos cotas
+        # superiores simultáneas en unidades distintas, y el motor elige **un** límite vigente.
+        # El "y" de la norma no es un operador: son dos parámetros.
+        "pisos_maximos",
+        "rasante",
+        "antejarin",
+        "distanciamiento",
+        "cuerpos_salientes",
+        "superficie_predial_minima",
     }
 )
-
-NORMADOS: frozenset[str] = frozenset({"superficie_predial_minima"})
-"""Valores que fija el plan regulador y que un hecho puede citar. No son primitivas del proyecto:
-`superficie_predial_minima` la establece el PRC, y la condición 1.a) del art. 2.6.4 la compara
-contra la superficie del predio."""
 
 # Todo lo que una expresión puede nombrar. Definición ÚNICA: la usan el intérprete (`reglas.py`) y
 # el validador del corpus (`corpus/esquema.py`). Si estuviera en dos sitios, podrían divergir y una
 # expresión pasaría la validación para romper en la evaluación.
-VOCABULARIO: frozenset[str] = frozenset(PRIMITIVAS) | PARAMETROS | NORMADOS
+#
+# **`NORMADOS` ya no existe.** Era un conjunto aparte para `superficie_predial_minima`, "un valor
+# que fija el PRC y que un hecho puede citar, pero que no es una primitiva del proyecto". Al
+# transcribir la primera zona real quedó claro que eso **es** un parámetro de la zona: el predio
+# debe cumplir la superficie predial mínima, y el valor lo pone el PRC. Un conjunto de un solo
+# elemento que además no aportaba nada al intérprete.
+VOCABULARIO: frozenset[str] = frozenset(PRIMITIVAS) | PARAMETROS
 
 OPERADORES_BINARIOS = (ast.Add, ast.Sub, ast.Mult, ast.Div)
 OPERADORES_UNARIOS = (ast.UAdd, ast.USub)

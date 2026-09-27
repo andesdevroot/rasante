@@ -1,0 +1,169 @@
+norma_id: prc:nunoa
+zona: Z-2
+nombre: 'Z-2'
+comuna: Ñuñoa
+articulo: '26'
+materia: 'Zona Z-2: normas de edificación y subdivisión (Artículo 26 del PRC de Ñuñoa)'
+cita: 'ZONA Z- 2  (104) Superficie de subdivisión predial mínima 500 m²'
+hechos:
+  edificio_de_4_pisos_o_mas:
+    expresion: numero_pisos >= 4 and altura_m >= 12
+    cita:
+      norma_id: prc:nunoa
+      articulo: '26'
+      texto: Distanciamiento mínimo a los deslindes en edificios de 4 pisos y altura 12 m o más.
+    nota: 'Es la condición que separa los dos tramos de distanciamiento de la zona.'
+parametros:
+  superficie_predial_minima:
+    id: superficie_predial_minima
+    sentido: minimo
+    limites:
+      - tipo: base
+        valor: '500'
+        unidad: m²
+        cita:
+          norma_id: prc:nunoa
+          articulo: '26'
+          texto: Superficie de subdivisión predial mínima 500 m²
+  cos:
+    id: cos
+    sentido: maximo
+    limites:
+      - tipo: base
+        valor: '0,5'
+        unidad: adimensional
+        cita:
+          norma_id: prc:nunoa
+          articulo: '26'
+          texto: Coeficiente de ocupación de suelo 0,5
+  cus:
+    id: cus
+    sentido: maximo
+    limites:
+      - tipo: base
+        valor: '2'
+        unidad: adimensional
+        cita:
+          norma_id: prc:nunoa
+          articulo: '26'
+          texto: Coeficiente de constructibilidad 2
+  altura_maxima:
+    id: altura_maxima
+    sentido: maximo
+    limites:
+      - tipo: base
+        valor: '28,00'
+        unidad: m
+        cita:
+          norma_id: prc:nunoa
+          articulo: '26'
+          texto: Altura máxima de edificación. 10 pisos y 28,00 m
+  pisos_maximos:
+    id: pisos_maximos
+    sentido: maximo
+    limites:
+      - tipo: base
+        valor: '10'
+        unidad: pisos
+        cita:
+          norma_id: prc:nunoa
+          articulo: '26'
+          texto: Altura máxima de edificación. 10 pisos y 28,00 m
+    nota: 'La ordenanza escribe la altura como "10 pisos **y** 28,00 m": dos cotas superiores
+      simultáneas en unidades distintas. `altura_maxima` y `pisos_maximos` son el mismo renglón
+      partido en dos, y ambos deben cumplirse.'
+  densidad.bruta:
+    id: densidad
+    calificador: bruta
+    sentido: maximo
+    limites:
+      - tipo: base
+        valor: '1600'
+        unidad: hab/ha
+        cita:
+          norma_id: prc:nunoa
+          articulo: '26'
+          texto: Densidad bruta máxima 1.600 Hab/há.
+    nota: 'La ordenanza escribe "1.600". Se transcribe "1600" porque `decimal_de` RECHAZA "1.600"
+      como ambiguo (¿mil seiscientos o uno coma seis?) y prefiere fallar a adivinar.'
+  rasante:
+    id: rasante
+    sentido: maximo
+    limites:
+      - tipo: base
+        valor: '60'
+        unidad: grados
+        cita:
+          norma_id: prc:nunoa
+          articulo: '26'
+          texto: Rasante 60°
+  antejarin:
+    id: antejarin
+    sentido: minimo
+    limites:
+      - tipo: base
+        valor: '7,00'
+        unidad: m
+        cita:
+          norma_id: prc:nunoa
+          articulo: '26'
+          texto: Antejardín 7,00 m
+  distanciamiento:
+    id: distanciamiento
+    sentido: minimo
+    limites:
+      - tipo: excepcion
+        valor: '5'
+        unidad: m
+        cuando: [edificio_de_4_pisos_o_mas]
+        cita:
+          norma_id: prc:nunoa
+          articulo: '26'
+          texto: Distanciamiento mínimo a los deslindes en edificios de 4 pisos y altura 12 m o más. 5 m
+    nota: 'El otro tramo —edificios de hasta 3 pisos y altura 9 m— NO tiene valor propio: la
+      ordenanza remite al "Art. 2.6.3 de OGUC". Sin ese valor no se emite límite, así que el
+      parámetro da P en ese tramo. Es correcto: no sabemos cuánto exige la OGUC para ese caso.'
+  cuerpos_salientes:
+    id: cuerpos_salientes
+    sentido: maximo
+    limites:
+      - tipo: base
+        valor: '1,5'
+        unidad: m
+        cita:
+          norma_id: prc:nunoa
+          articulo: '26'
+          texto: Cuerpos salientes de la línea de edificación sobre antejardín 1,5 m
+  adosamiento:
+    id: adosamiento
+    sentido: maximo
+    estado: desconocido
+    cita:
+      norma_id: prc:nunoa
+      articulo: '26'
+      texto: Adosamiento Según OGUC
+    nota: 'La celda no contiene un número: contiene una remisión a la OGUC. Sin valor no hay nada
+      que comparar, y el veredicto es P.'
+  agrupamiento:
+    id: agrupamiento
+    sentido: maximo
+    estado: desconocido
+    cita:
+      norma_id: prc:nunoa
+      articulo: '26'
+      texto: Tipos de agrupamiento Aislado, pareado
+    nota: 'No es un tope: es el conjunto de tipos admitidos ("Aislado, pareado"). El modelo no sabe
+      expresar "uno de estos", así que se declara desconocido en vez de fingir un límite. Además
+      `agrupamiento` condiciona la altura en otras zonas de Ñuñoa (Z-1 tiene tres alturas máximas
+      según el tipo), así que necesita modelarse como hecho, no como parámetro.'
+vigencia:
+  nota: 'El P_DO del IPT (27/10/1989) NO se usa como vigencia (D12): es la publicación original del
+    instrumento, no la del texto refundido. El texto transcrito es el refundido de junio 2025.'
+procedencia:
+  url_fuente: https://www.nunoa.cl/app/uploads/2025/06/Ordenanza-PRC-Texto-Refundido-incluye-Fallo-Enmienda-1-1.pdf
+  hash_fuente: sha256:ccadae894e91d338835c69ddebf2ff4f6461588f77792daa8ae598cff784fc9f
+  consolidado_por: 'Texto Refundido de la Ordenanza del PRC de Ñuñoa, con las enmiendas incorporadas (junio 2025)'
+  extraido: '2026-09-27'
+  extraido_por: rasante.corpus.ingesta (pypdf) + transcripcion manual
+  revisado_por: null
+  estado: borrador

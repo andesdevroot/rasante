@@ -70,6 +70,16 @@ derivaciones:
     cita:
       norma_id: oguc
       articulo: 1.1.2
+  pisos_maximos:
+    expresion: numero_pisos
+    cita:
+      norma_id: oguc
+      articulo: 1.1.2
+  superficie_predial_minima:
+    expresion: superficie_predio_m2
+    cita:
+      norma_id: oguc
+      articulo: 1.1.2
 relaciones:
 - tipo: cota_superior
   objetivo: cus

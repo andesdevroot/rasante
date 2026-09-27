@@ -32,7 +32,6 @@ from rasante.dominio.modelos import (
 )
 from rasante.dominio.motor import evaluar
 from rasante.dominio.vocabulario import (
-    NORMADOS,
     PARAMETROS,
     PRIMITIVAS,
     VOCABULARIO,
@@ -84,7 +83,8 @@ def zona_completa() -> Zona:
 
 
 def test_el_vocabulario_es_exactamente_la_union_de_sus_partes() -> None:
-    assert frozenset(PRIMITIVAS) | PARAMETROS | NORMADOS == VOCABULARIO
+    """`NORMADOS` desapareció en T1.14: un valor del PRC que un hecho cita **es** un parámetro."""
+    assert frozenset(PRIMITIVAS) | PARAMETROS == VOCABULARIO
 
 
 def test_el_motor_no_hardcodea_que_se_compara() -> None:
