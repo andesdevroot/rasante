@@ -1,6 +1,6 @@
 # 04 — Registro de decisiones
 
-Decisiones abiertas, cerradas y su fundamento. Las decisiones de arquitectura **D1–D12** viven en
+Decisiones abiertas, cerradas y su fundamento. Las decisiones de arquitectura **D1–D19** viven en
 `03-DISENO.md`; acá está el registro de las decisiones de alcance y de datos.
 
 ## Índice

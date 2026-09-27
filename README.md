@@ -14,7 +14,7 @@ el Formato Tipo oficial de informe del revisor independiente (Circular DDU 514).
 | `doc/00-METODOLOGIA.md` | Cómo se trabaja: SDD, TDD estricto, commits atómicos, handoff |
 | `doc/01-VISION.md` | Problema, mercado, fuentes verificadas y plan |
 | `doc/02-ALCANCE.md` | Qué entra en cada iteración y qué queda fuera |
-| `doc/03-DISENO.md` | Arquitectura, decisiones D1–D12, modelo de dominio, corpus |
+| `doc/03-DISENO.md` | Arquitectura, decisiones D1–D19, modelo de dominio, corpus, capa de clasificación |
 | `doc/04-DECISIONES.md` | Registro de decisiones (A1–A3) y su fundamento |
 | `doc/05-VALIDACION.md` | Estrategia de tests, invariantes, riesgos |
 | `doc/06-OPERACION.md` | Entorno, cómo correr, licencias |

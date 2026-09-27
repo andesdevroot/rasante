@@ -158,30 +158,44 @@ Tres capas:
 
 ```
 ┌─ L0 · FUENTE AUTORITATIVA (determinista) ─────────────────────────┐
-│  ArcGIS REST MINVU (zona + usos + P_DO)                          │
-│  CIP del predio (norma aplicable autoritativa)                   │
-│  Formularios Únicos Nacionales (entrada estructurada)            │
-│  Corpus OGUC/LGUC versionado                                     │
+│  ArcGIS REST MINVU (zona + usos + P_DO)                           │
+│  CIP del predio (norma aplicable autoritativa)                    │
+│  Formularios Únicos Nacionales (entrada estructurada)             │
+│  Corpus OGUC/LGUC versionado                                      │
 └───────────────────────────┬──────────────────────────────────────┘
                             ▼
-┌─ L1 · MOTOR DE REGLAS (determinista, auditable, testeable) ──────┐
-│  Cálculo: ocupación de suelo, constructibilidad, altura,         │
-│  rasantes, densidad, estacionamientos, distanciamientos,         │
-│  aguas lluvias, accesibilidad, admisibilidad documental          │
-│  Salida: veredicto (C|NC|P|NP|PR) + traza + valores + cita       │
-│  Python puro · decimal stdlib · tests por artículo              │
+┌─ CLASIFICACIÓN · choice/noul/score + portero (JEV) ───────────────┐
+│  lo que el motor no puede decidir: usos, condiciones de texto     │
+└───────────────────────────┬─────────────────────────────────────┘
+                            ▼
+┌─ L1 · MOTOR DE REGLAS (determinista, auditable, testeable) ───────┐
+│  Cálculo: ocupación de suelo, constructibilidad, altura,          │
+│  rasantes, densidad, estacionamientos, distanciamientos,          │
+│  aguas lluvias, accesibilidad, admisibilidad documental           │
+│  Salida: veredicto (C|NC|P|NP|PR) + traza + valores + cita        │
+│  Python puro · decimal stdlib · tests por artículo                │
 └───────────────────────────┬──────────────────────────────────────┘
                             ▼
-┌─ L2 · LLM (extractor y redactor) ────────────────────────────────┐
-│  (a) compila prosa de ordenanza → reglas L1   [revisión humana]  │
-│  (b) extrae datos de PDFs escaneados y planos [visión]           │
-│  (c) redacta "la forma en que da cumplimiento" (116 bis LGUC)    │
-│  (d) responde consultas con cita verificable                     │
-│  NUNCA: aritmética, veredictos, ni números inventados            │
+┌─ L2 · LLM (extracción de PDFs y redacción) ───────────────────────┐
+│  (a) compila prosa de ordenanza → reglas L1   [revisión humana]   │
+│  (b) extrae datos de PDFs escaneados y planos [visión]            │
+│  (c) redacta "la forma en que da cumplimiento" (116 bis LGUC)     │
+│  (d) responde consultas con cita verificable                      │
+│  NUNCA: aritmética, veredictos, ni números inventados             │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-**Corolario crítico:** la herramienta debe funcionar **con LLM apagado**. L0+L1 solos ya entregan el checklist de admisibilidad y los cálculos. Eso da adopción sin fricción (cero costo, cero problema de privacidad) y hace que el LLM sea un plus, no un requisito.
+La **capa de clasificación** y L2 usan modelos, pero para cosas distintas: la primera responde
+preguntas **tipadas** sobre texto (¿qué uso es este? ¿es una fusión predial?) y devuelve
+probabilidades; el segundo extrae de PDFs —que JEV no puede leer— y redacta el informe.
+
+**Corolario crítico:** el **núcleo** —corpus + motor— funciona **con cero modelos**. Entrega los
+cálculos, la factibilidad y el checklist de admisibilidad sin red, sin costo y sin sacar un dato del
+país. Es lo que da adopción sin fricción.
+
+La capa de clasificación es **aditiva**: sin ella, las preguntas que solo ella sabe responder quedan
+en `P` —nunca en un veredicto inventado—. Y eso vale para los dos: una capa de clasificación caída
+degrada a `P`, no a una respuesta plausible.
 
 ### Cómo se evita la alucinación de citas
 

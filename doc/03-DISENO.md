@@ -40,14 +40,20 @@ determinísticamente y emite el Formato Tipo MINVU (Circular DDU 514).
 ## 2. Arquitectura de capas
 
 ```
-L0  FUENTE AUTORITATIVA     ArcGIS REST MINVU (zona, usos, P_DO)   [I/O, red]
+L0  FUENTES Y HECHOS        ArcGIS REST MINVU (zona, usos, P_DO)   [I/O, red]
                             CIP, Formularios Únicos Nacionales
-                             ↓
+    └─ CLASIFICACIÓN        choice · noul · score + portero        [red: JEV]
+                            respuestas tipadas CON confianza
+                            solo lo que supera el umbral sigue      (§2.9, D19)
+                             ↓  hechos resueltos y firmados
 L1  MOTOR DE REGLAS         Python puro · decimal · sin deps       [PURO]
                             veredicto + traza + valores + cita
                              ↓
-L2  LLM                     extracción y redacción                  [ITERACIÓN 2+]
+L2  LLM                     redacción del Formato Tipo             [ITERACIÓN 3]
 ```
+
+La **capa de clasificación** vive dentro de L0 y no de L1, y eso no es taxonomía: produce **datos**
+—hechos resueltos— igual que el corpus o el ArcGIS. El motor los consume; no sabe de dónde vienen.
 
 **Regla dura:** la frontera entre L0/L1 y L2 es el módulo puro. `src/rasante/dominio/` no importa
 nada fuera de la stdlib. Si necesita shapely, la geometría está del lado equivocado. Lo vigila
@@ -559,8 +565,12 @@ coordenada (lat, lon)
 |---|---|---|
 | Dominio (L1) | `rasante.dominio` | **solo stdlib** |
 | Corpus | `rasante.corpus` | `pyyaml` |
+| Clasificación (L0) | `rasante.clasificacion` | `httpx` — el proveedor es un **protocolo**: JEV, DeepSeek, un modelo local o uno guionizado |
 | Geo (L0) | `rasante.geo` | `shapely`, `pyproj`, `httpx` |
 | CLI | `rasante.cli` | `typer` |
 
-Solo `httpx` está instalado hoy (T0.2). El resto se agrega en la tarea que lo necesite: así cada
-commit queda atómico y sin dependencias ociosas.
+Instalado hoy: `httpx`, `pypdf`, `pyyaml`. `shapely` y `pyproj` llegan con T1.9. El resto se agrega
+en la tarea que lo necesite: así cada commit queda atómico y sin dependencias ociosas.
+
+**`rasante.clasificacion` está fuera de `rasante.dominio` a propósito**: habla por red, y el dominio
+no puede (D2).

@@ -44,7 +44,11 @@ momento — así sigue detectando truncamiento, que es lo que importa.
 3. **`rasante.dominio` solo importa stdlib** (guardián en `tests/test_arquitectura.py`).
 4. **Decimal, nunca `float`** en rutas normativas.
 5. **Un fallo de descarga no deja caché parcial** — un GeoJSON a medias se leería como completo.
-6. **Toda norma del corpus cita y declara procedencia** — artículo, URL, hash y fecha de extracción.
+6. **Ningún dato sin revisar aprueba.** Sin `revisado_por` no hay `C` ni `NC`, solo `P` y un
+   hallazgo (D18). Vale en las dos direcciones: un `(NC)` sin fundamento también haría daño.
+7. **El portero nunca redondea hacia lo permisivo.** Una respuesta bajo el umbral queda pendiente,
+   no se resuelve a la opción más probable; un `noul` de 0,5 no es ni sí ni no (D19).
+8. **Toda norma del corpus cita y declara procedencia** — artículo, URL, hash y fecha de extracción.
    Una regla sin fuente no entra al corpus. El corpus guarda **citas, no texto íntegro**: es
    citación, no reproducción (ver `03-DISENO.md` §2.2).
 

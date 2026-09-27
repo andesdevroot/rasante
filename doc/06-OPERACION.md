@@ -42,7 +42,8 @@ Ver `05-VALIDACION.md`.
 | `https://www.minvu.gob.cl/elementos-tecnicos/decretos/d-s-n47-1992-ordenanza-general-de-urbanismo-y-construccione/` | **OGUC consolidada** (D.S. N°47). El PDF vigente declara el decreto que lo consolida: hoy *D.D. N°5, D.O. 22-05-2026* (rev. 15.09.2026). **577 págs / 4,4 MB** |
 | `https://www.bcn.cl/leychile` | LGUC (DFL 458), Ley 21.826, Ley 21.718, Ley 17.336. Ojo: las páginas se renderizan por JS, `web_fetch` devuelve solo el título |
 | `https://www.minvu.gob.cl/elementos-tecnicos/formularios/grupo-15-...` | Formato Tipo del informe del revisor independiente (Circular DDU 514) |
-| `https://api.deepseek.com` | LLM (iteración 2+). `deepseek-flash`: 1M contexto, visión, cache hit $0.003/M |
+| `https://openrouter.ai/api/v1/decisions` | **JEV** de TypeSafe (`typesafe/jev-1.13`), para la capa de clasificación. **Solo texto**: no lee PDFs ni imágenes. $0,042/M entrada, ~194 ms mediana. Requiere clave en `OPENROUTER_API_KEY` |
+| `https://api.deepseek.com` | LLM (redacción, iteración 3). `deepseek-flash`: 1M contexto, visión, cache hit $0,003/M |
 
 ## Licencias
 

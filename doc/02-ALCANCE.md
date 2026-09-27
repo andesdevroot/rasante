@@ -33,10 +33,22 @@ Implicaciones completas en `04-DECISIONES.md` (A3).
 `cos` además necesita un **calificador**: las ordenanzas distinguen "ocupación de suelo" de
 "ocupación de suelo pisos superiores".
 
+## Capa de clasificación (D19)
+
+El motor determinista **solo compara números**. Todo lo que sea un juicio sobre texto —usos de suelo,
+agrupamiento, las condiciones del `2.6.4` que no son aritmética— se responde en
+`rasante/clasificacion/`, con el contrato de JEV (`choice`/`noul`/`score`) y su **portero de
+confianza**: bajo el umbral, el dato va a revisión humana en vez de resolverse.
+
+**Estado:** la capa está implementada y probada con un proveedor guionizado. **No está conectada al
+motor todavía**, y el corpus aún no declara preguntas. Eso queda para cuando el corpus de la comuna
+necesite usos de suelo.
+
 ## Fuera de alcance en iteración 1
 
 LLM · extracción de PDF · informes DOCX/PDF · UI · demo web · rasantes · estacionamientos ·
-distanciamientos · checklist de admisibilidad · usos de suelo.
+distanciamientos · checklist de admisibilidad · **evaluación de usos de suelo** (la capa que
+los responderá existe; conectarla está pendiente).
 
 ## Iteraciones siguientes
 
