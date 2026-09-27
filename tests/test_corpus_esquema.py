@@ -24,7 +24,7 @@ import yaml
 
 from rasante.corpus.cargador import cargar_reglas
 from rasante.corpus.esquema import ErrorEsquema, validar_archivo, validar_corpus, validar_documento
-from rasante.dominio.vocabulario import CONDICIONES, PARAMETROS, PRIMITIVAS, nombres_de_expresion
+from rasante.dominio.vocabulario import PARAMETROS, PRIMITIVAS, nombres_de_expresion
 
 RAIZ = Path(__file__).resolve().parents[1]
 CORPUS = RAIZ / "corpus"
@@ -112,9 +112,17 @@ def test_el_corpus_solo_usa_unidades_conocidas() -> None:
     assert unidades <= {"adimensional", "m", "pisos", "hab/ha", None}
 
 
-def test_hay_condiciones_para_las_variantes_reales() -> None:
-    assert "conjunto_armonico" in CONDICIONES
-    assert any(c.startswith("agrupamiento_") for c in CONDICIONES)
+def test_el_vocabulario_no_hardcodea_condiciones() -> None:
+    """D14/D16: los hechos que activan un límite los declara el corpus, no una lista en Python.
+
+    `CONDICIONES` era exactamente eso — `conjunto_armonico` y `agrupamiento_*` escritos en Python
+    para `Proyecto.clasificaciones`, que nadie consumía. Un segundo origen de verdad que además no
+    podía expresar "no se sabe", así que nunca habría podido alimentar un `P`. Lo reemplaza
+    `hechos_externos` (T1.10), y este test existe para que no vuelva por la puerta de atrás.
+    """
+    from rasante.dominio import vocabulario
+
+    assert not hasattr(vocabulario, "CONDICIONES")
 
 
 @pytest.mark.parametrize(

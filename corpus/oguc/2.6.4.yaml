@@ -12,6 +12,15 @@ hechos:
       norma_id: oguc
       articulo: 2.6.4
     nota: 'Plenamente expresable: sus dos conjuntos son datos del proyecto.'
+  conjunto_armonico:
+    expresion: acoge_conjunto_armonico >= 1
+    cita:
+      norma_id: oguc
+      articulo: 2.6.4
+    nota: 'Acogerse es una FACULTAD del titular que exige un plan aprobado por la DOM (art. 107
+      LGUC). No se constata solo por cumplir la condicion de dimension: si asi fuera, cualquier
+      predio de mas de 5.000 m2 excederia el cus en un 50 %. Por eso este hecho es una condicion
+      aparte, y las excepciones de 2.6.5 lo exigen junto con la dimension.'
 hechos_pendientes:
   dimension_b: Constituir una manzana existente exige datos catastrales que el proyecto no declara.
   dimension_c: 'La fusión predial del art. 63 del DFL 458 exige el historial registral. NO se expresa

@@ -6,11 +6,16 @@ pasar con una expresión maliciosa es un error de validación, y el árbol sint�
 
 Este módulo es la única definición de:
 - **qué puede nombrar** una expresión (`PRIMITIVAS` + `PARAMETROS`),
-- **qué condiciones** puede exigir un límite condicional (`CONDICIONES`),
 - **qué sintaxis** se admite (operadores y nodos del AST).
 
 El validador (T1.3) y el intérprete (T1.4) usan los dos este vocabulario, así que no pueden
 divergir.
+
+**Lo que ya NO está acá:** la lista de condiciones que activan un límite condicional. `CONDICIONES`
+hardcodeaba `conjunto_armonico` y `agrupamiento_*` en Python para `Proyecto.clasificaciones`, que
+nadie consumía. Los hechos que activan un límite los declara el corpus (D14/D16) y los resuelve el
+puente de clasificación (T1.10); una lista paralela en Python era un segundo origen de verdad que
+además no podía expresar "no se sabe".
 """
 
 from __future__ import annotations
@@ -28,6 +33,7 @@ PRIMITIVAS: Mapping[str, str] = MappingProxyType(
         "numero_pisos": "número de pisos sobre el terreno natural",
         "numero_viviendas": "número de unidades de vivienda",
         "altura_m": "altura de edificación, en metros",
+        "acoge_conjunto_armonico": "el proyecto se acoge a la calidad de Conjunto Armónico",
     }
 )
 
@@ -46,21 +52,10 @@ PARAMETROS: frozenset[str] = frozenset(
     }
 )
 
-# Atributos del proyecto que activan un límite condicional. El caso real: la OGUC 2.6.5 permite al
-# Conjunto Armónico exceder el coeficiente de constructibilidad hasta en un 50 %.
-CONDICIONES: frozenset[str] = frozenset(
-    {
-        "conjunto_armonico",
-        "agrupamiento_aislada",
-        "agrupamiento_pareada",
-        "agrupamiento_continua",
-    }
-)
-
-# Valores que fija el plan regulador y que un hecho puede citar. No son primitivas del proyecto:
-# `superficie_predial_minima` la establece el PRC, y la condición 1.a) del art. 2.6.4 la compara
-# contra la superficie del predio.
 NORMADOS: frozenset[str] = frozenset({"superficie_predial_minima"})
+"""Valores que fija el plan regulador y que un hecho puede citar. No son primitivas del proyecto:
+`superficie_predial_minima` la establece el PRC, y la condición 1.a) del art. 2.6.4 la compara
+contra la superficie del predio."""
 
 # Todo lo que una expresión puede nombrar. Definición ÚNICA: la usan el intérprete (`reglas.py`) y
 # el validador del corpus (`corpus/esquema.py`). Si estuviera en dos sitios, podrían divergir y una

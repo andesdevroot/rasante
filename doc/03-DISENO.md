@@ -36,6 +36,8 @@ determinísticamente y emite el Formato Tipo MINVU (Circular DDU 514).
 | D17 | **La incertidumbre vive en la extracción, no en el veredicto.** El extractor devuelve alternativas y confianza (Choice/Score/Noul); el motor consume solo valores ya resueltos | Ver §2.8. La ambigüedad se resuelve **una vez** al escribir el corpus, no en cada proyecto |
 | D18 | **Un dato sin revisar no aprueba.** Sin `revisado_por` no hay `C` ni `NC`, solo `P` | Ver §2.8. Verificado el 2026-09-26: el motor no leía `EstadoRevision`, y `borrador` producía `C` |
 | D16 | **El motor selecciona el límite aplicable evaluando hechos del corpus.** Si un hecho es indeterminado, da `P` — **nunca elige el límite más permisivo** | Ver §2.7. El caso real: la OGUC `2.6.5` permite +50 % de `cus` bajo las condiciones 1.a/1.b del `2.6.4`, pero solo +30 % bajo la 1.c |
+| D20 | **Una excepción de aplicación general lleva `factor`, no `valor`.** La zona aporta el valor, la OGUC la proporción | Ver §2.10. `2.6.5` no dice cuánto es el `cus`: dice que puede excederlo en un 50 %. Un `Limite` absoluto no puede expresarlo, y expandirlo por zona duplicaría la regla nacional en cada ordenanza |
+| D21 | **Acogerse al Conjunto Armónico es una facultad del titular, no una consecuencia del tamaño del predio.** Por defecto `False` | Ver §2.10. Si bastara cumplir la condición de dimensión, cualquier terreno de más de 5.000 m² excedería el `cus` en un 50 %. Y sin el default, el `cus` de **todo** proyecto quedaría `P` |
 
 ## 2. Arquitectura de capas
 
@@ -545,6 +547,58 @@ habla por red, y el dominio no (D2).
 
 **Lo que NO hace.** No calcula cumplimiento. No decide. No opina sobre geometría. Clasifica, y el
 motor calcula.
+
+## 2.10 Excepciones de aplicación general (D20, D21)
+
+Hay normas que **no fijan un valor**: fijan cuánto puede apartarse un proyecto del valor que fija
+otro. La OGUC `2.6.5` es el caso: *"podrán exceder hasta en un 50% el coeficiente de
+constructibilidad **establecido por el Plan Regulador respectivo**"*.
+
+### El factor, no el valor (D20)
+
+`Excepcion(parametro, hechos, factor, cita)` vive en `Reglas`, **no en la zona**. La zona aporta el
+valor —el `cus` de Ñuñoa no es el de Las Condes— y la OGUC aporta la proporción. Si la excepción se
+expandiera por zona, la regla nacional se duplicaría en cada ordenanza y perdería su trazabilidad:
+un cambio en `2.6.5` habría que aplicarlo veinte veces a mano.
+
+El límite efectivo es `base.valor * factor`. **Sin base no se inventa un valor**: la excepción
+aplicaría, pero no hay nada que ampliar, y el parámetro da `P` por su propia falta de base.
+
+Entre varias excepciones que aplican a la vez manda **la más restrictiva**, que es el comportamiento
+que ya existía para las excepciones de zona. Eso cubre el caso real de un proyecto que cumple la
+letra a) —50 %— y la letra c) —30 %— a la vez, sin necesidad de un operador lógico nuevo.
+
+Las tres excepciones de `2.6.5` llevan **cita propia o heredada del artículo**: la del 50 % hereda
+(es el mismo inciso que las letras a y b), y la del 30 % trae la suya, porque una cita que no
+distingue el inciso no respalda la regla.
+
+### Acogerse es una facultad (D21)
+
+`2.6.5` dice *"los proyectos **que cumplan** con la condición de dimensión a)"*. Leído al pie de la
+letra, cualquier predio de más de 5.000 m² podría exceder el `cus` en un 50 %.
+
+**Eso no es como funciona.** El Conjunto Armónico es un procedimiento del art. 107 LGUC: el titular
+se acoge y presenta un plan que la DOM aprueba. La condición de dimensión es **necesaria, no
+suficiente**.
+
+Por eso `Proyecto.acoge_conjunto_armonico` existe, con default `False`, y las tres excepciones de
+`2.6.5` exigen `[conjunto_armonico, dimension_X]` — una **conjunción**.
+
+El default no es comodidad. Sin él, el `cus` de **cualquier** proyecto quedaría `P`, porque la
+condición de dimensión depende de `dimension_b` y `dimension_c`, que son preguntas (T1.10) y no
+estarían resueltas. Un motor que responde "pendiente" a todo no es prudente: es inútil.
+
+**Desviación que hay que confirmar:** la lectura de que acogerse es facultativo es una
+interpretación del art. 107 LGUC, no texto literal de `2.6.5`. Está aislada en un solo campo con
+default `False`, así que si la lectura correcta fuera la otra, se cambia ahí y nada más.
+
+### El bug que destapó
+
+`Clasificacion.aplica` y `Clasificacion.indeterminados` **no implementaban el cortocircuito que el
+propio proyecto documenta**: `X and False = False`. Con una sola condición por límite nunca se
+notaba; con una conjunción, un hecho ya descartado seguía reportándose como duda, y producía
+hallazgos pidiéndole al revisor un dato que ya no cambiaba el veredicto. Corregido en las dos: **un
+`False` decide antes que un `None`**.
 
 ## 3. Flujo de la iteración 1
 

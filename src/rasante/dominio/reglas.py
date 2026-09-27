@@ -70,6 +70,52 @@ class Relacion:
 
 
 @dataclass(frozen=True, slots=True)
+class Excepcion:
+    """Una norma de aplicación general que **amplía un valor que fija el plan regulador** (T1.10b).
+
+    OGUC `2.6.5`: *"Los proyectos que cumplan con la condición de dimensión a que se refieren las
+    letras a) o b) del número 1. del artículo 2.6.4., podrán exceder hasta en un 50% el coeficiente
+    de constructibilidad establecido por el Plan Regulador respectivo."*
+
+    El valor **no es un número**: es un factor sobre lo que fije cada PRC. El `cus` de Ñuñoa no es
+    el de Las Condes, y la OGUC aplica a los dos. Un `Limite` con `valor` absoluto no puede
+    expresarlo, y expandirlo por zona duplicaría la regla nacional en cada ordenanza hasta perder
+    su trazabilidad.
+
+    Que sea un `factor` y no un `valor` es lo que hace que esto **no pueda vivir en la zona**: la
+    zona aporta el valor, la OGUC aporta la proporción.
+
+    La disyunción *"letras a) o b)"* se modela con **una entrada por hecho**. Cada una concede su
+    factor por separado y, entre las que apliquen, manda la más restrictiva: para un máximo, esa es
+    la dirección segura, y evita inventar un operador lógico nuevo.
+
+    `hechos` es una **conjunción**: todos deben cumplirse. Ahí está la diferencia entre "el terreno
+    cumple la condición de dimensión" y "el proyecto se acoge al Conjunto Armónico **y** el terreno
+    cumple la condición". Sin lo primero, cualquier predio de más de 5.000 m² obtendría el +50 %.
+    """
+
+    parametro: str
+    hechos: frozenset[str]
+    factor: Decimal
+    cita: Cita
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.factor, Decimal):
+            tipo = type(self.factor).__name__
+            raise ErrorDominio(f"el factor de una Excepcion debe ser Decimal, no {tipo}")
+        if self.factor <= 0:
+            raise ErrorDominio("el factor de una Excepcion debe ser mayor que cero")
+        if not isinstance(self.cita, Cita):
+            raise ErrorDominio("una Excepcion necesita una Cita")
+        if not self.parametro.strip():
+            raise ErrorDominio("una Excepcion necesita 'parametro'")
+        if not self.hechos:
+            raise ErrorDominio("una Excepcion necesita 'hechos': sin ellos aplicaría siempre")
+        if any(not h.strip() for h in self.hechos):
+            raise ErrorDominio("una Excepcion no admite nombres de hecho vacíos")
+
+
+@dataclass(frozen=True, slots=True)
 class Hecho:
     """Un predicado nombrado que el corpus define como expresión (D16).
 
@@ -94,15 +140,33 @@ class Clasificacion:
     hechos: Mapping[str, bool | None]
 
     def aplica(self, cuando: frozenset[str]) -> bool | None:
-        """`True` si se cumplen todos; `False` si alguno no; `None` si alguno es indeterminado."""
+        """`True` si se cumplen todos; `False` si alguno no; `None` si alguno es indeterminado.
+
+        **Un `False` decide antes que un `None`**, porque `X and False = False`: si una condición
+        ya falló, que otra sea desconocida no cambia nada. Evaluar en el otro orden convertía en
+        "pendiente" a todo límite con una condición descartada — y con la excepción de `2.6.5`,
+        que combina "el proyecto se acoge" con "cumple la condición de dimensión", eso dejaba en `P`
+        hasta el `cus` de los proyectos que no se acogen a nada.
+        """
         estados = [self.hechos.get(nombre) for nombre in sorted(cuando)]
+        if any(estado is False for estado in estados):
+            return False
         if any(estado is None for estado in estados):
             return None
-        return all(estados)
+        return True
 
     def indeterminados(self, cuando: frozenset[str]) -> tuple[str, ...]:
-        """Los hechos que no se pudieron determinar, para poder decir **cuál** dato falta."""
-        return tuple(n for n in sorted(cuando) if self.hechos.get(n) is None)
+        """Los hechos que no se pudieron determinar **y que todavía importan**.
+
+        Si alguno ya es `False`, la condición está descartada y no falta ningún dato (`X and False =
+        False`). Devolver nombres ahí produciría un hallazgo pidiéndole al revisor un dato que ya no
+        cambia el veredicto — y con la excepción de `2.6.5`, que exige acogerse *y* cumplir una
+        condición de dimensión, eso llenaba de hallazgos a todos los proyectos no acogidos.
+        """
+        estados = {nombre: self.hechos.get(nombre) for nombre in cuando}
+        if any(estado is False for estado in estados.values()):
+            return ()
+        return tuple(sorted(n for n, estado in estados.items() if estado is None))
 
 
 @dataclass(frozen=True, slots=True)
@@ -114,6 +178,12 @@ class Reglas:
     hechos: Mapping[str, Hecho] = field(
         default_factory=lambda: MappingProxyType({})
     )
+    excepciones: tuple[Excepcion, ...] = ()
+    """Normas de aplicación general que amplían un valor del plan regulador (`2.6.5`).
+
+    Van acá y no en la `Zona` a propósito: la zona aporta el **valor**, la OGUC aporta la
+    **proporción**. Ponerlas en la zona duplicaría la regla nacional en cada ordenanza.
+    """
 
 
 def declarar_nombres(

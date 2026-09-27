@@ -22,8 +22,6 @@ from decimal import Decimal
 from enum import StrEnum
 from types import MappingProxyType
 
-from .vocabulario import CONDICIONES
-
 
 class ErrorDominio(ValueError):
     """Se intentó construir un modelo violando un invariante del dominio."""
@@ -313,8 +311,14 @@ class Proyecto:
     superficie_primer_piso_m2: Decimal | None = None
     altura_m: Decimal | None = None
     numero_pisos: int | None = None
-    clasificaciones: frozenset[str] = frozenset()
-    """Atributos que activan límites condicionales (`conjunto_armonico`, `agrupamiento_*`)."""
+    acoge_conjunto_armonico: bool = False
+    """Si el proyecto **se acoge** a la calidad de Conjunto Armónico (art. 107 LGUC).
+
+    Por defecto `False`, y ese default es deliberado: acogerse es una **facultad del titular** que
+    exige un plan de conjunto armónico aprobado por la DOM. Al revés —suponer que todo predio que
+    cumple las condiciones de dimensión queda automáticamente acogido— cualquier terreno de más de
+    5.000 m² podría exceder el `cus` en un 50 %, que no es como funciona.
+    """
 
     def __post_init__(self) -> None:
         if not isinstance(self.superficie_predio_m2, Decimal):
@@ -329,9 +333,6 @@ class Proyecto:
                 raise ErrorDominio(f"'{nombre}' debe ser Decimal o None")
         if self.numero_pisos is not None and self.numero_pisos < 0:
             raise ErrorDominio("'numero_pisos' no puede ser negativo")
-        desconocidas = sorted(self.clasificaciones - CONDICIONES)
-        if desconocidas:
-            raise ErrorDominio(f"clasificaciones fuera del vocabulario: {desconocidas}")
 
 
 @dataclass(frozen=True, slots=True)

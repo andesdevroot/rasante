@@ -72,7 +72,7 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.8 | Capa de clasificación con contrato tipado | ✅ | `[T1.8]` |
 | T1.9 | El sentido lo declara el corpus, no el motor | ✅ | `[T1.9]` |
 | T1.10 | El puente: de las preguntas a los hechos | ✅ | `[T1.10]` |
-| T1.10b | `excepcion` del corpus nunca llega a `Limite` | ⬜ |
+| T1.10b | Excepciones de aplicación general: factor y acogerse | ✅ | `[T1.10b]` |
 | T1.11 | Geo: reproyección e índice espacial | ⬜ |
 | T1.12 | Resolución coordenada → zona | ⬜ |
 | T1.13 | CLI | ⬜ |
@@ -183,7 +183,7 @@ es `factibilidad`, por parámetro y por límite; si el puente emitiera además u
 dato faltante aparecería dos veces en el informe. El puente expone `motivos()` —**por qué** quedó
 pendiente— y `factibilidad` dice **qué** falta.
 
-**Dos huecos que aparecieron al conectar** (no se arreglan acá, se anotan):
+**Dos huecos que aparecieron al conectar** — **ambos cerrados en T1.10b**:
 
 1. El bloque `excepcion:` de `corpus/oguc/2.6.5.yaml` **no lo lee ningún código**. El "+50 % de cus
    por Conjunto Armónico" está escrito en el corpus y nunca llega a ser un `Limite`. `cargar_reglas`

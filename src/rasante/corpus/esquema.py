@@ -15,6 +15,7 @@ con el motivo concreto en vez de con un error de librería.
 from __future__ import annotations
 
 from collections.abc import Iterator
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -67,6 +68,9 @@ def validar_corpus(raiz: Path) -> list[Path]:
         pendientes.update(datos.get("hechos_pendientes") or {})
         for nombre in datos.get("preguntas") or {}:
             con_pregunta.setdefault(nombre, archivo.name)
+        for excepcion in datos.get("excepciones") or []:
+            for nombre in excepcion["hechos"]:
+                exigidos.setdefault(str(nombre), archivo.name)
         for parametro in (datos.get("parametros") or {}).values():
             for limite in parametro.get("limites", []):
                 for nombre in limite.get("cuando") or []:
@@ -124,6 +128,7 @@ def validar_documento(datos: Any, *, origen: str = "") -> None:
     _validar_hechos(datos, prefijo)
     _validar_hechos_pendientes(datos, prefijo)
     _validar_preguntas(datos, prefijo)
+    _validar_excepciones(datos, prefijo)
 
     declarados = set(datos.get("parametros", {}))
     permitidos = set(VOCABULARIO) | declarados
@@ -335,6 +340,55 @@ def _validar_alternativas(pregunta: dict[str, Any], tipo: str, donde: str) -> No
     ajenos = sorted(set(map(str, verdadero_si)) - alternativas)
     if ajenos:
         raise ErrorEsquema(f"{donde}: 'verdadero_si' nombra valores que no ofrece: {ajenos}")
+
+
+def _validar_excepciones(datos: dict[str, Any], prefijo: str) -> None:
+    """Excepciones de **aplicación general**: un factor sobre el valor que fija cada plan regulador.
+
+    OGUC `2.6.5` no dice cuánto es el `cus`: dice que puede excederlo en un 50 %. Por eso el campo
+    es `factor` y no `valor`, y por eso la excepción vive en el artículo nacional y no en la zona.
+
+    El `factor` debe ser **texto** por la misma razón que un `valor` (D6): `1.5` sin comillas entra
+    como `float` y reintroduce el error binario justo en el camino donde no se admite.
+    """
+    excepciones = datos.get("excepciones")
+    if excepciones is None:
+        return
+    if not isinstance(excepciones, list):
+        raise ErrorEsquema(f"{prefijo}'excepciones' debe ser una lista")
+    for indice, excepcion in enumerate(excepciones):
+        donde = f"{prefijo}excepciones[{indice}]"
+        if not isinstance(excepcion, dict):
+            raise ErrorEsquema(f"{donde}: no es un mapping")
+        if not str(excepcion.get("parametro") or "").strip() or (
+            excepcion.get("parametro") not in PARAMETROS
+        ):
+            raise ErrorEsquema(
+                f"{donde}: 'parametro' debe ser un parámetro conocido, no "
+                f"{excepcion.get('parametro')!r}"
+            )
+        hechos = excepcion.get("hechos")
+        if not isinstance(hechos, list) or not hechos:
+            raise ErrorEsquema(
+                f"{donde}: 'hechos' debe ser una lista no vacía: sin condiciones la excepción "
+                "aplicaría siempre y anularía al base"
+            )
+        if any(not str(h or "").strip() for h in hechos):
+            raise ErrorEsquema(f"{donde}: 'hechos' no admite nombres vacíos")
+        factor = excepcion.get("factor")
+        if not isinstance(factor, str):
+            raise ErrorEsquema(
+                f"{donde}: 'factor' debe ser texto entre comillas, no {type(factor).__name__}"
+            )
+        try:
+            numero = Decimal(factor)
+        except InvalidOperation as error:
+            raise ErrorEsquema(f"{donde}: 'factor' no es un número: {factor!r}") from error
+        if numero <= 0:
+            raise ErrorEsquema(
+                f"{donde}: 'factor' debe ser mayor que cero, no {factor!r}: un factor 0 anularía "
+                "el parámetro y uno negativo lo invertiría"
+            )
 
 
 def _validar_relacion(relacion: Any, objetivos_permitidos: set[str], donde: str) -> None:

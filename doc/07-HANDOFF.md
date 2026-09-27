@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 1 — Vertical slice, en curso.** T1.1–T1.10 cerradas (más T1.7b) (iteración 0 completa: T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1–T1.10b cerradas (más T1.7b) (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.10b** (`excepcion` del corpus sin consumir) |
+| Tarea en curso | ninguna. Siguiente: **T1.11** (índice espacial) |
 | Código | `puente.py` (nuevo) · `clasificacion/{contrato,porteria,proveedor}.py` · `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
-| Tests | **355 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tests | **391 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | **`./gate.sh`** en verde (`set -euo pipefail`): pytest, ruff y mypy sobre `src` **y** `tests` |
 | Árbol git | limpio — todo commiteado |
 
@@ -23,37 +23,41 @@ Reestructuración a `doc/` aplicada el 2026-09-26: `01-VISION.md`, `03-DISENO.md
 
 ## Último commit
 
-`2c6e093 feat(puente): el corpus pregunta y el motor recibe hechos externos [T1.10]`
+El más reciente es el que trae este archivo. **Un archivo no puede contener su propio hash**:
+lo invalida el mismo `commit` que lo guarda, y un `amend` lo deja mintiendo. Por eso la lista
+arranca en el commit anterior.
 
-Historia completa (**26 commits**), del más nuevo al más viejo:
+Historia completa (**29 commits**), del más nuevo al más viejo:
 
 ```
-2c6e093 feat(puente): el corpus pregunta y el motor recibe hechos externos [T1.10]
-6bd4db1 refactor(dominio): el sentido lo declara el corpus, no MAXIMOS [T1.9]
-dc35709 docs: sincroniza todos los md con la capa de clasificacion (D19)
-3975f0c feat(clasificacion): capa con contrato tipado y portero de confianza [D19]
-c9efa16 fix(dominio): un dato sin revisar no aprueba [D18]
-2083c07 test: gate unico, mypy sobre tests y suites de realidad y consistencia
-2fb9d05 feat(corpus): cargador de zonas con coma decimal y sin claves duplicadas [T1.7]
-0ea3104 feat(dominio): hechos y seleccion de limites condicionales [T1.6]
-e5d798c docs: inserta T1.6 (hechos y seleccion de limites) y agrega D16
-a6d0351 feat(dominio): verificador de factibilidad geometrica [T1.5]
-db84928 feat(dominio): interprete de reglas del corpus con lista blanca [T1.4]
-4cc3dc8 feat(corpus): esquema ejecutable con limites multiples y variantes [T1.3]
-5c110da docs: inserta T1.3-T1.5 (corpus ejecutable y factibilidad) y renumera la cola
-0eadbc6 feat(dominio): motor de evaluacion de parametros urbanisticos [T1.2]
-70f84d1 feat(dominio): modelos de dominio e invariante de cita obligatoria [T1.1]
-5afa813 feat(corpus): corpus curado de OGUC y DDU 514 con citas [T0.6]
-45b39dd feat(corpus): troceador determinista de la OGUC por articulo [T0.5]
-35e14f5 docs: registra T0.5 y T0.6, D13 y el esquema del corpus normativo
-3b80db2 docs: cierra T0.3, registra A2 y A3 y actualiza el alcance a 4 parametros [T0.3]
-def1a5d docs: corrige los hashes invalidados por el squash de T0.1
-516f505 test(geo): test de integracion contra la API real de MINVU [T0.4]
-c426875 docs: reestructura la documentacion a doc/ y actualiza la metodologia
-9538bd1 docs: agrega T0.4 (test de integracion contra la API real)
-6420178 feat(geo): ingestor ArcGIS REST con paginacion y cache en disco [T0.2]
-64bdcdd chore(repo): esqueleto, uv, licencias y guardian de arquitectura [T0.1]
-e02ff7c docs: spec inicial (design, task, handoff)
+b4395cd docs(readme): README real para el repositorio open source
+e704415 docs: sincroniza los md con el estado real y elimina referencias muertas
+597b70f feat(puente): el corpus pregunta y el motor recibe hechos externos [T1.10]
+7db9c13 refactor(dominio): el sentido lo declara el corpus, no MAXIMOS [T1.9]
+c6a1486 docs: sincroniza todos los md con la capa de clasificacion (D19)
+12123af feat(clasificacion): capa con contrato tipado y portero de confianza [D19]
+0489bd9 fix(dominio): un dato sin revisar no aprueba [D18]
+a77228b test: gate unico, mypy sobre tests y suites de realidad y consistencia
+700fc3f feat(corpus): cargador de zonas con coma decimal y sin claves duplicadas [T1.7]
+020ec15 feat(dominio): hechos y seleccion de limites condicionales [T1.6]
+de0bd07 docs: inserta T1.6 (hechos y seleccion de limites) y agrega D16
+c457421 feat(dominio): verificador de factibilidad geometrica [T1.5]
+df1124a feat(dominio): interprete de reglas del corpus con lista blanca [T1.4]
+f3e0d6f feat(corpus): esquema ejecutable con limites multiples y variantes [T1.3]
+b144137 docs: inserta T1.3-T1.5 (corpus ejecutable y factibilidad) y renumera la cola
+06ea9eb feat(dominio): motor de evaluacion de parametros urbanisticos [T1.2]
+0c507f2 feat(dominio): modelos de dominio e invariante de cita obligatoria [T1.1]
+b081f4c feat(corpus): corpus curado de OGUC y DDU 514 con citas [T0.6]
+deb942c feat(corpus): troceador determinista de la OGUC por articulo [T0.5]
+2f29632 docs: registra T0.5 y T0.6, D13 y el esquema del corpus normativo
+b63a0f5 docs: cierra T0.3, registra A2 y A3 y actualiza el alcance a 4 parametros [T0.3]
+f82846e docs: corrige los hashes invalidados por el squash de T0.1
+fee7c98 test(geo): test de integracion contra la API real de MINVU [T0.4]
+5307095 docs: reestructura la documentacion a doc/ y actualiza la metodologia
+a111a3c docs: agrega T0.4 (test de integracion contra la API real)
+9d826bd feat(geo): ingestor ArcGIS REST con paginacion y cache en disco [T0.2]
+a98dd5d chore(repo): esqueleto, uv, licencias y guardian de arquitectura [T0.1]
+af56aa8 docs: spec inicial (design, task, handoff)
 ```
 
 Una tarea, un commit, y **nunca con tests en rojo**. T0.1 se consolidó en `64bdcdd` tras el squash; los commits de documentación de la iteración 1 se agruparon en cadenas de `amend`, así que la historia es lineal en `main`.
@@ -180,9 +184,19 @@ La guía oficial de JEV recomienda literalmente nuestra arquitectura: *"route wi
 code**, write with an LLM"*, y advierte que **no es confiable en aritmética, conteo ni fechas** — que
 es exactamente lo que hace el motor. Detalle en `03-DISENO.md` §2.9.
 
-**Ya no hay pendiente de conexión (T1.10 cerrada).** La capa está conectada: `corpus/oguc/2.6.4.yaml`
-declara las tres preguntas de sus hechos pendientes y `rasante/puente.py` las resuelve contra el
-expediente. Queda **T1.10b**: el bloque `excepcion:` de `2.6.5.yaml` no lo lee ningún código, así que
-el +50 % de cus por Conjunto Armónico está en el corpus pero no llega a `Limite`. Y
-`Proyecto.clasificaciones` se valida sin consumirse: es un segundo mecanismo, menos expresivo (no
-admite «no se sabe»), que `hechos_externos` supersede.
+**T1.10b cerró los dos huecos (2026-09-27).** El bloque `excepcion:` de `2.6.5.yaml` **sí llega al
+motor** ahora, como `Excepcion` en `Reglas`: la zona aporta el valor y la OGUC el factor (D20). Y
+`Proyecto.clasificaciones` + `CONDICIONES` se **eliminaron**: eran un segundo origen de verdad, menos
+expresivo que `hechos_externos` porque un `frozenset` no puede expresar «no se sabe».
+
+Cargar `2.6.5` destapó dos cosas que ninguna prueba sintética habría mostrado:
+
+1. **Acogerse al Conjunto Armónico es una facultad del titular** (art. 107 LGUC), no una consecuencia
+   del tamaño del predio. Sin `Proyecto.acoge_conjunto_armonico` (default `False`), el `cus` de
+   *todos* los proyectos quedaba `P`. Es D21, y **es la única lectura del proyecto que no se apoya en
+   texto literal**: conviene que la confirmes.
+2. **`Clasificacion.aplica` e `indeterminados` no implementaban `X and False = False`.** Con una
+   sola condición por límite nunca se notó; con una conjunción, un hecho ya descartado se reportaba
+   como duda y generaba hallazgos pidiéndole al revisor un dato que ya no cambiaba el veredicto.
+
+15 tests existentes se cayeron al cargar `2.6.5`, y los 15 por la razón correcta.

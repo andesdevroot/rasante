@@ -324,6 +324,8 @@ def test_un_limite_base_con_condiciones_no_se_puede_construir() -> None:
 def test_clasificar_no_muta_nada() -> None:
     z = zona(CUS_CON_EXCEPCION)
     p = proyecto(superficie_predio_m2=Decimal("6000"))
-    antes = (len(z.parametros), len(p.clasificaciones))
-    clasificar(p, z, REGLAS)
-    assert (len(z.parametros), len(p.clasificaciones)) == antes
+    antes = dict(REGLAS.hechos)
+    primera = clasificar(p, z, REGLAS)
+    segunda = clasificar(p, z, REGLAS)
+    assert primera.hechos == segunda.hechos
+    assert dict(REGLAS.hechos) == antes

@@ -42,6 +42,7 @@ from .modelos import (
 from .reglas import (
     Clasificacion,
     ErrorHechoDuplicado,
+    Excepcion,
     Reglas,
     declarar_nombres,
     evaluar_expresion,
@@ -116,6 +117,7 @@ def valores_del_proyecto(proyecto: Proyecto) -> dict[str, Decimal | None]:
         "numero_pisos": _decimal(proyecto.numero_pisos),
         "numero_viviendas": Decimal(proyecto.numero_viviendas),
         "altura_m": proyecto.altura_m,
+        "acoge_conjunto_armonico": Decimal(1) if proyecto.acoge_conjunto_armonico else Decimal(0),
     }
 
 
@@ -141,7 +143,7 @@ def _evaluar_uno(
     clasificacion: Clasificacion,
     fuente_revisada: bool,
 ) -> Veredicto:
-    limite, indeterminados = _limite_vigente(parametro, clasificacion)
+    limite, indeterminados = _limite_vigente(parametro, clasificacion, reglas)
     derivacion = reglas.derivaciones.get(parametro.clave)
     valor_proyecto = (
         evaluar_expresion(derivacion.expresion, declarar_nombres(derivacion.expresion, valores))
@@ -159,22 +161,22 @@ def _evaluar_uno(
 
 
 def _limite_vigente(
-    parametro: Parametro, clasificacion: Clasificacion
+    parametro: Parametro, clasificacion: Clasificacion, reglas: Reglas
 ) -> tuple[Limite | None, tuple[str, ...]]:
     """El límite que rige, y los hechos que no se pudieron determinar.
 
     Las **excepciones sustituyen al base**, no se le suman: si ligaran los dos y ganara el más
     restrictivo, la excepción del Conjunto Armónico de la OGUC `2.6.5` —que *amplía* el `cus`—
-    nunca podría aplicarse y la norma sería letra muerta.
+    nunca podría aplicarse y la norma sería letra muerta. Acá "gana el más restrictivo" se aplica
+    **entre excepciones**, no entre la excepción y el base.
 
     Entre **varias excepciones** que se cumplen a la vez manda la más restrictiva: si dos normas
-    discrepan, la prudencia es exigir la más severa.
+    discrepan, la prudencia es exigir la más severa. Eso cubre el caso real de `2.6.5`, donde un
+    proyecto puede cumplir la letra a) —50 %— y la letra c) —30 %— a la vez.
     """
     faltantes: set[str] = set()
     vigentes: list[Limite] = []
-    for limite in parametro.limites:
-        if limite.tipo is TipoLimite.BASE:
-            continue
+    for limite in _candidatos(parametro, reglas):
         aplica = clasificacion.aplica(limite.cuando)
         if aplica is None:
             faltantes.update(clasificacion.indeterminados(limite.cuando))
@@ -186,6 +188,48 @@ def _limite_vigente(
     if vigentes:
         return min(vigentes, key=lambda x: x.valor), ()
     return parametro.base, ()
+
+
+def _candidatos(parametro: Parametro, reglas: Reglas) -> list[Limite]:
+    """Todos los límites que podrían regir: los que fija la zona y los de aplicación general."""
+    propios = [x for x in parametro.limites if x.tipo is TipoLimite.EXCEPCION]
+    generales = [
+        ampliado
+        for ampliado in (
+            _ampliado(excepcion, parametro)
+            for excepcion in excepciones_generales(parametro, reglas)
+        )
+        if ampliado is not None
+    ]
+    return propios + generales
+
+
+def excepciones_generales(parametro: Parametro, reglas: Reglas) -> tuple[Excepcion, ...]:
+    """Las excepciones de aplicación general que nombran este parámetro.
+
+    Se comparan contra la **clave compuesta**: una excepción sobre `cos` no debe alcanzar a
+    `cos.pisos_superiores`.
+    """
+    return tuple(e for e in reglas.excepciones if e.parametro == parametro.clave)
+
+
+def _ampliado(excepcion: Excepcion, parametro: Parametro) -> Limite | None:
+    """El límite que resulta de aplicar el factor sobre el valor que fija la zona.
+
+    Sin base no hay nada que ampliar: el factor multiplica un número que no está, así que **no se
+    inventa un valor**. Devuelve `None` y el parámetro dará `P` por su cuenta — el mismo principio
+    de siempre, aplicado a la aritmética en vez de al dato.
+    """
+    base = parametro.base
+    if base is None:
+        return None
+    return Limite(
+        tipo=TipoLimite.EXCEPCION,
+        valor=base.valor * excepcion.factor,
+        unidad=base.unidad,
+        cita=excepcion.cita,
+        cuando=excepcion.hechos,
+    )
 
 
 def _decidir(

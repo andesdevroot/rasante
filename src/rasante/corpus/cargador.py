@@ -37,7 +37,7 @@ from rasante.dominio.modelos import (
     Vigencia,
     Zona,
 )
-from rasante.dominio.reglas import Derivacion, Hecho, Reglas, Relacion
+from rasante.dominio.reglas import Derivacion, Excepcion, Hecho, Reglas, Relacion
 
 
 class ErrorCarga(ValueError):
@@ -53,6 +53,7 @@ def cargar_reglas(raiz: Path) -> Reglas:
     derivaciones: dict[str, Derivacion] = {}
     relaciones: list[Relacion] = []
     hechos: dict[str, Hecho] = {}
+    excepciones: list[Excepcion] = []
 
     for archivo in sorted(Path(raiz).rglob("*.yaml")):
         datos = _leer(archivo)
@@ -77,11 +78,21 @@ def cargar_reglas(raiz: Path) -> Reglas:
                     cita=_cita(relacion.get("cita"), datos, archivo),
                 )
             )
+        for excepcion in datos.get("excepciones") or []:
+            excepciones.append(
+                Excepcion(
+                    parametro=str(excepcion["parametro"]),
+                    hechos=frozenset(str(h) for h in excepcion["hechos"]),
+                    factor=decimal_de(excepcion["factor"]),
+                    cita=_cita(excepcion.get("cita"), datos, archivo),
+                )
+            )
 
     return Reglas(
         derivaciones=MappingProxyType(derivaciones),
         relaciones=tuple(relaciones),
         hechos=MappingProxyType(hechos),
+        excepciones=tuple(excepciones),
     )
 
 
@@ -298,9 +309,16 @@ def _cita(bruta: Any, documento: dict[str, Any], archivo: Path) -> Cita:
 
     El corpus cita con `norma_id` + `articulo`; el texto se hereda de la cita del artículo cuando el
     límite o la derivación no trae uno propio. Así el veredicto siempre puede mostrar la norma.
+
+    **Sin cita propia (`None`) también se hereda.** Es el caso de las excepciones de `2.6.5`: los
+    incisos del 50 % *son* el artículo, así que repetir su texto en cada entrada sería duplicarlo.
+    El del 30 % sí trae la suya, porque es otro inciso del mismo artículo y una cita que no
+    distingue el inciso no respalda la regla.
     """
+    if bruta is None:
+        bruta = {}
     if not isinstance(bruta, dict):
-        raise ErrorCarga(f"{archivo.name}: falta la 'cita' de una regla")
+        raise ErrorCarga(f"{archivo.name}: la 'cita' de una regla debe ser un mapping")
     norma_id = str(bruta.get("norma_id") or documento.get("norma_id") or "")
     articulo = str(bruta.get("articulo") or documento.get("articulo") or "")
     texto = str(bruta.get("texto") or documento.get("cita") or "")

@@ -36,7 +36,7 @@ from .modelos import (
     Severidad,
     Zona,
 )
-from .motor import clasificar
+from .motor import clasificar, excepciones_generales
 from .reglas import Reglas
 
 # Referencia de la OGUC `2.1.23`: 3,50 m por piso. Solo se usa para traducir una altura normada
@@ -90,8 +90,14 @@ def _clasificacion_indeterminada(
     clasificacion = clasificar(proyecto, zona, reglas, hechos_externos=hechos_externos)
     hallazgos: list[Hallazgo] = []
     for parametro in sorted(zona.parametros.values(), key=lambda x: x.clave):
-        for limite in parametro.excepciones:
-            faltantes = clasificacion.indeterminados(limite.cuando)
+        # Las de la zona y las de aplicación general (`2.6.5`) se reportan igual: al revisor le da
+        # lo mismo de dónde salió la condición que no se pudo evaluar.
+        condiciones = [(x.cuando, x.cita) for x in parametro.excepciones]
+        condiciones += [
+            (e.hechos, e.cita) for e in excepciones_generales(parametro, reglas)
+        ]
+        for cuando, cita in condiciones:
+            faltantes = clasificacion.indeterminados(cuando)
             if not faltantes:
                 continue
             hallazgos.append(
@@ -104,7 +110,7 @@ def _clasificacion_indeterminada(
                         f"el dato para {' y '.join(faltantes)}. Se deja pendiente; no se asume el "
                         "límite más permisivo."
                     ),
-                    cita=limite.cita,
+                    cita=cita,
                     parametros=(parametro.clave, *faltantes),
                 )
             )
