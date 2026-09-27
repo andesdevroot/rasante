@@ -27,6 +27,7 @@ import ast
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from decimal import Decimal
+from enum import StrEnum
 from types import MappingProxyType
 
 from .modelos import Cita, ErrorDominio
@@ -129,6 +130,37 @@ class Hecho:
     cita: Cita
 
 
+class ProcedenciaHecho(StrEnum):
+    """Por qué un hecho quedó en `None` (T3).
+
+    El veredicto es el mismo en los cuatro casos —`P`—, así que esto **no decide nada**: es
+    diagnóstico. Existe porque `None` mezclaba cuatro causas con arreglos distintos, y para mejorar
+    el corpus hay que saber cuál es cuál.
+
+    **`_decidir()` no consulta este dato, y no debe hacerlo.** Si el veredicto leyera un campo de
+    diagnóstico, el diagnóstico empezaría a decidir. El invariante se sostiene en que `None` es
+    `None`, venga de donde venga.
+    """
+
+    DATO_FALTANTE = "dato_faltante"
+    """La expresión nombra algo que no está: el proyecto no lo declaró, o la zona no lo fija.
+    Se arregla consiguiendo el dato."""
+
+    EXPRESION_NO_CALCULABLE = "expresion_no_calculable"
+    """Todos los nombres están y aun así no dio un número. La causa típica es una división por
+    cero —superficie de predio en cero, por ejemplo—. Se arregla **en el corpus**, no consiguiendo
+    datos."""
+
+    EXTERNO_INDETERMINADO = "externo_indeterminado"
+    """El hecho no lo calcula el corpus: lo resolvió el puente de clasificación (T1.10) y volvió sin
+    resolverse. Se arregla revisando el expediente."""
+
+    HECHO_NO_DECLARADO = "hecho_no_declarado"
+    """Alguien lo nombró —un `cuando`, una excepción— y ningún documento lo declara.
+    `validar_corpus` lo bloquea, así que es defensivo; existe para que un `Reglas` construido a mano
+    no devuelva un `None` indistinguible de "no se sabe"."""
+
+
 @dataclass(frozen=True, slots=True)
 class Clasificacion:
     """Qué hechos se cumplen para un proyecto.
@@ -138,6 +170,22 @@ class Clasificacion:
     """
 
     hechos: Mapping[str, bool | None]
+    procedencia: Mapping[str, ProcedenciaHecho] = field(
+        default_factory=lambda: MappingProxyType({})
+    )
+    """Por qué cada hecho indeterminado lo está. **Solo trae los `None`**: un hecho ausente del
+    mapping se determinó, y por eso el caso "no está declarado" se responde por ausencia en
+    `hechos`, no acá."""
+
+    def procedencia_de(self, nombre: str) -> ProcedenciaHecho | None:
+        """Por qué ese hecho no se pudo determinar, o `None` si **sí** se determinó.
+
+        Tres estados, no dos: `None` significa "se sabe"; un `ProcedenciaHecho` significa "no se
+        sabe, y por esto"; y un nombre que no está en `hechos` significa "nadie lo declaró".
+        """
+        if nombre not in self.hechos:
+            return ProcedenciaHecho.HECHO_NO_DECLARADO
+        return self.procedencia.get(nombre)
 
     def aplica(self, cuando: frozenset[str]) -> bool | None:
         """`True` si se cumplen todos; `False` si alguno no; `None` si alguno es indeterminado.

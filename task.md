@@ -74,6 +74,7 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.10 | El puente: de las preguntas a los hechos | ✅ | `[T1.10]` |
 | T1.10b | Excepciones de aplicación general: factor y acogerse | ✅ | `[T1.10b]` |
 | T1.11 | Geo: índice espacial de zonas (sin reproyección) | ✅ | `[T1.11]` |
+| T1.17 | Motor: caché de AST, procedencia de `None` y orden documentado | ✅ | `[T1.17]` |
 | T1.12 | Resolución coordenada → zona | ⬜ |
 | T1.13 | CLI | ⬜ |
 | T1.14a | Corpus real: Zona Z-2 de Ñuñoa (primera zona transcrita) | ✅ | `[T1.14a]` |
@@ -302,6 +303,51 @@ centro cae en su propia zona.
 **Hallazgo para T1.12:** el servicio devuelve **3 de 40 códigos de zona con espaciado irregular**
 (`'MH- 1'`, `'ZCH- 1'`). El índice los devuelve tal cual —normalizarlos escondería que el corpus y el
 servicio no coinciden— y la reconciliación es de T1.12, con su propio test.
+
+### ✅ T1.17 — Motor: caché de AST, procedencia de `None` y orden documentado
+
+Tanda de mejora del core pedida para la base del paper. **Primero se midió**, porque dos de las
+cuatro tareas se justificaban con afirmaciones sobre el costo que resultaron incompletas.
+
+**T1 — caché de árboles sintácticos. Hecha, medida.** La justificación decía "el parseo `ast.parse()`
+se repite"; medido, `ast.parse` es el **37 %** de `arbol()` y el **63 %** es el recorrido de la lista
+blanca `_revisar`. Memorizar `arbol()` cubre los dos. `lru_cache(maxsize=1024)`, **no** un `dict` del
+módulo: uno sin cota es una fuga en un proceso de vida larga.
+
+| parámetros | antes | después | mejora |
+|---|---|---|---|
+| 12 (Z-2 real) | 209,2 µs | 67,9 µs | **3,1×** |
+| 50 (sintética) | 985,5 µs | 255,7 µs | **3,9×** |
+| 200 (sintética) | 3.652,2 µs | 960,3 µs | **3,8×** |
+
+Corpus real: 9 expresiones distintas, 9 *misses*, 1,59 M *hits*. Firma de `evaluar()` sin cambios.
+
+**T2 — pre-cálculo de `valores_normados`. Rechazada, con datos.** El mecanismo propuesto no es
+implementable: `Zona` es un dataclass congelado cuyo `parametros` es un `MappingProxyType`, o sea
+**no es hasheable**, así que `lru_cache` levanta `TypeError`. Y hashear la zona entera en cada
+llamada costaría más que el bucle que evita. Medido, `valores_normados` es el **5,5 %** de `evaluar()`
+con 200 parámetros. Se documenta en vez de implementarse.
+
+**T3 — procedencia de `None`. Hecha, con el vocabulario corregido.** El propuesto mezclaba dos causas
+distintas bajo `"corpus_indeterminado"` y no cubría un cuarto caso. Los reales, derivados del código:
+
+| valor | cuándo | cómo se arregla |
+|---|---|---|
+| `dato_faltante` | la expresión nombra algo que no está | consiguiendo el dato |
+| `expresion_no_calculable` | están todos los nombres y no dio número | **en el corpus** (división por cero) |
+| `externo_indeterminado` | vino de `hechos_externos` en `None` | revisando el expediente |
+| `hecho_no_declarado` | nadie lo declaró | defensivo; `validar_corpus` ya lo bloquea |
+
+Tres estados, no dos: ausente en `procedencia` significa "se determinó". Y el invariante que lo hace
+seguro: **`_decidir()` no lee la procedencia**, verificado con un test sobre el código fuente —si el
+veredicto leyera un campo de diagnóstico, el diagnóstico empezaría a decidir.
+
+**T4 — orden de verificación documentado. Hecho.** Seis pasos con su porqué y su decisión (D16, D18,
+D20) en el docstring de `_decidir`, más dos tests: que el orden esté escrito y que **ningún `P` ni
+`NO_PROCEDE` aparezca después de una comparación** en el código.
+
+**Riesgo que queda anotado:** el "bucle de aprendizaje offline" que justifica T3 debe alimentar la
+**priorización del corpus**, nunca el veredicto ni un ajuste de modelo (D3, D4).
 
 ### ⬜ T1.12 — Resolución de zona
 

@@ -7,7 +7,7 @@ auditable**, y apunta a emitir el Formato Tipo oficial de informe del revisor in
 (Circular DDU 514). El LLM **clasifica y redacta; nunca calcula ni dictamina.**
 
 > ⚠️ **Estado: iteración 1 en curso.** El motor, el corpus ejecutable y la capa de clasificación
-> están construidos y probados (453 tests). **Todavía no emite el Formato Tipo de punta a punta**:
+> están construidos y probados (468 tests). **Todavía no emite el Formato Tipo de punta a punta**:
 > faltan el índice espacial, la CLI y el corpus real de la comuna piloto. Ver [Estado](#estado).
 
 ---

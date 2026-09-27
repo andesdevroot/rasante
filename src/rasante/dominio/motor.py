@@ -43,11 +43,13 @@ from .reglas import (
     Clasificacion,
     ErrorHechoDuplicado,
     Excepcion,
+    ProcedenciaHecho,
     Reglas,
     declarar_nombres,
     evaluar_expresion,
     evaluar_hecho,
 )
+from .vocabulario import nombres_de_expresion
 
 
 def evaluar(
@@ -90,10 +92,13 @@ def clasificar(
     """
     disponibles: dict[str, Decimal | None] = dict(valores or valores_del_proyecto(proyecto))
     disponibles.update(valores_normados(zona))
-    evaluados: dict[str, bool | None] = {
-        nombre: evaluar_hecho(hecho.expresion, declarar_nombres(hecho.expresion, disponibles))
-        for nombre, hecho in reglas.hechos.items()
-    }
+    evaluados: dict[str, bool | None] = {}
+    procedencia: dict[str, ProcedenciaHecho] = {}
+    for nombre, hecho in reglas.hechos.items():
+        estado = evaluar_hecho(hecho.expresion, declarar_nombres(hecho.expresion, disponibles))
+        evaluados[nombre] = estado
+        if estado is None:
+            procedencia[nombre] = _motivo(hecho.expresion, disponibles)
     for nombre, estado in (hechos_externos or {}).items():
         if nombre in evaluados:
             raise ErrorHechoDuplicado(
@@ -101,7 +106,27 @@ def clasificar(
                 "sobrescribirlo, porque cuál de las dos fuentes gana sería una decisión implícita"
             )
         evaluados[nombre] = estado
-    return Clasificacion(hechos=MappingProxyType(evaluados))
+        if estado is None:
+            procedencia[nombre] = ProcedenciaHecho.EXTERNO_INDETERMINADO
+    return Clasificacion(
+        hechos=MappingProxyType(evaluados), procedencia=MappingProxyType(procedencia)
+    )
+
+
+def _motivo(expresion: str, disponibles: Mapping[str, Decimal | None]) -> ProcedenciaHecho:
+    """Por qué una expresión no dio un número (T3).
+
+    Se calcula **solo para los hechos que salieron `None`**, nunca en el camino caliente: evaluar un
+    proyecto con todos sus datos no paga nada por esto.
+
+    Distingue dos causas que `evaluar_expresion` deliberadamente confunde —las dos son "no se pudo
+    calcular", y para el veredicto da lo mismo—: si falta un nombre, el problema es el **dato**; si
+    están todos, el problema es la **expresión**. El arreglo de cada una es distinto.
+    """
+    completos = declarar_nombres(expresion, disponibles)
+    if any(completos[nombre] is None for nombre in nombres_de_expresion(expresion)):
+        return ProcedenciaHecho.DATO_FALTANTE
+    return ProcedenciaHecho.EXPRESION_NO_CALCULABLE
 
 
 def valores_del_proyecto(proyecto: Proyecto) -> dict[str, Decimal | None]:
@@ -239,11 +264,36 @@ def _decidir(
     valor_proyecto: Decimal | None,
     fuente_revisada: bool,
 ) -> CodigoVeredicto:
-    """El orden importa: todo lo que no se puede afirmar sale antes de cualquier comparación.
+    """El veredicto de un parámetro. **El orden importa y no es negociable.**
 
-    Lo primero de todo es la **procedencia**: de un corpus que nadie firmó no se afirma nada, ni
-    aprobando ni rechazando. `NO_APLICA` incluido: "no procede" también es una afirmación sobre la
-    norma, y no se puede hacer desde un dato sin revisar.
+    Todo lo que no se puede afirmar sale antes de cualquier comparación. El orden va de la causa más
+    general a la más particular, y cada paso existe porque omitirlo produjo —o produciría— un
+    veredicto falso firmado por un profesional:
+
+    1. **`fuente_revisada`.** De un corpus que nadie firmó no se afirma nada. Va primero porque es
+       la única condición que invalida **todas** las demás: si el valor no está revisado, da lo
+       mismo cuán completo sea el proyecto. Cubre también `NO_APLICA`: "no procede" es una
+       afirmación sobre la norma, y no se puede hacer desde un dato sin revisar. (D18)
+    2. **`estado is NO_APLICA`.** La norma existe pero no rige para este caso. Es una afirmación
+       *negativa* —"esto no le aplica"— y por eso va después de la firma: se puede afirmar, pero
+       solo con fuente revisada.
+    3. **`indeterminados`.** No sabemos **cuál** de los límites rige, porque algún hecho quedó en
+       `None`. Es distinto de "no sabemos el límite": acá el límite está declarado y lo que falta es
+       saber si aplica. Elegir uno sería elegir el permisivo la mitad de las veces. (D16)
+    4. **`estado is DESCONOCIDO` o `limite is None`.** No sabemos **cuál es** el límite: la zona no
+       lo fija, o la excepción aplicable no se pudo calcular por falta de base. (D20)
+    5. **`valor_proyecto is None`.** Sabemos el límite y sabemos que rige, pero no cuánto mide el
+       proyecto. Es el último `P` posible antes de comparar.
+    6. **La comparación**, y recién acá. `sentido` dice hacia dónde: `MAXIMO` cumple por debajo,
+       `MINIMO` por encima. Sin `sentido` el esquema no deja construir el parámetro, porque un
+       mínimo tratado como máximo da el veredicto **invertido** sin que nadie se entere. (T1.9)
+
+    **Lo que este orden garantiza:** los pasos 1 a 5 solo pueden devolver `P`. Ninguno compara. La
+    comparación es el paso 6 y es la única línea donde un `C` o un `NC` puede nacer.
+
+    **Lo que NO entra acá:** el margen, la procedencia de un `None` (`ProcedenciaHecho`) y cualquier
+    otra señal de diagnóstico. Este método decide; si leyera un campo de diagnóstico, el diagnóstico
+    empezaría a decidir.
     """
     if not fuente_revisada:
         return CodigoVeredicto.PENDIENTE
