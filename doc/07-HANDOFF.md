@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 1 — Vertical slice, en curso.** T1.1–T1.7 y T1.7b cerradas (iteración 0 completa: T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1–T1.8 cerradas (más T1.7b) (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.8** (índice espacial) |
-| Código | `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
-| Tests | **273 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tarea en curso | ninguna. Siguiente: **T1.9** (índice espacial) |
+| Código | `clasificacion/` (nueva) · `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
+| Tests | **297 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | **`./gate.sh`** en verde (`set -euo pipefail`): pytest, ruff y mypy sobre `src` **y** `tests` |
 | Árbol git | limpio — todo commiteado |
 
@@ -147,3 +147,21 @@ Cerrado con **D18**: sin firma humana no hay `C` ni `NC`, solo `P` y un `Hallazg
 **D17** registra JEV (Choice/Score/Noul) donde sí corresponde: **contrato de la capa de extracción**,
 iteración 2. La confianza decide si un dato está listo, no cuánto cumple. El razonamiento completo
 —incluido por qué el veredicto no puede ser probabilístico— está en `03-DISENO.md` §2.8.
+
+## Capa de clasificación (2026-09-26, D19)
+
+El usuario señaló un segundo gap real: **el motor solo sabe comparar números**. Verificado contra
+nuestro propio corpus: usos de suelo (`UPERM`/`UPROH`) y `dimension_b`/`dimension_c` —parkeadas en
+`hechos_pendientes` del `2.6.4`— no son aritmética sobre el proyecto, son juicios sobre texto.
+
+Se implementó `rasante/clasificacion` con el contrato de JEV (TypeSafe): `choice`/`noul`/`score`,
+una pasada, respuestas tipadas con confianza, y un **portero** que manda a revisión humana lo que no
+supera el umbral. **Nunca se resuelve a la opción más probable.**
+
+La guía oficial de JEV recomienda literalmente nuestra arquitectura: *"route with Jev, **compute in
+code**, write with an LLM"*, y advierte que **no es confiable en aritmética, conteo ni fechas** — que
+es exactamente lo que hace el motor. Detalle en `03-DISENO.md` §2.9.
+
+**Pendiente de T1.9 en adelante:** la capa existe y está probada con un proveedor guionizado, pero
+**no está conectada al motor todavía**. Falta que el corpus declare preguntas `choice`/`noul` y que
+sus resoluciones alimenten los `hechos_pendientes`.

@@ -32,6 +32,7 @@ determinísticamente y emite el Formato Tipo MINVU (Circular DDU 514).
 | D13 | **La OGUC aporta reglas; el PRC aporta valores.** Son dos mitades del corpus con naturaleza y frecuencia de cambio distintas | Ver §2.4. La OGUC define *cómo se computa*; los números (`cos 0,6`) los fija cada plan regulador |
 | D14 | **El corpus es ejecutable.** Sus reglas no se describen: se interpretan | Ver §2.5. Hoy `DERIVACIONES` en `motor.py` hardcodea lo que `corpus/oguc/*.yaml` describe: dos fuentes de verdad para el mismo cálculo |
 | D15 | **El motor verifica factibilidad, no solo parámetros sueltos** | Ver §2.6. Los parámetros están acoplados geométricamente: chequeados por separado, todos pueden dar `C` en un proyecto imposible |
+| D19 | **Una capa de clasificación con contrato tipado** (`choice`/`noul`/`score`), con proveedor intercambiable y **portero de confianza** | Ver §2.9. El motor solo sabe comparar números; usos de suelo, agrupamiento y las condiciones que no son aritmética no tienen representación |
 | D17 | **La incertidumbre vive en la extracción, no en el veredicto.** El extractor devuelve alternativas y confianza (Choice/Score/Noul); el motor consume solo valores ya resueltos | Ver §2.8. La ambigüedad se resuelve **una vez** al escribir el corpus, no en cada proyecto |
 | D18 | **Un dato sin revisar no aprueba.** Sin `revisado_por` no hay `C` ni `NC`, solo `P` | Ver §2.8. Verificado el 2026-09-26: el motor no leía `EstadoRevision`, y `borrador` producía `C` |
 | D16 | **El motor selecciona el límite aplicable evaluando hechos del corpus.** Si un hecho es indeterminado, da `P` — **nunca elige el límite más permisivo** | Ver §2.7. El caso real: la OGUC `2.6.5` permite +50 % de `cus` bajo las condiciones 1.a/1.b del `2.6.4`, pero solo +30 % bajo la 1.c |
@@ -501,6 +502,43 @@ pasada como `id`), *"ligan todos"* rompía el `2.6.5` (spec mal escrita, con la 
 delante), tres citas parafraseadas (transcripción). Todos deterministas, todos cazados por
 verificaciones deterministas. Un evaluador probabilístico no habría cazado **ninguno**, y habría
 hecho los cuatro más difíciles de cazar.
+
+## 2.9 Capa de clasificación (D19)
+
+**El hueco que cierra.** El motor determinista solo sabe comparar números. Quedaron fuera, escritos
+en nuestro propio corpus:
+
+- **Usos de suelo.** `UPERM`/`UPROH` son texto libre sucio (`"culto, culto"`, fragmentos truncados).
+  Responder "¿este uso está permitido en la zona?" es una **`choice`**, y hoy no se puede.
+- **`dimension_b`** ("constituya en sí una manzana existente") y **`dimension_c`** ("fusión predial
+  del art. 63"), parkeadas en `hechos_pendientes` de `2.6.4.yaml`. No son aritmética sobre números
+  del proyecto: son juicios sobre texto (escrituras, CIP). Eso es un **`noul`**.
+- **Triaje de legibilidad** de una página escaneada, antes de extraer: un **`score`**.
+
+**Por qué JEV encaja.** TypeSafe lo describe como un modelo *System One*: juicios rápidos, una
+pasada, respuestas tipadas con probabilidad en vez de prosa. Y su guía de uso recomienda exactamente
+nuestra arquitectura: *"route with Jev, **compute in code**, write with an LLM"*, *"exact data never
+goes through a model"*. Añade que **no es confiable en aritmética, conteo ni comparación de fechas**
+— que es justo lo que hace nuestro motor.
+
+| | |
+|---|---|
+| Forma | Un **estado** (bloques de texto con nombre) + N preguntas tipadas, en **una pasada** |
+| Salida | `choice`: opción + confianza + reparto · `noul`: probabilidad · `score`: nivel + confianza |
+| Límites | **Solo texto**: no lee PDFs ni imágenes. Pierde precisión con detalle irrelevante |
+| Coste | $0,042/M entrada, salida gratis · ~194 ms mediana |
+
+**El portero es lo que importa.** Una respuesta por debajo del umbral **no se resuelve**: queda
+marcada para revisión humana. Nunca se redondea una duda hacia el lado permisivo — un `noul` de 0,5
+no es ni sí ni no, y una elección con 0,54 no se resuelve a la opción más probable. Es **D18 aguas
+arriba**: la confianza decide **si un dato está listo**, no cuánto cumple.
+
+**El contrato no depende de JEV.** `Proveedor` es un protocolo: JEV, DeepSeek, un modelo local o un
+proveedor guionizado para tests. `rasante.clasificacion` vive **fuera de `rasante.dominio`** porque
+habla por red, y el dominio no (D2).
+
+**Lo que NO hace.** No calcula cumplimiento. No decide. No opina sobre geometría. Clasifica, y el
+motor calcula.
 
 ## 3. Flujo de la iteración 1
 
