@@ -12,7 +12,7 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 | | |
 |---|---|
 | Tarea en curso | ninguna. Siguiente: **T1.10b** (`excepcion` del corpus sin consumir) |
-| Código | `clasificacion/` (nueva) · `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
+| Código | `puente.py` (nuevo) · `clasificacion/{contrato,porteria,proveedor}.py` · `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
 | Tests | **355 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | **`./gate.sh`** en verde (`set -euo pipefail`): pytest, ruff y mypy sobre `src` **y** `tests` |
 | Árbol git | limpio — todo commiteado |
@@ -23,40 +23,58 @@ Reestructuración a `doc/` aplicada el 2026-09-26: `01-VISION.md`, `03-DISENO.md
 
 ## Último commit
 
+`2c6e093 feat(puente): el corpus pregunta y el motor recibe hechos externos [T1.10]`
+
+Historia completa (**26 commits**), del más nuevo al más viejo:
+
 ```
-[T1.6]    feat(dominio): hechos y seleccion de limites condicionales
-[T1.5]    feat(dominio): verificador de factibilidad geometrica
-[T1.4]    feat(dominio): interprete de reglas del corpus con lista blanca
-[T1.3]    feat(corpus): esquema ejecutable con limites multiples y variantes
-[T1.2]    feat(dominio): motor de evaluacion de parametros urbanisticos
-[T1.1]    feat(dominio): modelos de dominio e invariante de cita obligatoria
-[T0.6]    feat(corpus): corpus curado de OGUC y DDU 514 con citas
-[T0.5]    feat(corpus): troceador determinista de la OGUC por articulo
-[T0.3]    docs: cierra T0.3, registra A2 y A3 y actualiza el alcance a 4 parametros
-def1a5d  docs: corrige los hashes invalidados por el squash de T0.1
-[T0.4]    test(geo): test de integracion contra la API real de MINVU
-c426875  docs: reestructura la documentacion a doc/ y actualiza la metodologia
-9538bd1  docs: agrega T0.4 (test de integracion contra la API real)
-6420178  feat(geo): ingestor ArcGIS REST con paginacion y cache en disco [T0.2]
-64bdcdd  chore(repo): esqueleto, uv, licencias y guardian de arquitectura [T0.1]
-e02ff7c  docs: spec inicial (design, task, handoff)
+2c6e093 feat(puente): el corpus pregunta y el motor recibe hechos externos [T1.10]
+6bd4db1 refactor(dominio): el sentido lo declara el corpus, no MAXIMOS [T1.9]
+dc35709 docs: sincroniza todos los md con la capa de clasificacion (D19)
+3975f0c feat(clasificacion): capa con contrato tipado y portero de confianza [D19]
+c9efa16 fix(dominio): un dato sin revisar no aprueba [D18]
+2083c07 test: gate unico, mypy sobre tests y suites de realidad y consistencia
+2fb9d05 feat(corpus): cargador de zonas con coma decimal y sin claves duplicadas [T1.7]
+0ea3104 feat(dominio): hechos y seleccion de limites condicionales [T1.6]
+e5d798c docs: inserta T1.6 (hechos y seleccion de limites) y agrega D16
+a6d0351 feat(dominio): verificador de factibilidad geometrica [T1.5]
+db84928 feat(dominio): interprete de reglas del corpus con lista blanca [T1.4]
+4cc3dc8 feat(corpus): esquema ejecutable con limites multiples y variantes [T1.3]
+5c110da docs: inserta T1.3-T1.5 (corpus ejecutable y factibilidad) y renumera la cola
+0eadbc6 feat(dominio): motor de evaluacion de parametros urbanisticos [T1.2]
+70f84d1 feat(dominio): modelos de dominio e invariante de cita obligatoria [T1.1]
+5afa813 feat(corpus): corpus curado de OGUC y DDU 514 con citas [T0.6]
+45b39dd feat(corpus): troceador determinista de la OGUC por articulo [T0.5]
+35e14f5 docs: registra T0.5 y T0.6, D13 y el esquema del corpus normativo
+3b80db2 docs: cierra T0.3, registra A2 y A3 y actualiza el alcance a 4 parametros [T0.3]
+def1a5d docs: corrige los hashes invalidados por el squash de T0.1
+516f505 test(geo): test de integracion contra la API real de MINVU [T0.4]
+c426875 docs: reestructura la documentacion a doc/ y actualiza la metodologia
+9538bd1 docs: agrega T0.4 (test de integracion contra la API real)
+6420178 feat(geo): ingestor ArcGIS REST con paginacion y cache en disco [T0.2]
+64bdcdd chore(repo): esqueleto, uv, licencias y guardian de arquitectura [T0.1]
+e02ff7c docs: spec inicial (design, task, handoff)
 ```
 
-Una tarea, un commit: T0.1 quedó consolidada en `64bdcdd` tras el squash.
+Una tarea, un commit, y **nunca con tests en rojo**. T0.1 se consolidó en `64bdcdd` tras el squash; los commits de documentación de la iteración 1 se agruparon en cadenas de `amend`, así que la historia es lineal en `main`.
 
 ## Siguiente tarea
 
-**T1.8 — Geo: reproyección e índice espacial** (`src/rasante/geo/indices.py`).
+**T1.10b — El `excepcion` del corpus nunca llega a `Limite`.**
 
+`corpus/oguc/2.6.5.yaml` declara el +50 % de `cus` por Conjunto Armónico, pero `cargar_reglas` solo
+lee `derivaciones`, `hechos` y `relaciones`: el bloque `excepcion:` **no lo consume ningún código**.
+El corpus afirma algo que el motor no puede aplicar, y eso es peor que no tenerlo — parece cubierto.
+
+Lo mismo con `Proyecto.clasificaciones`: se valida contra `CONDICIONES` y **no se consume** en
+ninguna parte. Es un segundo mecanismo para lo que ahora hace `hechos_externos`, y con una
+limitación de fondo: un `frozenset` no puede expresar «no se sabe», así que nunca podría alimentar
+un `P`. La decisión es **eliminarlo**, no mantenerlo.
+
+Después: **T1.11 — Geo: reproyección e índice espacial** (`src/rasante/geo/indices.py`).
 `IndiceZonas.buscar(lat, lon) -> str | None` sobre las capas PRC cacheadas en T0.2: reproyectar
-EPSG:4326 → 3857 con `pyproj` y point-in-polygon con `shapely`.
-
-**Ojo:** `shapely` y `pyproj` entran como dependencias nuevas. Van en `rasante.geo`, nunca en
-`rasante.dominio` (D2).
-
-**Deuda registrada:** `Proyecto.clasificaciones` existe y se valida, pero **nadie lo usa todavía**:
-`clasificar` evalúa hechos por expresión. Es el mecanismo previsto para lo que no se deduce de
-números, como la fusión predial de la condición 1.c) del 2.6.4.
+EPSG:4326 → 3857 con `pyproj` y point-in-polygon con `shapely`. Las dos entran como dependencias
+nuevas, en `rasante.geo`, **nunca** en `rasante.dominio` (D2).
 
 ## Blockers
 
@@ -131,7 +149,7 @@ Se incorporaron tres arreglos que **reducen fallos y tiempo a la vez**, más dos
 | `mypy` sobre `tests` | los errores mecánicos (`.valor` tras cambiar el modelo, `id_` vs `id`) pasan a ser **una** corrida de mypy en vez de cuatro fallos de test |
 | Leer antes de renombrar | buscar los llamadores antes de un cambio transversal |
 | `tests/test_realidad_corpus.py` | contrasta cada cita contra el artículo real y hash-verificado. **Ya cazó tres citas parafraseadas** (`1.1.2`, `2.6.4`, `2.6.5`) |
-| `tests/test_consistencia.py` | invariantes transversales en un sitio: vocabulario, derivaciones vs `MAXIMOS`, `cuando` vs hechos, leyenda, y que nada afirme cumplimiento sin norma ni cita |
+| `tests/test_consistencia.py` | invariantes transversales en un sitio: vocabulario, `sentido` declarado por parámetro, `cuando` vs hechos, leyenda, y que nada afirme cumplimiento sin norma ni cita |
 
 El detalle y el porqué están en `00-METODOLOGIA.md`.
 

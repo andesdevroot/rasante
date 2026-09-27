@@ -569,7 +569,7 @@ coordenada (lat, lon)
 | Geo (L0) | `rasante.geo` | `shapely`, `pyproj`, `httpx` |
 | CLI | `rasante.cli` | `typer` |
 
-Instalado hoy: `httpx`, `pypdf`, `pyyaml`. `shapely` y `pyproj` llegan con T1.9. El resto se agrega
+Instalado hoy: `httpx`, `pypdf`, `pyyaml`. `shapely` y `pyproj` llegan con T1.11. El resto se agrega
 en la tarea que lo necesite: así cada commit queda atómico y sin dependencias ociosas.
 
 **`rasante.clasificacion` está fuera de `rasante.dominio` a propósito**: habla por red, y el dominio

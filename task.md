@@ -108,9 +108,9 @@ condicionales y potencias. `Proyecto` gana `numero_pisos` y `clasificaciones`. 3
 **T1.4 — Dominio: intérprete de reglas.** ✅ `dominio/reglas.py` (intérprete con `ast` y lista
 blanca) y `corpus/cargador.py` (`cargar_reglas`). **D14 cerrado:** el motor ya no tiene tabla
 hardcodeada — lee `derivaciones` del corpus. `evaluar(proyecto, zona, reglas)`. División por cero y
-dato faltante dan `None`, nunca excepción: eso es `P`, no un fallo. Lo que sigue hardcodeado es solo
-`MAXIMOS` (el sentido de la comparación, que el esquema aún no expresa), en un sitio explícito y con
-un test que falla si el corpus deriva algo sin sentido declarado. Un test verifica sobre el código
+dato faltante dan `None`, nunca excepción: eso es `P`, no un fallo. Lo que quedaba hardcodeado era solo
+`MAXIMOS` (el sentido de la comparación): **cerrado en T1.9**, cuando el `sentido` pasó a declararlo
+el corpus con el esquema exigiéndolo. Un test verifica sobre el código
 fuente que no hay `eval`, `exec` ni `compile`. 35 tests.
 
 **T1.5 — Dominio: verificador de factibilidad.** ✅ `dominio/factibilidad.py` y el tipo `Hallazgo`

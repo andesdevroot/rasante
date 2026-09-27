@@ -116,7 +116,7 @@ Z-2A, Z-3, Z-3A, Z-4, Z-4C, Z-4m, Z-5, Z-5A, Z-6, Z-7, Z-7A/B, Z-8`.
 
 El criterio dominante es **el costo del corpus**, que es el activo del proyecto: **Ñuñoa tiene un
 texto refundido único y reciente con los parámetros en tablas extraíbles.** Ninguna otra candidata
-ofrece eso. Sobre 40 zonas, extraer 3–5 a mano para T1.10 es acotado y trazable.
+ofrece eso. Sobre 40 zonas, extraer 3–5 a mano para T1.14 es acotado y trazable.
 
 Las Condes tiene mejores datos de usos, y fue la tentación obvia, pero tiene **66 zonas** y una
 ordenanza muy enmendada: el costo de construir y *mantener* el corpus es el más alto de las tres.
