@@ -58,8 +58,12 @@ def evaluar(proyecto: Proyecto, zona: Zona, reglas: Reglas) -> list[Veredicto]:
     """Evalúa cada parámetro que la zona declara, en orden determinista por clave."""
     valores = valores_del_proyecto(proyecto)
     clasificacion = clasificar(proyecto, zona, reglas, valores)
+    revisada = zona.procedencia.revisada
     parametros = sorted(zona.parametros.values(), key=lambda p: p.clave)
-    return [_evaluar_uno(parametro, valores, reglas, clasificacion) for parametro in parametros]
+    return [
+        _evaluar_uno(parametro, valores, reglas, clasificacion, revisada)
+        for parametro in parametros
+    ]
 
 
 def clasificar(
@@ -118,6 +122,7 @@ def _evaluar_uno(
     valores: Mapping[str, Decimal | None],
     reglas: Reglas,
     clasificacion: Clasificacion,
+    fuente_revisada: bool,
 ) -> Veredicto:
     limite, indeterminados = _limite_vigente(parametro, clasificacion)
     derivacion = reglas.derivaciones.get(parametro.clave)
@@ -128,7 +133,7 @@ def _evaluar_uno(
     )
     return Veredicto(
         parametro_id=parametro.id,
-        codigo=_decidir(parametro, limite, indeterminados, valor_proyecto),
+        codigo=_decidir(parametro, limite, indeterminados, valor_proyecto, fuente_revisada),
         cita=parametro.cita if limite is None else limite.cita,
         valor_norma=None if limite is None else limite.valor,
         valor_proyecto=valor_proyecto,
@@ -171,8 +176,16 @@ def _decidir(
     limite: Limite | None,
     indeterminados: tuple[str, ...],
     valor_proyecto: Decimal | None,
+    fuente_revisada: bool,
 ) -> CodigoVeredicto:
-    """El orden importa: todo lo que no se puede afirmar sale antes de cualquier comparación."""
+    """El orden importa: todo lo que no se puede afirmar sale antes de cualquier comparación.
+
+    Lo primero de todo es la **procedencia**: de un corpus que nadie firmó no se afirma nada, ni
+    aprobando ni rechazando. `NO_APLICA` incluido: "no procede" también es una afirmación sobre la
+    norma, y no se puede hacer desde un dato sin revisar.
+    """
+    if not fuente_revisada:
+        return CodigoVeredicto.PENDIENTE
     if parametro.estado is EstadoParametro.NO_APLICA:
         return CodigoVeredicto.NO_PROCEDE
     if indeterminados:

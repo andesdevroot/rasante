@@ -229,6 +229,16 @@ class Procedencia:
     revisado_por: str | None = None
     estado: EstadoRevision = EstadoRevision.BORRADOR
 
+    @property
+    def revisada(self) -> bool:
+        """¿Un humano firmó estos valores?
+
+        `estado` es una etiqueta; **la firma es `revisado_por`**. Sin firma, ningún valor de este
+        documento puede producir un `(C)` ni un `(NC)`: afirmar cualquiera de los dos sería un
+        informe sin respaldo de una persona.
+        """
+        return self.revisado_por is not None
+
     def __post_init__(self) -> None:
         if not self.url_fuente.strip():
             raise ErrorDominio("Procedencia necesita 'url_fuente' no vacía")
@@ -351,6 +361,9 @@ class CodigoHallazgo(StrEnum):
 
     CLASIFICACION_INDETERMINADA = "clasificacion_indeterminada"
     """No hay datos para saber qué límite rige. Se da `P`; **jamás** se asume el más permisivo."""
+
+    FUENTE_SIN_REVISAR = "fuente_sin_revisar"
+    """El corpus de esta comuna no tiene firma humana. Un dato sin validar no puede aprobar."""
 
 
 class Severidad(StrEnum):

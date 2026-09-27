@@ -32,6 +32,8 @@ determinísticamente y emite el Formato Tipo MINVU (Circular DDU 514).
 | D13 | **La OGUC aporta reglas; el PRC aporta valores.** Son dos mitades del corpus con naturaleza y frecuencia de cambio distintas | Ver §2.4. La OGUC define *cómo se computa*; los números (`cos 0,6`) los fija cada plan regulador |
 | D14 | **El corpus es ejecutable.** Sus reglas no se describen: se interpretan | Ver §2.5. Hoy `DERIVACIONES` en `motor.py` hardcodea lo que `corpus/oguc/*.yaml` describe: dos fuentes de verdad para el mismo cálculo |
 | D15 | **El motor verifica factibilidad, no solo parámetros sueltos** | Ver §2.6. Los parámetros están acoplados geométricamente: chequeados por separado, todos pueden dar `C` en un proyecto imposible |
+| D17 | **La incertidumbre vive en la extracción, no en el veredicto.** El extractor devuelve alternativas y confianza (Choice/Score/Noul); el motor consume solo valores ya resueltos | Ver §2.8. La ambigüedad se resuelve **una vez** al escribir el corpus, no en cada proyecto |
+| D18 | **Un dato sin revisar no aprueba.** Sin `revisado_por` no hay `C` ni `NC`, solo `P` | Ver §2.8. Verificado el 2026-09-26: el motor no leía `EstadoRevision`, y `borrador` producía `C` |
 | D16 | **El motor selecciona el límite aplicable evaluando hechos del corpus.** Si un hecho es indeterminado, da `P` — **nunca elige el límite más permisivo** | Ver §2.7. El caso real: la OGUC `2.6.5` permite +50 % de `cus` bajo las condiciones 1.a/1.b del `2.6.4`, pero solo +30 % bajo la 1.c |
 
 ## 2. Arquitectura de capas
@@ -450,6 +452,55 @@ manda el más restrictivo.
 **Dónde sí entra el aprendizaje.** Extrayendo datos de PDFs y planos (iteración 2), y redactando la
 propuesta de regla que un humano valida por PR. **El modelo propone; el humano firma.** Nunca en la
 ruta del veredicto.
+
+## 2.8 Incertidumbre: en la extracción, no en el veredicto (D17, D18)
+
+**El agujero que se verificó.** El motor **no leía** `Procedencia.estado`. Una zona en `borrador`,
+con `revisado_por=None`, producía los mismos `(C)` que una validada:
+
+```
+corpus en estado borrador   -> C   (revisado_por=None)
+corpus en estado revisado   -> C   (revisado_por=None)
+```
+
+Es la misma clase de fallo que el proyecto viene cerrando: **aprobación silenciosa desde entrada no
+confiable**. Un dato que nadie firmó no puede convertirse en un `(C)` — ni en un `(NC)`, que
+rechazaría un proyecto que quizá cumple. De ahí **D18**: sin firma, todo sale `P` y un `Hallazgo`
+que dice por qué.
+
+**Dónde SÍ hay incertidumbre de verdad: la extracción.** No la evaluación. Sobre un PDF escaneado
+—la DDU 514 extrae `"SAANTIAGo, 10 ENE 2029"`— la duda es real, y ahí las tres primitivas encajan:
+
+| Primitiva | Dónde vive |
+|---|---|
+| **Choice** | "¿cuál de estos 8 artículos define constructibilidad?" |
+| **Score** | "¿qué tan legible es esta página?" — triaje antes de extraer |
+| **Noul** | "¿este fragmento contiene un coeficiente de ocupación de suelo?" (probabilidad 0–1) |
+
+**D17: eso es un contrato de la capa de extracción, no del motor.** Cada dato extraído llega con sus
+alternativas y su confianza, y **solo cruza al motor cuando un humano lo resolvió a un valor
+único**. La confianza decide **si un dato está listo**, no *cuánto cumple*. Un umbral bajo lo deja en
+`borrador`; una firma lo pasa a `revisado`.
+
+**Por qué el veredicto no puede ser probabilístico.**
+
+1. **Es un acto, no una estimación.** `(C)` afirma que el proyecto cumple la norma, bajo
+   responsabilidad civil y penal. Una probabilidad no se firma.
+2. **El Formato Tipo no tiene casillero.** La DDU 514 define `(C)/(NC)/(P)/(NP)/(PR)`. No existe
+   "confianza 0,62"; inventarlo rompe la correspondencia con el formulario oficial.
+3. **Lo binario obliga a decidir.** Un `0,94` se archiva sin mirar; un `P` fuerza a resolver el dato.
+4. **La ambigüedad se resuelve una vez, no en cada proyecto.** Si un artículo es ambiguo, un humano
+   lo lee, decide y **escribe la regla** — versionada, citada y revisada, aplicándose igual a todos
+   los proyectos futuros. Un evaluador probabilístico volvería a adivinar en cada evaluación: la
+   misma norma daría 0,70 en enero y 0,65 en junio **sobre el mismo expediente**. Eso no es rigor,
+   es ruido con decimales.
+
+**Ninguno de los fallos reales fue de interpretación.** El registro de esta iteración: el troceador
+fusionaba `2.1.3` con `2.1.3 bis` (regex mal escrita), `densidad.bruta.bruta` (clave compuesta
+pasada como `id`), *"ligan todos"* rompía el `2.6.5` (spec mal escrita, con la norma **inequívoca**
+delante), tres citas parafraseadas (transcripción). Todos deterministas, todos cazados por
+verificaciones deterministas. Un evaluador probabilístico no habría cazado **ninguno**, y habría
+hecho los cuatro más difíciles de cazar.
 
 ## 3. Flujo de la iteración 1
 

@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 1 — Vertical slice, en curso.** T1.1–T1.7 cerradas (iteración 0 completa: T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1–T1.7 y T1.7b cerradas (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|
 | Tarea en curso | ninguna. Siguiente: **T1.8** (índice espacial) |
 | Código | `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
-| Tests | **262 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tests | **273 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | **`./gate.sh`** en verde (`set -euo pipefail`): pytest, ruff y mypy sobre `src` **y** `tests` |
 | Árbol git | limpio — todo commiteado |
 
@@ -134,3 +134,16 @@ Se incorporaron tres arreglos que **reducen fallos y tiempo a la vez**, más dos
 | `tests/test_consistencia.py` | invariantes transversales en un sitio: vocabulario, derivaciones vs `MAXIMOS`, `cuando` vs hechos, leyenda, y que nada afirme cumplimiento sin norma ni cita |
 
 El detalle y el porqué están en `00-METODOLOGIA.md`.
+
+## Agujero cerrado (2026-09-26)
+
+**El motor no leía `EstadoRevision`.** Una zona en `borrador`, sin `revisado_por`, producía los
+mismos `(C)` que una validada. Lo detectó el usuario al proponer un evaluador probabilístico; su
+instinto apuntó a un agujero real, aunque el mecanismo propuesto no era el correcto.
+
+Cerrado con **D18**: sin firma humana no hay `C` ni `NC`, solo `P` y un `Hallazgo`
+(`FUENTE_SIN_REVISAR`). Vale en las dos direcciones: un `(NC)` sin fundamento también haría daño.
+
+**D17** registra JEV (Choice/Score/Noul) donde sí corresponde: **contrato de la capa de extracción**,
+iteración 2. La confianza decide si un dato está listo, no cuánto cumple. El razonamiento completo
+—incluido por qué el veredicto no puede ser probabilístico— está en `03-DISENO.md` §2.8.

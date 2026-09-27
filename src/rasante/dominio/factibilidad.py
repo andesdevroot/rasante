@@ -46,6 +46,23 @@ PISO_REFERENCIA_M = Decimal("3.50")
 
 def verificar(proyecto: Proyecto, zona: Zona, reglas: Reglas) -> list[Hallazgo]:
     """Hallazgos de factibilidad. Lista vacía significa "no se puede afirmar que haya problema"."""
+    if not zona.procedencia.revisada:
+        # De un corpus sin firma no se puede afirmar **nada**, ni siquiera que un proyecto sea
+        # imposible: la geometría sería correcta, pero el valor que la hace fallar no está revisado.
+        return [
+            Hallazgo(
+                codigo=CodigoHallazgo.FUENTE_SIN_REVISAR,
+                severidad=Severidad.ADVERTENCIA,
+                mensaje=(
+                    f"el corpus de {zona.comuna} ({zona.codigo}) no tiene revisión humana: "
+                    f"estado '{zona.procedencia.estado}', sin 'revisado_por'. No se emiten "
+                    "veredictos ni hallazgos hasta que alguien lo firme."
+                ),
+                cita=_cita_del_acoplamiento("cus", zona, reglas)
+                or next(iter(sorted(zona.parametros.values(), key=lambda p: p.clave))).cita,
+                parametros=tuple(sorted(zona.parametros)),
+            )
+        ]
     return [
         *_proyecto_imposible(proyecto, zona, reglas),
         *_cus_inalcanzable(zona, reglas),

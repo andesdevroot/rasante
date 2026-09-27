@@ -47,7 +47,7 @@ PROCEDENCIA = Procedencia(
     url_fuente="https://x.cl/o.pdf",
     hash_fuente="sha256:" + "0" * 64,
     consolidado_por="refundido",
-    extraido="2026-09-26",
+    extraido="2026-09-26", revisado_por="Revisor de prueba",
 )
 
 

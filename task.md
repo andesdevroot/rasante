@@ -68,6 +68,7 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.5 | Dominio: verificador de factibilidad | ✅ | `[T1.5]` |
 | T1.6 | Hechos y selección de límites condicionales | ✅ | `[T1.6]` |
 | T1.7 | Corpus: cargador y validación de YAML | ✅ | `[T1.7]` |
+| T1.7b | Un dato sin revisar no aprueba (D18) | ✅ | `[T1.7b]` |
 | T1.8 | Geo: reproyección e índice espacial | ⬜ |
 | T1.9 | Resolución coordenada → zona | ⬜ |
 | T1.10 | CLI | ⬜ |

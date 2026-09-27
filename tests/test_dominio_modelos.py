@@ -70,7 +70,7 @@ def procedencia() -> Procedencia:
         url_fuente="https://www.nunoa.cl/ordenanza.pdf",
         hash_fuente="sha256:" + "0" * 64,
         consolidado_por="Texto refundido, junio 2025",
-        extraido="2026-09-26",
+        extraido="2026-09-26", revisado_por="Revisor de prueba",
     )
 
 
