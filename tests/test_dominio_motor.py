@@ -31,9 +31,11 @@ from rasante.dominio.modelos import (
     CodigoVeredicto,
     EstadoParametro,
     EstadoRevision,
+    Limite,
     Parametro,
     Procedencia,
     Proyecto,
+    TipoLimite,
     Veredicto,
     Vigencia,
     Zona,
@@ -69,14 +71,26 @@ def parametro(
     valor: str | None,
     *,
     calificador: str | None = None,
-    estado: EstadoParametro = EstadoParametro.APLICABLE,
+    estado: EstadoParametro | None = None,
     unidad: str = "adimensional",
 ) -> Parametro:
+    """Un parámetro con un solo límite base.
+
+    Un `valor=None` es un parámetro **desconocido**, no uno aplicable sin límites: no tener el valor
+    y saber que la norma lo fija son cosas distintas, y el motor las trata distinto.
+    """
+    if valor is None:
+        return Parametro(
+            id=id_,
+            limites=(),
+            estado=estado or EstadoParametro.DESCONOCIDO,
+            cita=CITA,
+            calificador=calificador,
+        )
     return Parametro(
         id=id_,
-        valor=Decimal(valor) if valor is not None else None,
-        unidad=unidad,
-        estado=estado,
+        limites=(Limite(TipoLimite.BASE, Decimal(valor), unidad, CITA),),
+        estado=estado or EstadoParametro.APLICABLE,
         cita=CITA,
         calificador=calificador,
     )

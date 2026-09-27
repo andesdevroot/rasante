@@ -36,10 +36,12 @@ from rasante.dominio.modelos import (
     EstadoParametro,
     EstadoRevision,
     Hallazgo,
+    Limite,
     Parametro,
     Procedencia,
     Proyecto,
     Severidad,
+    TipoLimite,
     Vigencia,
     Zona,
 )
@@ -64,8 +66,7 @@ def procedencia() -> Procedencia:
 def parametro(id_: str, valor: str, calificador: str | None = None, unidad: str = "adimensional"):
     return Parametro(
         id=id_,
-        valor=Decimal(valor),
-        unidad=unidad,
+        limites=(Limite(TipoLimite.BASE, Decimal(valor), unidad, CITA),),
         estado=EstadoParametro.APLICABLE,
         cita=CITA,
         calificador=calificador,

@@ -25,9 +25,11 @@ from rasante.dominio.modelos import (
     ErrorDominio,
     EstadoParametro,
     EstadoRevision,
+    Limite,
     Parametro,
     Procedencia,
     Proyecto,
+    TipoLimite,
     Veredicto,
     Vigencia,
     Zona,
@@ -36,6 +38,27 @@ from rasante.dominio.modelos import (
 
 RAIZ = Path(__file__).resolve().parents[1]
 CORPUS_DDU = RAIZ / "corpus" / "ddu" / "514.yaml"
+
+
+CITA_POR_DEFECTO = Cita(norma_id="oguc", articulo="1.1.2", texto="definiciones")
+
+
+def par(
+    id: str,  # noqa: A002 - se llama `id` para que los tests se lean como el modelo
+    valor: object = None,
+    *,
+    calificador: str | None = None,
+    unidad: str = "adimensional",
+    estado: EstadoParametro = EstadoParametro.APLICABLE,
+    cita: Cita | None = None,
+) -> Parametro:
+    """Un parámetro con un solo límite base, para no repetir el envoltorio en cada test."""
+    usada = cita or CITA_POR_DEFECTO
+    if valor is None:
+        limites: tuple[Limite, ...] = ()
+    else:
+        limites = (Limite(TipoLimite.BASE, valor, unidad, usada),)  # type: ignore[arg-type]
+    return Parametro(id=id, limites=limites, estado=estado, cita=usada, calificador=calificador)
 
 
 def cita() -> Cita:
@@ -89,11 +112,13 @@ def test_un_veredicto_valido_se_construye() -> None:
 
 def test_decimal_se_preserva_sin_perdida() -> None:
     valor = Decimal("3.6")
-    p = Parametro(
+    p = par(
         id="cus", valor=valor, unidad="adimensional", estado=EstadoParametro.APLICABLE, cita=cita()
     )
-    assert p.valor == valor
-    assert str(p.valor) == "3.6", "el roundtrip no debe reintroducir notación científica"
+    assert p.base is not None and p.base.valor == valor
+    assert p.base is not None and str(p.base.valor) == "3.6", (
+        "el roundtrip no debe reintroducir notación científica"
+    )
 
 
 def test_decimal_distingue_la_coma_de_la_ordenanza() -> None:
@@ -105,7 +130,7 @@ def test_decimal_distingue_la_coma_de_la_ordenanza() -> None:
 @pytest.mark.parametrize("malo", [0.6, 3.5, 1])
 def test_un_parametro_rechaza_valores_que_no_son_decimal(malo: object) -> None:
     with pytest.raises(ErrorDominio, match="Decimal"):
-        Parametro(
+        par(
             id="cos",
             valor=malo,  # type: ignore[arg-type]
             unidad="adimensional",
@@ -123,7 +148,7 @@ def test_un_proyecto_rechaza_float() -> None:
 
 
 def test_clave_sin_calificador_es_el_id() -> None:
-    p = Parametro(
+    p = par(
         id="cus", valor=Decimal("3.6"), unidad="adimensional", estado=EstadoParametro.APLICABLE,
         cita=cita(),
     )
@@ -140,7 +165,7 @@ def test_clave_compuesta_es_la_unica_definicion() -> None:
 def test_un_parametro_rechaza_un_id_que_ya_trae_el_calificador() -> None:
     """Bug real de T1.2: pasar la clave compuesta como `id` producía `densidad.bruta.bruta`."""
     with pytest.raises(ErrorDominio, match="calificador"):
-        Parametro(
+        par(
             id="densidad.bruta",
             valor=Decimal("50"),
             unidad="hab/ha",
@@ -151,7 +176,7 @@ def test_un_parametro_rechaza_un_id_que_ya_trae_el_calificador() -> None:
 
 
 def test_clave_con_calificador_es_compuesta() -> None:
-    p = Parametro(
+    p = par(
         id="cos", valor=Decimal("0.6"), unidad="adimensional", estado=EstadoParametro.APLICABLE,
         cita=cita(), calificador="primer_piso",
     )
@@ -160,11 +185,11 @@ def test_clave_con_calificador_es_compuesta() -> None:
 
 def test_dos_variantes_del_mismo_parametro_conviven_en_una_zona() -> None:
     """El caso real de Ñuñoa: cos `0,6` de primer piso y `0,4` de pisos superiores."""
-    primer_piso = Parametro(
+    primer_piso = par(
         id="cos", valor=Decimal("0.6"), unidad="adimensional", estado=EstadoParametro.APLICABLE,
         cita=cita(), calificador="primer_piso",
     )
-    superiores = Parametro(
+    superiores = par(
         id="cos", valor=Decimal("0.4"), unidad="adimensional", estado=EstadoParametro.APLICABLE,
         cita=cita(), calificador="pisos_superiores",
     )
@@ -174,12 +199,12 @@ def test_dos_variantes_del_mismo_parametro_conviven_en_una_zona() -> None:
         vigencia=Vigencia(), procedencia=procedencia(),
     )
     assert len(zona.parametros) == 2, "las dos variantes deben sobrevivir, no pisarse"
-    assert zona.parametro("cos.primer_piso").valor == Decimal("0.6")
-    assert zona.parametro("cos.pisos_superiores").valor == Decimal("0.4")
+    assert zona.parametro("cos.primer_piso").base.valor == Decimal("0.6")
+    assert zona.parametro("cos.pisos_superiores").base.valor == Decimal("0.4")
 
 
 def test_la_zona_rechaza_una_clave_que_no_coincide_con_su_parametro() -> None:
-    p = Parametro(
+    p = par(
         id="cos", valor=Decimal("0.6"), unidad="adimensional", estado=EstadoParametro.APLICABLE,
         cita=cita(), calificador="primer_piso",
     )
@@ -192,13 +217,12 @@ def test_la_zona_rechaza_una_clave_que_no_coincide_con_su_parametro() -> None:
 
 
 def test_un_parametro_sin_valor_es_legal() -> None:
-    """Un dato que no tenemos se representa con valor None y estado DESCONOCIDO, no con un 0."""
-    p = Parametro(
-        id="densidad", valor=None, unidad="hab/ha", estado=EstadoParametro.DESCONOCIDO, cita=cita(),
-        calificador="bruta",
-    )
-    assert p.valor is None
+    """Un dato que no tenemos se representa sin límites y con estado DESCONOCIDO, no con un 0."""
+    p = par("densidad", None, calificador="bruta", estado=EstadoParametro.DESCONOCIDO)
+    assert p.limites == ()
+    assert p.base is None
     assert p.estado is EstadoParametro.DESCONOCIDO
+    assert p.clave == "densidad.bruta"
 
 
 # --- La leyenda de veredictos debe coincidir con el corpus ---

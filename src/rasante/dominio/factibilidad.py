@@ -29,11 +29,13 @@ from .modelos import (
     Cita,
     CodigoHallazgo,
     Hallazgo,
+    Limite,
     Parametro,
     Proyecto,
     Severidad,
     Zona,
 )
+from .motor import clasificar
 from .reglas import Reglas
 
 # Referencia de la OGUC `2.1.23`: 3,50 m por piso. Solo se usa para traducir una altura normada
@@ -47,7 +49,40 @@ def verificar(proyecto: Proyecto, zona: Zona, reglas: Reglas) -> list[Hallazgo]:
     return [
         *_proyecto_imposible(proyecto, zona, reglas),
         *_cus_inalcanzable(zona, reglas),
+        *_clasificacion_indeterminada(proyecto, zona, reglas),
     ]
+
+
+def _clasificacion_indeterminada(
+    proyecto: Proyecto, zona: Zona, reglas: Reglas,
+) -> list[Hallazgo]:
+    """Un límite condicional que no se puede decidir: el motor dará `P`, y hay que decir por qué.
+
+    Que el veredicto salga `P` no basta: el revisor necesita saber **qué dato** le falta para
+    clasificar el proyecto. Es la diferencia entre "no sé" y "no me consta".
+    """
+    clasificacion = clasificar(proyecto, zona, reglas)
+    hallazgos: list[Hallazgo] = []
+    for parametro in sorted(zona.parametros.values(), key=lambda x: x.clave):
+        for limite in parametro.excepciones:
+            faltantes = clasificacion.indeterminados(limite.cuando)
+            if not faltantes:
+                continue
+            hallazgos.append(
+                Hallazgo(
+                    codigo=CodigoHallazgo.CLASIFICACION_INDETERMINADA,
+                    severidad=Severidad.ADVERTENCIA,
+                    mensaje=(
+                        f"no se puede determinar si rige la excepción de "
+                        f"'{parametro.clave}': falta "
+                        f"el dato para {' y '.join(faltantes)}. Se deja pendiente; no se asume el "
+                        "límite más permisivo."
+                    ),
+                    cita=limite.cita,
+                    parametros=(parametro.clave, *faltantes),
+                )
+            )
+    return hallazgos
 
 
 # --- 1. ¿El proyecto declarado se puede construir? ---
@@ -124,18 +159,24 @@ def _cus_inalcanzable(zona: Zona, reglas: Reglas) -> list[Hallazgo]:
 
 def _pisos_normados(zona: Zona) -> int | None:
     """Cuántos pisos permite la norma, según su altura máxima en metros."""
-    altura = zona.parametro("altura_maxima")
-    if altura is None or altura.valor is None or altura.unidad != "m":
+    base = _base(zona, "altura_maxima")
+    if base is None or base.unidad != "m":
         return None
-    return int(altura.valor / PISO_REFERENCIA_M)
+    return int(base.valor / PISO_REFERENCIA_M)
 
 
 # --- utilidades ---
 
 
-def _valor(zona: Zona, clave: str) -> Decimal | None:
+def _base(zona: Zona, clave: str) -> Limite | None:
+    """El límite base de ese parámetro: el valor por defecto de la zona."""
     parametro = zona.parametro(clave)
-    return None if parametro is None else parametro.valor
+    return None if parametro is None else parametro.base
+
+
+def _valor(zona: Zona, clave: str) -> Decimal | None:
+    base = _base(zona, clave)
+    return None if base is None else base.valor
 
 
 def _claves(zona: Zona, *candidatas: str) -> tuple[str, ...]:

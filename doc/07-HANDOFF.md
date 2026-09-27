@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 1 — Vertical slice, en curso.** T1.1–T1.5 cerradas (iteración 0 completa: T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1–T1.6 cerradas (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.6** (hechos y selección de límites) |
+| Tarea en curso | ninguna. Siguiente: **T1.7** (cargador de zonas) |
 | Código | `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
-| Tests | **213 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tests | **233 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | `pytest` verde, sin saltados · `ruff` limpio · `mypy --strict` limpio |
 | Árbol git | limpio — todo commiteado |
 
@@ -46,21 +46,13 @@ Una tarea, un commit: T0.1 quedó consolidada en `64bdcdd` tras el squash.
 
 ## Siguiente tarea
 
-**T1.6 — Hechos y selección de límites condicionales.** Ver `task.md` y `03-DISENO.md` §2.7.
+**T1.7 — Corpus: cargador de zonas** (`src/rasante/corpus/cargador.py`, que ya tiene
+`cargar_reglas`).
 
-El motor tiene que **elegir cuál límite aplica** según cómo sea el proyecto, evaluando hechos que el
-corpus define como expresiones — la misma maquinaria de T1.4. El caso real es la OGUC `2.6.5`: +50 %
-de `cus` bajo las condiciones 1.a/1.b del `2.6.4`, pero solo +30 % bajo la 1.c.
+Convierte `corpus/prc/<region>/<comuna>/zonas/*.yaml` en `Zona`, al esquema de T1.3: `limites` con
+`tipo` y `cuando`, coma decimal de las ordenanzas y rechazo de claves duplicadas.
 
-**No es un clasificador entrenado.** La regla está escrita y es una comparación
-(`superficie_predio_m2 >= 5 * superficie_predial_minima`). Un modelo la aproximaría peor, no sería
-reproducible, y el revisor no podría citar por qué. Es D3 aplicado a las condiciones.
-
-**Lo que cambia:** `Parametro` pasa de `valor` a `limites: tuple[Limite, ...]`.
-
-**Lo que no puede pasar:** un hecho indeterminado **jamás** cae al límite más permisivo. Da `P`.
-
-**T1.7 quedó desbloqueada** por esta tarea: el cargador necesita el modelo con tupla de límites.
+**Desbloqueada:** el modelo ya tiene `Parametro.limites` y el motor ya sabe elegir el límite vigente.
 
 ## Blockers
 

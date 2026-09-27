@@ -25,11 +25,12 @@ from __future__ import annotations
 
 import ast
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
+from types import MappingProxyType
 
 from .modelos import Cita
-from .vocabulario import VOCABULARIO, ErrorVocabulario, arbol, ruta_de
+from .vocabulario import VOCABULARIO, ErrorVocabulario, arbol, nombres_de_expresion, ruta_de
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,11 +62,75 @@ class Relacion:
 
 
 @dataclass(frozen=True, slots=True)
+class Hecho:
+    """Un predicado nombrado que el corpus define como expresión (D16).
+
+    Es lo que permite que un límite condicional diga *"aplico si el proyecto cumple la condición
+    1.a) del 2.6.4"* sin que nadie tenga que decidirlo con un modelo: la condición es una
+    comparación escrita en la norma.
+    """
+
+    nombre: str
+    expresion: str
+    cita: Cita
+
+
+@dataclass(frozen=True, slots=True)
+class Clasificacion:
+    """Qué hechos se cumplen para un proyecto.
+
+    Tres estados por hecho, no dos: `True`, `False` y **`None` = no se sabe**. El tercero es el que
+    impide que un dato faltante se convierta en un límite más permisivo.
+    """
+
+    hechos: Mapping[str, bool | None]
+
+    def aplica(self, cuando: frozenset[str]) -> bool | None:
+        """`True` si se cumplen todos; `False` si alguno no; `None` si alguno es indeterminado."""
+        estados = [self.hechos.get(nombre) for nombre in sorted(cuando)]
+        if any(estado is None for estado in estados):
+            return None
+        return all(estados)
+
+    def indeterminados(self, cuando: frozenset[str]) -> tuple[str, ...]:
+        """Los hechos que no se pudieron determinar, para poder decir **cuál** dato falta."""
+        return tuple(n for n in sorted(cuando) if self.hechos.get(n) is None)
+
+
+@dataclass(frozen=True, slots=True)
 class Reglas:
     """Lo que el corpus aporta al motor. Sin reglas no se puede calcular nada, y todo sale `P`."""
 
     derivaciones: Mapping[str, Derivacion]
     relaciones: tuple[Relacion, ...] = ()
+    hechos: Mapping[str, Hecho] = field(
+        default_factory=lambda: MappingProxyType({})
+    )
+
+
+def declarar_nombres(
+    expresion: str, valores: Mapping[str, Decimal | None]
+) -> dict[str, Decimal | None]:
+    """Completa con `None` los nombres que la expresión usa y el llamador no aportó.
+
+    Un nombre que el corpus menciona y el proyecto no declara es un **dato faltante**, no un error:
+    debe dar `None` (indeterminado). Sin esto, la evaluación levantaría `ErrorVocabulario` por algo
+    que simplemente no sabemos, y el motor no podría distinguir "no lo sé" de "está mal escrito".
+    """
+    completos = dict(valores)
+    for nombre in nombres_de_expresion(expresion):
+        completos.setdefault(nombre, None)
+    return completos
+
+
+def evaluar_hecho(expresion: str, valores: Mapping[str, Decimal | None]) -> bool | None:
+    """Evalúa un predicado. `None` si no se puede determinar.
+
+    Las comparaciones se representan internamente como `Decimal(1)`/`Decimal(0)` para no tener que
+    devolver dos tipos desde el mismo evaluador; acá se traducen a `bool`.
+    """
+    resultado = evaluar_expresion(expresion, valores)
+    return None if resultado is None else bool(resultado)
 
 
 def evaluar_expresion(expresion: str, valores: Mapping[str, Decimal | None]) -> Decimal | None:
@@ -84,7 +149,10 @@ def _evaluar(nodo: ast.expr, valores: Mapping[str, Decimal | None]) -> Decimal |
 
     if isinstance(nodo, (ast.Name, ast.Attribute)):
         ruta = ruta_de(nodo)
-        if ruta is None or ruta not in VOCABULARIO:
+        # Un nombre vale si está en el vocabulario o si el llamador lo aportó: un hecho puede
+        # referirse a un valor **normado** (la superficie predial mínima del PRC), que no es una
+        # primitiva del proyecto. Los nombres los aporta el llamador, nunca la expresión.
+        if ruta is None or (ruta not in VOCABULARIO and ruta not in valores):
             raise ErrorVocabulario(f"nombre fuera del vocabulario: {ruta!r}")
         return valores.get(ruta)
 
@@ -101,8 +169,57 @@ def _evaluar(nodo: ast.expr, valores: Mapping[str, Decimal | None]) -> Decimal |
             return None
         return _aplicar(nodo.op, izquierda, derecha)
 
+    if isinstance(nodo, ast.Compare):
+        return _comparar_cadena(nodo, valores)
+
+    if isinstance(nodo, ast.BoolOp):
+        return _aplicar_logico(nodo, valores)
+
     # `arbol()` ya filtró esto, pero un nodo nuevo en una versión futura del AST no debe colarse.
     raise ErrorVocabulario(f"nodo no evaluable: {type(nodo).__name__}")
+
+
+def _aplicar_logico(nodo: ast.BoolOp, valores: Mapping[str, Decimal | None]) -> Decimal | None:
+    """`and`/`or` sobre predicados. El cortocircuito de Python se respeta."""
+    resultados = [_evaluar(valor, valores) for valor in nodo.values]
+    if isinstance(nodo.op, ast.And):
+        if any(r is not None and not r for r in resultados):
+            return Decimal(0)
+        return None if any(r is None for r in resultados) else Decimal(1)
+    if any(r is not None and r for r in resultados):
+        return Decimal(1)
+    return None if any(r is None for r in resultados) else Decimal(0)
+
+
+def _comparar_cadena(nodo: ast.Compare, valores: Mapping[str, Decimal | None]) -> Decimal | None:
+    """`Decimal(1)` si la comparación se cumple, `Decimal(0)` si no, `None` si falta un dato."""
+    izquierda = _evaluar(nodo.left, valores)
+    if izquierda is None:
+        return None
+    for operador, comparador in zip(nodo.ops, nodo.comparators, strict=True):
+        derecha = _evaluar(comparador, valores)
+        if derecha is None:
+            return None
+        if not _comparar(operador, izquierda, derecha):
+            return Decimal(0)
+        izquierda = derecha
+    return Decimal(1)
+
+
+def _comparar(operador: ast.cmpop, izquierda: Decimal, derecha: Decimal) -> bool:
+    if isinstance(operador, ast.Gt):
+        return izquierda > derecha
+    if isinstance(operador, ast.GtE):
+        return izquierda >= derecha
+    if isinstance(operador, ast.Lt):
+        return izquierda < derecha
+    if isinstance(operador, ast.LtE):
+        return izquierda <= derecha
+    if isinstance(operador, ast.Eq):
+        return izquierda == derecha
+    if isinstance(operador, ast.NotEq):
+        return izquierda != derecha
+    raise ErrorVocabulario(f"comparación no evaluable: {type(operador).__name__}")
 
 
 def _aplicar(operador: ast.operator, izquierda: Decimal, derecha: Decimal) -> Decimal | None:

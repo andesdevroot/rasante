@@ -37,11 +37,31 @@ class ErrorEsquema(ValueError):
 
 
 def validar_corpus(raiz: Path) -> list[Path]:
-    """Valida todos los YAML bajo `raiz`. Devuelve los validados, en orden."""
+    """Valida todos los YAML bajo `raiz`. Devuelve los validados, en orden.
+
+    Además de cada archivo por separado, comprueba **entre archivos** que todo `cuando` tenga su
+    hecho definido en algún artículo. Sin eso, ese límite nunca aplicaría y nadie se enteraría.
+    """
     archivos = sorted(Path(raiz).rglob("*.yaml"))
+    definidos: set[str] = set()
+    exigidos: dict[str, str] = {}
     for archivo in archivos:
         validar_archivo(archivo)
+        datos = _leer(archivo)
+        definidos.update(datos.get("hechos") or {})
+        for parametro in (datos.get("parametros") or {}).values():
+            for limite in parametro.get("limites", []):
+                for nombre in limite.get("cuando") or []:
+                    exigidos.setdefault(nombre, archivo.name)
+    huerfanos = {n: a for n, a in exigidos.items() if n not in definidos}
+    if huerfanos:
+        raise ErrorEsquema(f"'cuando' sin hecho definido en ningún artículo: {huerfanos}")
     return archivos
+
+
+def _leer(archivo: Path) -> dict[str, Any]:
+    datos = yaml.safe_load(archivo.read_text(encoding="utf-8"))
+    return datos if isinstance(datos, dict) else {}
 
 
 def validar_archivo(ruta: Path) -> None:
@@ -65,6 +85,7 @@ def validar_documento(datos: Any, *, origen: str = "") -> None:
     if "parametros" in datos:
         _validar_parametros(datos, prefijo)
     _validar_derivaciones(datos, prefijo)
+    _validar_hechos(datos, prefijo)
 
     declarados = set(datos.get("parametros", {}))
     permitidos = set(VOCABULARIO) | declarados
@@ -109,6 +130,7 @@ def _validar_parametros(datos: dict[str, Any], prefijo: str) -> None:
             raise ErrorEsquema(f"{prefijo}'{clave}': 'limites' no puede estar vacío")
         for indice, limite in enumerate(limites):
             _validar_limite(limite, f"{prefijo}'{clave}'.limites[{indice}]")
+        _validar_tipos_de_limite(limites, clave, prefijo)
 
 
 def _validar_limite(limite: Any, donde: str) -> None:
@@ -153,6 +175,34 @@ def _validar_derivaciones(datos: dict[str, Any], prefijo: str) -> None:
             raise ErrorEsquema(f"{prefijo}derivaciones.{clave}: no es un mapping")
         if not isinstance(derivacion.get("cita"), dict):
             raise ErrorEsquema(f"{prefijo}derivaciones.{clave}: falta 'cita'")
+
+
+def _validar_tipos_de_limite(limites: list[Any], clave: str, prefijo: str) -> None:
+    """Un `base` no lleva condiciones y una `excepcion` las exige, o la semántica se rompe."""
+    for indice, limite in enumerate(limites):
+        tipo = limite.get("tipo")
+        cuando = limite.get("cuando") or []
+        if tipo == "base" and cuando:
+            raise ErrorEsquema(f"{prefijo}'{clave}'.limites[{indice}]: un 'base' no lleva 'cuando'")
+        if tipo == "excepcion" and not cuando:
+            raise ErrorEsquema(
+                f"{prefijo}'{clave}'.limites[{indice}]: una 'excepcion' sin 'cuando' aplicaría "
+                "siempre y anularía al base"
+            )
+
+
+def _validar_hechos(datos: dict[str, Any], prefijo: str) -> None:
+    """Un hecho es un predicado nombrado. Su `expresion` la valida `_expresiones`."""
+    hechos = datos.get("hechos")
+    if hechos is None:
+        return
+    if not isinstance(hechos, dict):
+        raise ErrorEsquema(f"{prefijo}'hechos' no es un mapping")
+    for nombre, hecho in hechos.items():
+        if not isinstance(hecho, dict):
+            raise ErrorEsquema(f"{prefijo}hechos.{nombre}: no es un mapping")
+        if not isinstance(hecho.get("cita"), dict):
+            raise ErrorEsquema(f"{prefijo}hechos.{nombre}: falta 'cita'")
 
 
 def _validar_relacion(relacion: Any, objetivos_permitidos: set[str], donde: str) -> None:

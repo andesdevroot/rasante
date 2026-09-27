@@ -57,16 +57,32 @@ CONDICIONES: frozenset[str] = frozenset(
     }
 )
 
+# Valores que fija el plan regulador y que un hecho puede citar. No son primitivas del proyecto:
+# `superficie_predial_minima` la establece el PRC, y la condición 1.a) del art. 2.6.4 la compara
+# contra la superficie del predio.
+NORMADOS: frozenset[str] = frozenset({"superficie_predial_minima"})
+
 # Todo lo que una expresión puede nombrar. Definición ÚNICA: la usan el intérprete (`reglas.py`) y
 # el validador del corpus (`corpus/esquema.py`). Si estuviera en dos sitios, podrían divergir y una
 # expresión pasaría la validación para romper en la evaluación.
-VOCABULARIO: frozenset[str] = frozenset(PRIMITIVAS) | PARAMETROS
+VOCABULARIO: frozenset[str] = frozenset(PRIMITIVAS) | PARAMETROS | NORMADOS
 
 OPERADORES_BINARIOS = (ast.Add, ast.Sub, ast.Mult, ast.Div)
 OPERADORES_UNARIOS = (ast.UAdd, ast.USub)
+# Las comparaciones son lo que permite que un `hecho` sea un predicado. Sin esto no hay `cuando`.
+OPERADORES_COMPARACION = (
+    ast.Gt, ast.GtE, ast.Lt, ast.LtE, ast.Eq, ast.NotEq,
+)
 
 # Nodos que solo aportan estructura: se aceptan y se validan por su padre.
-_ESTRUCTURALES = (ast.Expression, ast.expr_context, ast.operator, ast.unaryop)
+_ESTRUCTURALES = (
+    ast.Expression,
+    ast.expr_context,
+    ast.operator,
+    ast.unaryop,
+    ast.cmpop,
+    ast.boolop,
+)
 
 
 class ErrorVocabulario(ValueError):
@@ -110,6 +126,15 @@ def _revisar(nodo: ast.AST) -> None:
             if not isinstance(hijo.op, OPERADORES_BINARIOS):
                 raise ErrorVocabulario(f"operador no permitido: {type(hijo.op).__name__}")
             continue
+        if isinstance(hijo, ast.BoolOp):
+            if not isinstance(hijo.op, (ast.And, ast.Or)):
+                raise ErrorVocabulario(f"operador lógico no permitido: {type(hijo.op).__name__}")
+            continue
+        if isinstance(hijo, ast.Compare):
+            for op in hijo.ops:
+                if not isinstance(op, OPERADORES_COMPARACION):
+                    raise ErrorVocabulario(f"comparación no permitida: {type(op).__name__}")
+            continue
         if isinstance(hijo, ast.UnaryOp):
             if not isinstance(hijo.op, OPERADORES_UNARIOS):
                 raise ErrorVocabulario(f"operador unario no permitido: {type(hijo.op).__name__}")
@@ -123,6 +148,13 @@ def _recolectar(nodo: ast.expr) -> set[str]:
         return _recolectar(nodo.left) | _recolectar(nodo.right)
     if isinstance(nodo, ast.UnaryOp):
         return _recolectar(nodo.operand)
+    if isinstance(nodo, ast.Compare):
+        return _recolectar(nodo.left).union(*(_recolectar(c) for c in nodo.comparators))
+    if isinstance(nodo, ast.BoolOp):
+        encontrados: set[str] = set()
+        for valor in nodo.values:
+            encontrados |= _recolectar(valor)
+        return encontrados
     if isinstance(nodo, (ast.Name, ast.Attribute)):
         ruta = ruta_de(nodo)
         return {ruta} if ruta else set()

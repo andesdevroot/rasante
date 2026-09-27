@@ -66,7 +66,7 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.3 | Corpus ejecutable: esquema y migración | ✅ | `[T1.3]` |
 | T1.4 | Dominio: intérprete de reglas | ✅ | `[T1.4]` |
 | T1.5 | Dominio: verificador de factibilidad | ✅ | `[T1.5]` |
-| T1.6 | Hechos y selección de límites condicionales | ⬜ |
+| T1.6 | Hechos y selección de límites condicionales | ✅ | `[T1.6]` |
 | T1.7 | Corpus: cargador y validación de YAML | ⬜ |
 | T1.8 | Geo: reproyección e índice espacial | ⬜ |
 | T1.9 | Resolución coordenada → zona | ⬜ |

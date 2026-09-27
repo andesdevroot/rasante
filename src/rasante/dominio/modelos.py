@@ -105,23 +105,66 @@ class Cita:
             raise ErrorDominio("una Cita necesita 'texto' no vacío")
 
 
+class TipoLimite(StrEnum):
+    """Cómo se relaciona un límite con los demás del mismo parámetro."""
+
+    BASE = "base"
+    """El valor por defecto. No lleva condiciones: un base con condición no es un base."""
+
+    EXCEPCION = "excepcion"
+    """Cuando sus hechos se cumplen, **sustituye** al base.
+
+    Sustituye, no se suma. Si ligaran los dos y ganara el más restrictivo, la excepción del
+    Conjunto Armónico de la OGUC `2.6.5` —que *amplía* el `cus`— nunca podría aplicarse.
+    """
+
+
+@dataclass(frozen=True, slots=True)
+class Limite:
+    """Un valor normado para un parámetro, con las condiciones que lo activan.
+
+    `cuando` son nombres de **hechos** que el corpus define como expresiones. Una excepción sin
+    `cuando` aplicaría siempre y anularía al base; por eso no se puede construir.
+    """
+
+    tipo: TipoLimite
+    valor: Decimal
+    unidad: str
+    cita: Cita
+    cuando: frozenset[str] = frozenset()
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.valor, Decimal):
+            tipo = type(self.valor).__name__
+            raise ErrorDominio(f"el valor de un Limite debe ser Decimal, no {tipo}")
+        if not isinstance(self.cita, Cita):
+            raise ErrorDominio("un Limite necesita una Cita")
+        if not self.unidad.strip():
+            raise ErrorDominio("un Limite necesita 'unidad'")
+        if self.tipo is TipoLimite.BASE and self.cuando:
+            raise ErrorDominio("un límite 'base' no lleva 'cuando'")
+        if self.tipo is TipoLimite.EXCEPCION and not self.cuando:
+            raise ErrorDominio(
+                "un límite 'excepcion' necesita 'cuando': sin condiciones aplicaría siempre y "
+                "anularía al base"
+            )
+
+
 @dataclass(frozen=True, slots=True)
 class Parametro:
-    """Un parámetro urbanístico normado para una zona.
+    """Un parámetro urbanístico normado para una zona, con **todos** sus límites.
 
     `calificador` no es decorativo: sin él dos reglas distintas colisionan en la misma clave.
 
-    - `cos` distingue `primer_piso` (`0,6`) de `pisos_superiores` (`0,4`) — ambos en la misma zona
-      del texto refundido de Ñuñoa.
+    - `cos` distingue `primer_piso` (`0,6`) de `pisos_superiores` (`0,4`).
     - `densidad` distingue `bruta` de `neta`.
 
-    `valor=None` con `estado=DESCONOCIDO` es legítimo y **debe propagarse como `P` pendiente,
+    `limites` vacío con `estado=DESCONOCIDO` es legítimo y **debe propagarse como `P` pendiente,
     nunca como cumple**. Un dato que no tenemos no puede convertirse en un aprobado.
     """
 
     id: str
-    valor: Decimal | None
-    unidad: str
+    limites: tuple[Limite, ...]
     estado: EstadoParametro
     cita: Cita
     calificador: str | None = None
@@ -134,16 +177,27 @@ class Parametro:
                 f"'{self.id}': el 'id' no lleva calificador. Usa id y calificador por separado, "
                 "no la clave compuesta: si no, la clave sale duplicada ('densidad.bruta.bruta')"
             )
-        if self.valor is not None and not isinstance(self.valor, Decimal):
-            tipo = type(self.valor).__name__
-            raise ErrorDominio(f"'{self.id}': el valor debe ser Decimal o None, no {tipo}")
         if not isinstance(self.cita, Cita):
             raise ErrorDominio(f"'{self.id}': un Parametro necesita una Cita")
+        if self.estado is EstadoParametro.APLICABLE and not self.limites:
+            raise ErrorDominio(f"'{self.id}': un Parametro aplicable necesita al menos un límite")
+        if len({limite.tipo for limite in self.limites if limite.tipo is TipoLimite.BASE}) > 1:
+            raise ErrorDominio(f"'{self.id}': no puede tener dos límites 'base'")
 
     @property
     def clave(self) -> str:
         """Clave compuesta del parámetro dentro de una zona: `id` o `id.calificador`."""
         return clave_compuesta(self.id, self.calificador)
+
+    @property
+    def base(self) -> Limite | None:
+        """El límite por defecto, si lo hay."""
+        return next((x for x in self.limites if x.tipo is TipoLimite.BASE), None)
+
+    @property
+    def excepciones(self) -> tuple[Limite, ...]:
+        """Los límites que sustituyen al base cuando sus hechos se cumplen."""
+        return tuple(x for x in self.limites if x.tipo is TipoLimite.EXCEPCION)
 
 
 @dataclass(frozen=True, slots=True)
@@ -294,6 +348,9 @@ class CodigoHallazgo(StrEnum):
 
     CUS_INALCANZABLE = "cus_inalcanzable"
     """El conjunto normativo es internamente inalcanzable: ningún proyecto podría cumplirlo."""
+
+    CLASIFICACION_INDETERMINADA = "clasificacion_indeterminada"
+    """No hay datos para saber qué límite rige. Se da `P`; **jamás** se asume el más permisivo."""
 
 
 class Severidad(StrEnum):

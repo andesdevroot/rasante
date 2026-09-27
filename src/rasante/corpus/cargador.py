@@ -16,7 +16,7 @@ from typing import Any
 import yaml
 
 from rasante.dominio.modelos import Cita
-from rasante.dominio.reglas import Derivacion, Reglas, Relacion
+from rasante.dominio.reglas import Derivacion, Hecho, Reglas, Relacion
 
 
 class ErrorCarga(ValueError):
@@ -31,6 +31,7 @@ def cargar_reglas(raiz: Path) -> Reglas:
     """
     derivaciones: dict[str, Derivacion] = {}
     relaciones: list[Relacion] = []
+    hechos: dict[str, Hecho] = {}
 
     for archivo in sorted(Path(raiz).rglob("*.yaml")):
         datos = _leer(archivo)
@@ -39,6 +40,12 @@ def cargar_reglas(raiz: Path) -> Reglas:
                 parametro=clave,
                 expresion=str(derivacion["expresion"]),
                 cita=_cita(derivacion.get("cita"), datos, archivo),
+            )
+        for nombre, hecho in (datos.get("hechos") or {}).items():
+            hechos[nombre] = Hecho(
+                nombre=nombre,
+                expresion=str(hecho["expresion"]),
+                cita=_cita(hecho.get("cita"), datos, archivo),
             )
         for relacion in datos.get("relaciones") or []:
             relaciones.append(
@@ -53,6 +60,7 @@ def cargar_reglas(raiz: Path) -> Reglas:
     return Reglas(
         derivaciones=MappingProxyType(derivaciones),
         relaciones=tuple(relaciones),
+        hechos=MappingProxyType(hechos),
     )
 
 

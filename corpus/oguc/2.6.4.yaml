@@ -1,0 +1,30 @@
+norma_id: oguc
+articulo: 2.6.4
+materia: 'Conjunto Armónico: condiciones para tener esa calidad'
+cita: 'Artículo 2.6.4. Un proyecto tiene la calidad de Conjunto Armónico cuando cumple alguna de las condiciones
+  que se señalan y las exigencias que para cada caso se establecen. 1.- Condición de dimensión: a) terreno
+  cuya superficie total sea igual o superior a 5 veces la superficie predial mínima del Plan Regulador,
+  siempre que la superficie total no sea inferior a 5.000 m2; b) terreno que constituya en sí una manzana
+  existente; c) terreno resultante de una fusión predial, siempre que su superficie no sea inferior a
+  2.500 m2.'
+hechos:
+  dimension_a:
+    expresion: superficie_predio_m2 >= 5 * superficie_predial_minima and superficie_predio_m2 >= 5000
+    cita:
+      norma_id: oguc
+      articulo: 2.6.4
+    nota: 'Plenamente expresable: sus dos conjuntos son datos del proyecto.'
+hechos_pendientes:
+  dimension_b: Constituir una manzana existente exige datos catastrales que el proyecto no declara.
+  dimension_c: 'La fusión predial del art. 63 del DFL 458 exige el historial registral. NO se expresa
+    solo la superficie: daría por cumplida la 1.c) a un predio que no es fusión, y con eso el +30 % de
+    cus.'
+  condicion_uso: Requiere el destino del proyecto (equipamiento) y el art. 2.1.36.
+procedencia:
+  url_fuente: https://www.minvu.gob.cl/wp-content/uploads/2019/05/OGUC-Mayo-2026-D.S.-N5-D.O.-22-05-2026-rev-15.09.2026.pdf
+  consolidado_por: D.D. N°5, D.O. 22-05-2026
+  hash_fuente: sha256:64cf1b7c2e455a43c57548dfede31af4616182e4fe55b658a7e5fbf49b127acc
+  extraido: '2026-09-26'
+  extraido_por: rasante.corpus.ingesta (determinista) + seleccion manual
+  revisado_por: null
+  estado: borrador
