@@ -61,6 +61,38 @@ COS = '''  cos.primer_piso:
 '''
 
 
+# --- un parámetro sin límites: declarado, o rechazado ---
+
+
+SIN_LIMITES = """  adosamiento:
+    id: adosamiento
+    sentido: maximo
+    estado: {estado}
+    cita: {{norma_id: "prc:nunoa", articulo: "Z-4", texto: "Adosamiento Según OGUC"}}
+"""
+
+
+def test_un_parametro_sin_limites_y_sin_declararlo_es_un_error(tmp_path: Path) -> None:
+    """El esquema no corrige en silencio: exige `estado: desconocido` o rechaza.
+
+    Antes el cargador convertía un `aplicable` sin límites en `DESCONOCIDO` por su cuenta. Era una
+    corrección muda: el YAML estaba mal y nadie se enteraba. Ahora falla, y el parámetro sin valor
+    solo se admite cuando **declara** que no lo tiene — que es el caso de una remisión como
+    *"Adosamiento: Según OGUC"*.
+    """
+    ruta = escribir(tmp_path, zona_yaml(SIN_LIMITES.format(estado="aplicable")))
+    with pytest.raises(ErrorCarga, match="limites"):
+        cargar_zona(ruta)
+
+
+def test_un_parametro_sin_limites_declarado_desconocido_se_carga(tmp_path: Path) -> None:
+    ruta = escribir(tmp_path, zona_yaml(SIN_LIMITES.format(estado="desconocido")))
+    parametro = cargar_zona(ruta).parametro("adosamiento")
+    assert parametro is not None
+    assert parametro.limites == ()
+    assert parametro.cita.texto == "Adosamiento Según OGUC"
+
+
 # --- el caso que importa: la coma decimal ---
 
 

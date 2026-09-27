@@ -17,8 +17,9 @@ falla que este proyecto no admite.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import replace
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 import pytest
@@ -133,6 +134,63 @@ def test_todas_las_citas_apuntan_al_articulo_26() -> None:
         for limite in parametro.limites or (parametro,):
             assert limite.cita.norma_id == "prc:nunoa"
             assert limite.cita.articulo == "26"
+
+
+# --- 2b. el valor sale de la cita, no solo la cita es literal ---
+
+# Cómo reconocer, en el texto citado, el número que corresponde a cada unidad. Sin esto, un test que
+# solo comprueba que la cita es literal deja pasar el error que importa: escribir `0,6` con la cita
+# `"Coeficiente de ocupación de suelo 0,5"`. La cita sería literal y el valor estaría inventado.
+PATRONES_UNIDAD = {
+    "m": r"([\d.,]+)\s*m\b",
+    "m²": r"([\d.,]+)\s*m²",
+    "pisos": r"([\d.,]+)\s*pisos",
+    "hab/ha": r"([\d.,]+)\s*Hab",
+    "grados": r"([\d.,]+)\s*°",
+    "adimensional": r"([\d.,]+)",
+}
+
+
+def numeros_de(token: str) -> set[Decimal]:
+    """Los valores que un token del texto puede significar.
+
+    `1.600` es ambiguo —mil seiscientos o uno coma seis— y por eso el corpus guarda `1600`. Acá se
+    aceptan las dos lecturas: lo que se verifica es que el valor **esté** en el texto, no cómo se
+    desambiguó.
+    """
+    salida: set[Decimal] = set()
+    formas = {token, token.replace(".", ""), token.replace(",", ".")}
+    if re.fullmatch(r"\d{1,3}(\.\d{3})+", token):
+        formas.add(token.replace(".", ""))
+    for forma in formas:
+        try:
+            salida.add(Decimal(forma))
+        except InvalidOperation:
+            continue
+    return salida
+
+
+@pytest.mark.parametrize("clave", sorted(cargar_zona(ARCHIVO).parametros))
+def test_el_valor_sale_del_texto_que_la_cita_convoca(clave: str) -> None:
+    """El valor normativo tiene que ser **un número de la cita**, asociado a su unidad.
+
+    **Alcance, honestamente:** comprueba que el valor esté entre los números que la cita asocia a
+    esa unidad. No comprueba que sea *el* correcto cuando la cita trae varios de la misma unidad:
+    el distanciamiento cita `"4 pisos y altura 12 m o más. 5 m"` y ahí `12` y `5` son metros.
+    Cerrar eso exige leer el renglón, y es la revisión humana que sigue pendiente.
+    """
+    parametro = cargar_zona(ARCHIVO).parametros[clave]
+    for limite in parametro.limites:
+        patron = PATRONES_UNIDAD.get(limite.unidad)
+        assert patron is not None, f"{clave}: unidad '{limite.unidad}' sin patrón de verificación"
+        crudos = re.findall(patron, limite.cita.texto.replace("\u00a0", " "))
+        posibles: set[Decimal] = set()
+        for crudo in crudos:
+            posibles |= numeros_de(crudo)
+        assert limite.valor in posibles, (
+            f"{clave}: el valor {limite.valor} no aparece en su propia cita "
+            f"({limite.cita.texto!r} → {sorted(str(x) for x in posibles)})"
+        )
 
 
 # --- 3. la transcripción completa ---

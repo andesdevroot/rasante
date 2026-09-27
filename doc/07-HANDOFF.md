@@ -13,7 +13,7 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 |---|---|
 | Tarea en curso | ninguna. Siguiente: **T1.14b** (prosa normativa), luego T1.14 (más zonas) |
 | Código | `corpus/zonas/nunoa/Z-2.yaml` (nuevo) · `puente.py` · `clasificacion/{contrato,porteria,proveedor}.py` · `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
-| Tests | **418 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tests | **432 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | **`./gate.sh`** en verde (`set -euo pipefail`): pytest, ruff y mypy sobre `src` **y** `tests` |
 | Árbol git | limpio — todo commiteado |
 
@@ -27,9 +27,10 @@ El más reciente es el que trae este archivo. **Un archivo no puede contener su 
 lo invalida el mismo `commit` que lo guarda, y un `amend` lo deja mintiendo. Por eso la lista
 arranca en el commit anterior.
 
-Historia completa (**31 commits**), del más nuevo al más viejo:
+Historia completa (**32 commits**), del más nuevo al más viejo:
 
 ```
+c8d7b3f docs(task): cierra T1.14a y abre los huecos que dejo la primera zona real
 9880c69 feat(corpus): primera zona real, Z-2 de Nunoa, con citas verificadas [T1.14a]
 62e5664 feat(dominio): excepciones de aplicacion general con factor (D20, D21)
 b4395cd docs(readme): README real para el repositorio open source
@@ -232,3 +233,22 @@ explícitamente para probar el cálculo, y tests que verifican que sin firma no 
 `cus`, altura, pisos y densidad; y `P` en rasante, antejarín, distanciamiento, cuerpos salientes,
 adosamiento y agrupamiento — porque el proyecto todavía no declara esos datos. Seis de doce
 evaluables, y **los seis `P` nombrados**, no desaparecidos.
+
+### La verificación tenía un agujero, y era el que importaba
+
+El test de literalidad comprobaba que **la cita** fuera un fragmento del texto. No comprobaba que **el
+valor saliera de la cita**: `valor: "0,6"` con la cita `"Coeficiente de ocupación de suelo 0,5"` habría
+pasado. Es decir, la defensa contra inventar un número no existía.
+
+Cerrado con `test_el_valor_sale_del_texto_que_la_cita_convoca`: extrae de la cita los números
+**asociados a la unidad del límite** (un patrón por unidad: `m`, `m²`, `pisos`, `hab/ha`, `grados`, y
+para `adimensional` el número suelto) y exige que el valor sea uno de ellos. Comprobado con una prueba
+negativa: con la cita del `0,5`, un valor `0,6` ahora falla.
+
+**Lo que sigue sin cubrir un test:** cuando la cita trae varios números de la misma unidad —el
+distanciamiento cita `"4 pisos y altura 12 m o más. 5 m"`, y `12` y `5` son los dos metros—. Eso exige
+leer el renglón. La revisión humana de Z-2 sigue pendiente y no la puede cerrar un test.
+
+**Y de paso:** el cargador corregía en silencio un `aplicable` sin límites convirtiéndolo en
+`DESCONOCIDO`. Desde que el esquema lo rechaza, ese código quedó inalcanzable y se eliminó — una
+corrección muda es peor que un error, porque nadie se entera de que su YAML estaba mal.

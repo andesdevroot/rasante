@@ -229,9 +229,14 @@ distanciamiento, cuerpos salientes, adosamiento y agrupamiento. Sin firmar da to
 `FUENTE_SIN_REVISAR`: la zona viaja en `borrador` porque la transcribió un programa con supervisión
 humana, y eso no es una firma.
 
-**Deuda de proceso, declarada.** `T1.14` pide presentar cada extracción para validación **antes** del
-commit, y esta se commiteó primero. El test de literalidad protege contra inventar un número, **no
-contra leer mal el cuadro**: la revisión humana sigue pendiente.
+**Deuda de proceso.** `T1.14` pide presentar cada extracción para validación **antes** del commit, y
+esta se commiteó primero. Se cerró la parte mecánica: el test de literalidad **no bastaba** —verificaba
+que la cita fuera literal, no que el valor saliera de ella, así que `valor: "0,6"` con la cita del
+`0,5` pasaba igual—. Ahora `test_el_valor_sale_del_texto_que_la_cita_convoca` extrae los números de la
+cita y exige que el valor sea uno de los asociados a su unidad. Demostrado con una prueba negativa.
+
+Lo que **no** cierra un test es leer bien el renglón cuando la cita trae varios números de la misma
+unidad: la **revisión humana de Z-2 sigue pendiente**.
 
 ### ⬜ T1.14b — La prosa normativa del cuadro (decidir antes de transcribir)
 

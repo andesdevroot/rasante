@@ -238,18 +238,22 @@ def cargar_zonas(raiz: Path) -> list[Zona]:
 def _parametro(
     clave: str, bruto: dict[str, Any], datos: dict[str, Any], archivo: Path
 ) -> Parametro:
+    """Convierte un parámetro del YAML al dominio.
+
+    **Ya no corrige en silencio.** Antes, un parámetro `aplicable` sin límites se convertía acá en
+    `DESCONOCIDO`. El esquema no lo permitía pero tampoco lo rechazaba, así que la corrección era
+    muda; desde T1.14a `validar_documento` **exige** `estado: desconocido` para un parámetro sin
+    límites, y el flip quedó inalcanzable. Se eliminó en vez de dejarlo: una corrección silenciosa
+    es peor que un error, porque nadie se entera de que su YAML estaba mal.
+    """
     limites = tuple(
         _limite(limite, datos, archivo) for limite in (bruto.get("limites") or [])
     )
-    estado = EstadoParametro(str(bruto.get("estado") or "aplicable"))
-    if not limites and estado is EstadoParametro.APLICABLE:
-        # Sin límites no hay nada que comparar: es un dato que aún no tenemos.
-        estado = EstadoParametro.DESCONOCIDO
     return Parametro(
         id=str(bruto.get("id") or clave),
         limites=limites,
         sentido=Sentido(str(bruto["sentido"])),
-        estado=estado,
+        estado=EstadoParametro(str(bruto.get("estado") or "aplicable")),
         cita=_cita_de_parametro(bruto, datos, archivo),
         calificador=bruto.get("calificador"),
     )
