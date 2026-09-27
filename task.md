@@ -371,7 +371,7 @@ falta.
 | E1 | Monotonía bajo refinamiento + contraste con la semántica permisiva | ✅ `[E1]` |
 | E2 | Traza de auditoría: qué hecho cambió el límite vigente (habilita C4) | ⬜ |
 | E3 | Calibrar el portero de verdad (= P2) | ⬜ |
-| E4 | Cobertura: 6/12 en Z-2, extendida a más zonas | ⬜ |
+| E4 | Métrica de cobertura y taxonomía de las `P` | ✅ `[E4]` |
 
 ### ✅ E1 — Monotonía del veredicto bajo refinamiento del conocimiento
 
@@ -396,6 +396,37 @@ observación.
 resolviendo un hecho como **falso** es tan peligroso como resolverlo como cierto. La banda gris de
 dos lados (`0,2–0,8`) no es tuning: es **obligatoria**. La asimetría habitual de los clasificadores
 se vuelve acá una simetría exigida por el teorema.
+
+### ✅ E4 — Métrica de cobertura y taxonomía de las `P`
+
+Lo que el paper necesita y que "453 tests" no responde: **de los parámetros que la zona declara,
+cuántos concluye el motor y qué le falta a cada uno de los que no.** Es la tabla de §7, y sale de
+correr el motor sobre Z-2.
+
+**El resultado, sobre Ñuñoa Z-2 (12 parámetros):**
+
+| | |
+|---|---|
+| Concluidos (sin clasificar el expediente) | **6 de 12** |
+| `parametro_desconocido` | 2 — `adosamiento`, `agrupamiento`: la ordenanza remite a otra norma. **Se arregla en el corpus** |
+| `sin_dato_proyecto` | 4 — `antejarin`, `cuerpos_salientes`, `distanciamiento`, `rasante`: el límite se conoce, el expediente no declara el dato. **Se arregla consiguiendo el dato** |
+
+**Y el hallazgo contraintuitivo:** el `cus` **se concluye**, aunque `2.6.5` lo condicione a hechos que
+el corpus no puede calcular. Porque el proyecto **no se acoge** al Conjunto Armónico, y el
+cortocircuito `X and False = False` (T1.10b) descarta las excepciones: los hechos desconocidos dejan
+de importar. **La negativa a concluir no es indiscriminada: no concluye solo cuando la duda cambia el
+resultado.** Lo esperaba al revés y el test me corrigió — tercera vez en el proyecto.
+
+Acogido, el mismo expediente baja a **5 de 12** con `cus` en `limite_indeterminado`, y clasificando
+los dos hechos vuelve a 6. La cobertura depende **del expediente**, no solo del corpus.
+
+**Cómo está construido, y por qué importa:** `MotivoPendiente` es la **única** definición de la
+cascada; `_decidir` y el reporte leen los dos de ahí, así que no pueden divergir. El reporte no
+reimplementa nada. `Veredicto.motivo` viaja con el veredicto, así que la trazabilidad que el paper
+promete en C4 empieza a existir (es la mitad de E2).
+
+**Lo que falta para §7 (P3):** la matriz de confusión contra un revisor humano. La cobertura mide el
+corpus y el expediente; no mide si el motor **acierta**.
 
 ### ⬜ T1.12 — Resolución de zona
 

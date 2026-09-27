@@ -349,6 +349,15 @@ class Veredicto:
     valor_norma: Decimal | None = None
     valor_proyecto: Decimal | None = None
     calificador: str | None = None
+    motivo: str | None = None
+    """Por qué quedó `P`, cuando quedó `P`. Es el nombre de un `motor.MotivoPendiente`.
+
+    Se guarda como `str` y no como el enum para que `modelos` no dependa de `motor` (el motor
+    importa los modelos, no al revés). Un veredicto que **no** es `P` lo lleva en `None`.
+
+    **No cambia el veredicto.** Existe porque "no se pudo evaluar" no es un dato suficiente para el
+    revisor ni para el paper: hay que decir **qué falta**, y las causas tienen arreglos distintos.
+    """
 
     def __post_init__(self) -> None:
         if not isinstance(self.cita, Cita):

@@ -26,6 +26,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from decimal import Decimal
+from enum import StrEnum
 from types import MappingProxyType
 
 from .modelos import (
@@ -175,6 +176,9 @@ def _evaluar_uno(
         if derivacion is not None
         else None
     )
+    motivo = _motivo_de_pendiente(
+        parametro, limite, indeterminados, valor_proyecto, fuente_revisada
+    )
     return Veredicto(
         parametro_id=parametro.id,
         codigo=_decidir(parametro, limite, indeterminados, valor_proyecto, fuente_revisada),
@@ -182,6 +186,7 @@ def _evaluar_uno(
         valor_norma=None if limite is None else limite.valor,
         valor_proyecto=valor_proyecto,
         calificador=parametro.calificador,
+        motivo=None if motivo is None else motivo.value,
     )
 
 
@@ -257,6 +262,65 @@ def _ampliado(excepcion: Excepcion, parametro: Parametro) -> Limite | None:
     )
 
 
+class MotivoPendiente(StrEnum):
+    """Por qué un parámetro quedó en `P` (E4).
+
+    No todas las `P` son iguales: **"no se pudo evaluar" no es un dato suficiente**, ni para el
+    revisor ni para medir cobertura. Cada valor tiene un arreglo distinto y un responsable distinto.
+
+    El orden de la enumeración **es el orden de la cascada de `_decidir`**, y `_motivo_de_pendiente`
+    es la única definición de esa cascada. Si se agregara un paso allá y no acá, la cobertura
+    mentiría; por eso el reporte no reimplementa nada, lee lo que el motor ya decidió.
+    """
+
+    FUENTE_SIN_REVISAR = "fuente_sin_revisar"
+    """El corpus que fija el valor no tiene firma humana (D18). Se arregla **revisando el corpus**,
+    y es el único motivo que invalida todo lo demás."""
+
+    LIMITE_INDETERMINADO = "limite_indeterminado"
+    """Hay límites declarados, pero algún hecho que los condiciona quedó sin resolver (D16). Se
+    arregla **clasificando el expediente**."""
+
+    PARAMETRO_DESCONOCIDO = "parametro_desconocido"
+    """La zona declara el parámetro y no tiene valor para él: la ordenanza remite a otra norma, como
+    *"Adosamiento: Según OGUC"*. Se arregla **en el corpus**, no con datos del proyecto."""
+
+    SIN_LIMITE = "sin_limite"
+    """Hay valor en la zona, pero ningún límite rige para este caso: el base no existe y la
+    condición que activaría la excepción no se cumple. Se arregla **en el corpus**."""
+
+    SIN_DATO_PROYECTO = "sin_dato_proyecto"
+    """El límite se conoce y rige, pero el expediente no declara lo necesario para calcular el valor
+    del proyecto. Se arregla **consiguiendo el dato**."""
+
+
+def _motivo_de_pendiente(
+    parametro: Parametro,
+    limite: Limite | None,
+    indeterminados: tuple[str, ...],
+    valor_proyecto: Decimal | None,
+    fuente_revisada: bool,
+) -> MotivoPendiente | None:
+    """La **única** definición de la cascada: qué paso decide, y si ese paso es un `P`.
+
+    Devuelve `None` cuando el parámetro **sí** se puede concluir —ya sea `C`, `NC` o `NO_PROCEDE`—.
+    `_decidir` y el reporte de cobertura leen los dos de acá, así que no pueden divergir.
+    """
+    if not fuente_revisada:
+        return MotivoPendiente.FUENTE_SIN_REVISAR
+    if parametro.estado is EstadoParametro.NO_APLICA:
+        return None  # `NO_PROCEDE` no es un pendiente: es una afirmación, y se puede hacer
+    if indeterminados:
+        return MotivoPendiente.LIMITE_INDETERMINADO
+    if parametro.estado is EstadoParametro.DESCONOCIDO:
+        return MotivoPendiente.PARAMETRO_DESCONOCIDO
+    if limite is None:
+        return MotivoPendiente.SIN_LIMITE
+    if valor_proyecto is None:
+        return MotivoPendiente.SIN_DATO_PROYECTO
+    return None
+
+
 def _decidir(
     parametro: Parametro,
     limite: Limite | None,
@@ -295,16 +359,14 @@ def _decidir(
     otra señal de diagnóstico. Este método decide; si leyera un campo de diagnóstico, el diagnóstico
     empezaría a decidir.
     """
-    if not fuente_revisada:
+    if _motivo_de_pendiente(parametro, limite, indeterminados, valor_proyecto, fuente_revisada):
         return CodigoVeredicto.PENDIENTE
     if parametro.estado is EstadoParametro.NO_APLICA:
         return CodigoVeredicto.NO_PROCEDE
-    if indeterminados:
-        return CodigoVeredicto.PENDIENTE  # no sabemos **cuál** límite rige
-    if parametro.estado is EstadoParametro.DESCONOCIDO or limite is None:
-        return CodigoVeredicto.PENDIENTE  # no sabemos cuál es el límite
-    if valor_proyecto is None:
-        return CodigoVeredicto.PENDIENTE  # no sabemos cuánto mide el proyecto
+    if limite is None or valor_proyecto is None:
+        # Inalcanzable: `_motivo_de_pendiente` ya cubrió los dos casos. Se escribe explícito para
+        # que el tipo lo sepa y para que nadie compare contra `None` si la cascada cambia.
+        return CodigoVeredicto.PENDIENTE
     if parametro.sentido is Sentido.MAXIMO:
         return (
             CodigoVeredicto.CUMPLE
