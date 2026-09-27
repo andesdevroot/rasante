@@ -40,6 +40,7 @@ from rasante.dominio.modelos import (
     Parametro,
     Procedencia,
     Proyecto,
+    Sentido,
     Severidad,
     TipoLimite,
     Vigencia,
@@ -69,6 +70,7 @@ def parametro(
     return Parametro(
         id=id_,
         limites=(Limite(TipoLimite.BASE, Decimal(valor), unidad, CITA),),
+        sentido=Sentido.MAXIMO,
         estado=EstadoParametro.APLICABLE,
         cita=CITA,
         calificador=calificador,

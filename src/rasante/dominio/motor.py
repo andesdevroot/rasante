@@ -30,28 +30,12 @@ from .modelos import (
     Limite,
     Parametro,
     Proyecto,
+    Sentido,
     TipoLimite,
     Veredicto,
     Zona,
 )
 from .reglas import Clasificacion, Reglas, declarar_nombres, evaluar_expresion, evaluar_hecho
-
-# Parámetros cuyo sentido conocemos: son máximos, no deben excederse.
-#
-# Un parámetro que NO esté acá da `P`, no se asume nada sobre él. Suponer que algo desconocido es un
-# máximo y compararlo produciría un `(C)` o un `(NC)` sin fundamento.
-MAXIMOS: frozenset[str] = frozenset(
-    {
-        "cos",
-        "cos.primer_piso",
-        "cos.pisos_superiores",
-        "cus",
-        "altura_maxima",
-        "densidad",
-        "densidad.bruta",
-        "densidad.neta",
-    }
-)
 
 
 def evaluar(proyecto: Proyecto, zona: Zona, reglas: Reglas) -> list[Veredicto]:
@@ -194,11 +178,15 @@ def _decidir(
         return CodigoVeredicto.PENDIENTE  # no sabemos cuál es el límite
     if valor_proyecto is None:
         return CodigoVeredicto.PENDIENTE  # no sabemos cuánto mide el proyecto
-    if parametro.clave not in MAXIMOS:
-        return CodigoVeredicto.PENDIENTE  # no sabemos cómo se compara
-    if valor_proyecto <= limite.valor:
-        return CodigoVeredicto.CUMPLE
-    return CodigoVeredicto.NO_CUMPLE
+    if parametro.sentido is Sentido.MAXIMO:
+        return (
+            CodigoVeredicto.CUMPLE
+            if valor_proyecto <= limite.valor
+            else CodigoVeredicto.NO_CUMPLE
+        )
+    return (
+        CodigoVeredicto.CUMPLE if valor_proyecto >= limite.valor else CodigoVeredicto.NO_CUMPLE
+    )
 
 
 def _decimal(entero: int | None) -> Decimal | None:

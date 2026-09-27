@@ -26,6 +26,7 @@ from rasante.dominio.modelos import (
     Parametro,
     Procedencia,
     Proyecto,
+    Sentido,
     Severidad,
     TipoLimite,
     Vigencia,
@@ -57,12 +58,14 @@ def zona(estado: EstadoRevision = EstadoRevision.BORRADOR, revisado_por: str | N
             "cus": Parametro(
                 id="cus",
                 limites=(Limite(TipoLimite.BASE, Decimal("4"), "adimensional", CITA),),
+                sentido=Sentido.MAXIMO,
                 estado=EstadoParametro.APLICABLE,
                 cita=CITA,
             ),
             "densidad": Parametro(
                 id="densidad",
                 limites=(Limite(TipoLimite.BASE, Decimal("50"), "hab/ha", CITA),),
+                sentido=Sentido.MAXIMO,
                 estado=EstadoParametro.APLICABLE,
                 cita=CITA,
             ),

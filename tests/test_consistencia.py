@@ -25,11 +25,12 @@ from rasante.dominio.modelos import (
     Parametro,
     Procedencia,
     Proyecto,
+    Sentido,
     TipoLimite,
     Vigencia,
     Zona,
 )
-from rasante.dominio.motor import MAXIMOS, evaluar
+from rasante.dominio.motor import evaluar
 from rasante.dominio.vocabulario import (
     NORMADOS,
     PARAMETROS,
@@ -64,6 +65,7 @@ def zona_completa() -> Zona:
         parametros[clave] = Parametro(
             id=id_,
             limites=(Limite(TipoLimite.BASE, Decimal("1"), "adimensional", CITA),),
+            sentido=Sentido.MAXIMO,
             estado=EstadoParametro.APLICABLE,
             cita=CITA,
             calificador=calificador or None,
@@ -85,9 +87,12 @@ def test_el_vocabulario_es_exactamente_la_union_de_sus_partes() -> None:
     assert frozenset(PRIMITIVAS) | PARAMETROS | NORMADOS == VOCABULARIO
 
 
-def test_los_parametros_del_vocabulario_son_los_que_el_motor_sabe_comparar() -> None:
-    """Si divergen, el corpus podría nombrar algo que el motor no compara y daría `P` siempre."""
-    assert PARAMETROS == MAXIMOS
+def test_el_motor_no_hardcodea_que_se_compara() -> None:
+    """`MAXIMOS` era lo ultimo hardcodeado; el sentido lo declara ahora cada parametro."""
+    from rasante.dominio import motor
+
+    assert not hasattr(motor, "MAXIMOS")
+
 
 
 def test_toda_expresion_del_corpus_usa_solo_el_vocabulario() -> None:
@@ -102,9 +107,10 @@ def test_toda_expresion_del_corpus_usa_solo_el_vocabulario() -> None:
 # --- el corpus y el motor ---
 
 
-def test_toda_derivacion_del_corpus_tiene_sentido_declarado() -> None:
-    """Sin sentido, el motor daría `P` para siempre en vez de fallar. Que falle el test."""
-    assert set(REGLAS.derivaciones) <= MAXIMOS
+def test_toda_derivacion_del_corpus_cabe_en_el_vocabulario() -> None:
+    """El sentido de la comparacion ya no vive en el motor: lo declara cada parametro."""
+    assert set(REGLAS.derivaciones) <= PARAMETROS
+
 
 
 def test_todo_cuando_del_corpus_tiene_hecho_definido() -> None:

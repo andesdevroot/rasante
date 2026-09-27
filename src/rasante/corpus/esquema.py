@@ -124,6 +124,12 @@ def _validar_parametros(datos: dict[str, Any], prefijo: str) -> None:
             raise ErrorEsquema(
                 f"{prefijo}la clave '{clave}' no coincide con la de su parametro ('{esperada}')"
             )
+        sentido = parametro.get("sentido")
+        if sentido not in ("maximo", "minimo"):
+            raise ErrorEsquema(
+                f"{prefijo}'{clave}': falta 'sentido' (o no es 'maximo' ni 'minimo'). Un valor por "
+                "defecto invertiría el veredicto de un mínimo sin que nadie se entere"
+            )
         limites = _lista(parametro.get("limites"), "limites", f"{prefijo}'{clave}': ")
         if not limites:
             raise ErrorEsquema(f"{prefijo}'{clave}': 'limites' no puede estar vacío")

@@ -29,6 +29,7 @@ from rasante.dominio.modelos import (
     Parametro,
     Procedencia,
     Proyecto,
+    Sentido,
     TipoLimite,
     Veredicto,
     Vigencia,
@@ -58,7 +59,14 @@ def par(
         limites: tuple[Limite, ...] = ()
     else:
         limites = (Limite(TipoLimite.BASE, valor, unidad, usada),)  # type: ignore[arg-type]
-    return Parametro(id=id, limites=limites, estado=estado, cita=usada, calificador=calificador)
+    return Parametro(
+        id=id,
+        limites=limites,
+        sentido=Sentido.MAXIMO,
+        estado=estado,
+        cita=usada,
+        calificador=calificador,
+    )
 
 
 def cita() -> Cita:

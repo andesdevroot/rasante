@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 1 — Vertical slice, en curso.** T1.1–T1.8 cerradas (más T1.7b) (iteración 0 completa: T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1–T1.9 cerradas (más T1.7b) (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.9** (índice espacial) |
+| Tarea en curso | ninguna. Siguiente: **T1.10** (conectar la capa de clasificación) |
 | Código | `clasificacion/` (nueva) · `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
-| Tests | **297 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tests | **324 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | **`./gate.sh`** en verde (`set -euo pipefail`): pytest, ruff y mypy sobre `src` **y** `tests` |
 | Árbol git | limpio — todo commiteado |
 
@@ -162,6 +162,6 @@ La guía oficial de JEV recomienda literalmente nuestra arquitectura: *"route wi
 code**, write with an LLM"*, y advierte que **no es confiable en aritmética, conteo ni fechas** — que
 es exactamente lo que hace el motor. Detalle en `03-DISENO.md` §2.9.
 
-**Pendiente de T1.9 en adelante:** la capa existe y está probada con un proveedor guionizado, pero
-**no está conectada al motor todavía**. Falta que el corpus declare preguntas `choice`/`noul` y que
-sus resoluciones alimenten los `hechos_pendientes`.
+**Pendiente (T1.10):** la capa existe y está probada con un proveedor guionizado, pero **no está
+conectada al motor**. Falta que el corpus declare preguntas `choice`/`noul` y que sus resoluciones
+alimenten los `hechos_pendientes`.

@@ -24,7 +24,6 @@ import yaml
 
 from rasante.corpus.cargador import cargar_reglas
 from rasante.corpus.esquema import ErrorEsquema, validar_archivo, validar_corpus, validar_documento
-from rasante.dominio.motor import MAXIMOS
 from rasante.dominio.vocabulario import CONDICIONES, PARAMETROS, PRIMITIVAS, nombres_de_expresion
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -42,6 +41,15 @@ CITA: dict[str, str] = {"norma_id": "prc:nunoa", "articulo": "Z-4"}
 
 def zona(**parametros: Any) -> dict[str, Any]:
     """Documento de zona mínimo válido, al que cada test le cambia una pieza."""
+    if not parametros:
+        parametros = {
+            "cus": {
+                "id": "cus",
+                "limites": [{"valor": "4", "cita": CITA}],
+            }
+        }
+    for bruto in parametros.values():
+        bruto.setdefault("sentido", "maximo")
     return {
         "norma_id": "prc:nunoa",
         "zona": "Z-4",
@@ -87,9 +95,10 @@ def test_las_derivaciones_del_corpus_caben_en_el_vocabulario() -> None:
     assert set(cargar_reglas(CORPUS).derivaciones) <= PARAMETROS
 
 
-def test_toda_derivacion_del_corpus_tiene_sentido_declarado() -> None:
-    """Sin sentido, el motor daría `P` para siempre en vez de fallar. Que falle el test."""
-    assert set(cargar_reglas(CORPUS).derivaciones) <= MAXIMOS
+def test_toda_derivacion_del_corpus_cabe_en_el_vocabulario() -> None:
+    """El sentido de la comparacion ya no vive en el motor: lo declara cada parametro de la zona."""
+    assert set(cargar_reglas(CORPUS).derivaciones) <= PARAMETROS
+
 
 
 def test_el_corpus_solo_usa_unidades_conocidas() -> None:

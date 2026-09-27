@@ -52,6 +52,7 @@ def zona_yaml(parametros: str) -> str:
 COS = '''  cos.primer_piso:
     id: cos
     calificador: primer_piso
+    sentido: maximo
     limites:
       - tipo: base
         valor: "{valor}"
@@ -130,6 +131,7 @@ def test_el_calificador_sobrevive_a_la_carga(tmp_path: Path) -> None:
 def test_carga_limites_con_tipo_y_condicion(tmp_path: Path) -> None:
     parametros = '''  cus:
     id: cus
+    sentido: maximo
     limites:
       - tipo: base
         valor: "4"
@@ -177,6 +179,7 @@ def test_rechaza_claves_de_parametro_duplicadas(tmp_path: Path) -> None:
 def test_rechaza_claves_duplicadas_anidadas(tmp_path: Path) -> None:
     parametros = '''  cus:
     id: cus
+    sentido: maximo
     limites:
       - tipo: base
         valor: "4"

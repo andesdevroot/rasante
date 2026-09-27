@@ -24,6 +24,7 @@ from rasante.dominio.modelos import (
     Limite,
     Parametro,
     Procedencia,
+    Sentido,
     TipoLimite,
     Vigencia,
     Zona,
@@ -174,6 +175,7 @@ def _parametro(
     return Parametro(
         id=str(bruto.get("id") or clave),
         limites=limites,
+        sentido=Sentido(str(bruto["sentido"])),
         estado=estado,
         cita=_cita_de_parametro(bruto, datos, archivo),
         calificador=bruto.get("calificador"),

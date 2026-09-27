@@ -105,6 +105,21 @@ class Cita:
             raise ErrorDominio("una Cita necesita 'texto' no vacío")
 
 
+class Sentido(StrEnum):
+    """Si el parámetro es una cota superior o inferior.
+
+    Lo declara el corpus, no el motor: `MAXIMOS` era una lista en Python, y con ella agregar un
+    parámetro de mínimo exigía editar código. **Sin valor por defecto**: un mínimo tratado como
+    máximo daría el veredicto invertido en silencio.
+    """
+
+    MAXIMO = "maximo"
+    """El proyecto no debe exceder el límite."""
+
+    MINIMO = "minimo"
+    """El proyecto no debe quedar por debajo del límite."""
+
+
 class TipoLimite(StrEnum):
     """Cómo se relaciona un límite con los demás del mismo parámetro."""
 
@@ -165,6 +180,7 @@ class Parametro:
 
     id: str
     limites: tuple[Limite, ...]
+    sentido: Sentido
     estado: EstadoParametro
     cita: Cita
     calificador: str | None = None
@@ -172,6 +188,10 @@ class Parametro:
     def __post_init__(self) -> None:
         if not self.id.strip():
             raise ErrorDominio("un Parametro necesita 'id' no vacío")
+        if not isinstance(self.sentido, Sentido):
+            raise ErrorDominio(
+                f"'{self.id}': 'sentido' debe ser Sentido, no {type(self.sentido).__name__}"
+            )
         if "." in self.id:
             raise ErrorDominio(
                 f"'{self.id}': el 'id' no lleva calificador. Usa id y calificador por separado, "

@@ -39,6 +39,7 @@ from rasante.dominio.modelos import (
     Parametro,
     Procedencia,
     Proyecto,
+    Sentido,
     TipoLimite,
     Vigencia,
     Zona,
@@ -79,6 +80,7 @@ def parametro(
     return Parametro(
         id=id_,
         limites=limites,
+        sentido=Sentido.MAXIMO,
         estado=EstadoParametro.APLICABLE,
         cita=CITA_PRC,
         calificador=calificador,
@@ -98,6 +100,7 @@ def zona(
                 limites=(
                     Limite(TipoLimite.BASE, Decimal(superficie_predial_minima), "m2", CITA_PRC),
                 ),
+                sentido=Sentido.MAXIMO,
                 estado=EstadoParametro.APLICABLE,
                 cita=CITA_PRC,
             )

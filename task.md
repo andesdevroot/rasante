@@ -70,15 +70,17 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.7 | Corpus: cargador y validación de YAML | ✅ | `[T1.7]` |
 | T1.7b | Un dato sin revisar no aprueba (D18) | ✅ | `[T1.7b]` |
 | T1.8 | Capa de clasificación con contrato tipado | ✅ | `[T1.8]` |
-| T1.9 | Geo: reproyección e índice espacial | ⬜ |
-| T1.10 | Resolución coordenada → zona | ⬜ |
-| T1.11 | CLI | ⬜ |
-| T1.12 | Corpus real de la comuna piloto | ⬜ |
-| T1.13 | Validación contra predios reales | ⬜ |
+| T1.9 | El sentido lo declara el corpus, no el motor | ✅ | `[T1.9]` |
+| T1.10 | Conectar la capa de clasificación al motor | ⬜ |
+| T1.11 | Geo: reproyección e índice espacial | ⬜ |
+| T1.12 | Resolución coordenada → zona | ⬜ |
+| T1.13 | CLI | ⬜ |
+| T1.14 | Corpus real de la comuna piloto | ⬜ |
+| T1.15 | Validación contra predios reales | ⬜ |
 
 > **T1.3–T1.6 se insertaron el 2026-09-26**, al detectar tres gaps encadenados: el motor no
 > ejecutaba el corpus (D14), evaluaba parámetros acoplados como si fueran independientes (D15), y no
-> podía elegir entre límites condicionales (D16). Van **antes** de T1.7 y T1.12 porque definen el
+> podía elegir entre límites condicionales (D16). Van **antes** de T1.7 y T1.14 porque definen el
 > esquema: nacer con la forma vieja significa rehacerlos.
 
 **T1.1 — Dominio: modelos e invariante de cita.** ✅ `dominio/modelos.py`: `Cita`, `Parametro` (con
@@ -146,26 +148,33 @@ del proyecto: son juicios sobre texto.
 El **portero** es la pieza que importa: una respuesta bajo el umbral **no se resuelve**, va a revisión
 humana. Nunca se redondea una duda hacia el lado permisivo. Es D18 aguas arriba. 24 tests.
 
-### ⬜ T1.9 — Geo: reproyección e índice espacial
+**T1.9 — El sentido lo declara el corpus.** ✅ `MAXIMOS` **eliminado del motor**: era lo último
+hardcodeado en Python. Cada `Parametro` declara su `sentido` (`maximo`/`minimo`) y el esquema lo
+exige, **sin valor por defecto** — un mínimo tratado como máximo daría el veredicto invertido en
+silencio. Con eso el motor no hardcodea nada: `derivaciones` dice cómo se calcula, los hechos cuál
+límite rige, y el `sentido` hacia dónde compara. Habilita parámetros de mínimo (densidad mínima, área
+verde mínima) sin tocar código. 13 tests.
 
-### ⬜ T1.10 — Resolución de zona
+### ⬜ T1.11 — Geo: reproyección e índice espacial
+
+### ⬜ T1.12 — Resolución de zona
 
 - **Test primero:** coordenada conocida → `Zona` con parámetros del corpus; coordenada sin zona →
   `SinZonaError`; zona en el PRC pero ausente del corpus → `ZonaSinCorpusError`. Son dos fallos
   operacionales **distintos** y no deben confundirse.
 - **Entregable:** `geo/resolver.py`.
-- **Commit:** `feat(geo): resolucion coordenada -> zona del corpus [T1.10]`
+- **Commit:** `feat(geo): resolucion coordenada -> zona del corpus [T1.12]`
 
-### ⬜ T1.11 — CLI
+### ⬜ T1.13 — CLI
 
 - **Test primero:** invocación con `typer.testing.CliRunner`. `rasante zona --lat --lon` imprime
   código y nombre de zona; salida `--json` con esquema estable; código de salida distinto de cero en
-  los dos errores de T1.10. Los hallazgos de T1.5 se muestran aparte de los veredictos.
+  los dos errores de T1.12. Los hallazgos de T1.5 se muestran aparte de los veredictos.
 - **Entregable:** `cli.py`.
 - **Aceptación:** `uv run rasante zona --lat -33.45 --lon -70.61 --json` devuelve JSON válido.
-- **Commit:** `feat(cli): comandos zona y evaluar con salida JSON [T1.11]`
+- **Commit:** `feat(cli): comandos zona y evaluar con salida JSON [T1.13]`
 
-### ⬜ T1.12 — Corpus real de la comuna piloto
+### ⬜ T1.14 — Corpus real de la comuna piloto
 
 - **Desbloqueada: A2 = Ñuñoa.** Entregable: 3–5 zonas con los **4 parámetros** extraídos **a mano**
   de la ordenanza, revisados y citados, **en el esquema de T1.3**. Empezar por las zonas que el texto
@@ -178,11 +187,11 @@ humana. Nunca se redondea una duda hacia el lado permisivo. Es D18 aguas arriba.
   tiene cita y que la procedencia tiene `hash_fuente`.
 - **Aceptación:** cada valor trazable a un artículo de la ordenanza. `estado: revisado` con
   `revisado_por` poblado. **Se presenta cada extracción para validación antes del commit.**
-- **Commit:** `feat(corpus): zonas iniciales de <comuna> con parametros citados [T1.12]`
+- **Commit:** `feat(corpus): zonas iniciales de <comuna> con parametros citados [T1.14]`
 
-### ⬜ T1.13 — Validación contra predios reales
+### ⬜ T1.15 — Validación contra predios reales
 
 - **Objetivo:** cerrar la iteración 1 con evidencia. Metodología y métrica en `doc/05-VALIDACION.md`.
 - **Entregable:** `doc/` con precisión y recall sobre N expedientes reales ya aprobados.
 - **Nota:** sin esto la iteración **no se declara cerrada**.
-- **Commit:** `docs: validacion de la iteracion 1 contra predios reales [T1.13]`
+- **Commit:** `docs: validacion de la iteracion 1 contra predios reales [T1.15]`
