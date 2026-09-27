@@ -349,6 +349,54 @@ D20) en el docstring de `_decidir`, más dos tests: que el orden esté escrito y
 **Riesgo que queda anotado:** el "bucle de aprendizaje offline" que justifica T3 debe alimentar la
 **priorización del corpus**, nunca el veredicto ni un ajuste de modelo (D3, D4).
 
+
+## Iteración 2 — El paper, y lo que el motor necesita para sostenerlo
+
+El paper tiene un hueso real: **el invariante epistémico como restricción de diseño**, con una capa
+calibrada que no puede violarlo. Pero hoy lo vende con la afirmación equivocada («the first formal
+treatment») y con evidencia que no lo es («453 tests»). Estas tareas lo corrigen y producen lo que
+falta.
+
+**Las tres citas del borrador están verificadas y son reales:** [GroundEval 2606.22737](https://arxiv.org/abs/2606.22737),
+[JEV-as-a-Judge 2609.26550](https://arxiv.org/abs/2609.26550) (CMU, 22-sep-2026) y
+[Calibrated Decision Models for Pentest 2609.28940](https://arxiv.org/abs/2609.28940).
+
+| # | Tarea | Estado |
+|---|---|---|
+| P1 | Quitar «first»: Catala (ICFP 2021) y la lógica deóntica defeasible ya formalizan motores normativos | ⬜ |
+| P2 | Ganar «calibrated»: confiabilidad + ECE del portero, umbral derivado de una tasa objetivo | ⬜ |
+| P3 | Reescribir §7: confusión vs. revisor humano (falsos C / NC / P) y cobertura | ⬜ |
+| P4 | Related work honesto: Catala, Governatori, compliance checking en AEC | ⬜ |
+| P5 | Citar JEV-as-a-Judge como evidencia de D3 (falla en derivaciones), no la doc de JEV | ⬜ |
+| E1 | Monotonía bajo refinamiento + contraste con la semántica permisiva | ✅ `[E1]` |
+| E2 | Traza de auditoría: qué hecho cambió el límite vigente (habilita C4) | ⬜ |
+| E3 | Calibrar el portero de verdad (= P2) | ⬜ |
+| E4 | Cobertura: 6/12 en Z-2, extendida a más zonas | ⬜ |
+
+### ✅ E1 — Monotonía del veredicto bajo refinamiento del conocimiento
+
+**El teorema, tal como resultó** —y no como lo supuse primero—: bajo un **refinamiento** (un hecho
+pasa de `None` a `True`/`False`, sin contradecir lo ya sabido) **`C` y `NC` son estables**; el único
+inestable es `P`, y lo es **en las dos direcciones**: un `P` puede refinarse a `C` o a `NC`.
+
+**Empecé afirmando lo contrario** —que el veredicto era no monótono y que aprender un dato podía
+revocar un `C`— y el test de búsqueda exhaustiva **me refutó**: la inversión que yo «demostraba»
+requería **cambiar** un hecho de `False` a `True`, y eso es **revisión**, no refinamiento. Estaba mal
+el contraejemplo y estaba mal el teorema. Es el segundo caso en este proyecto en que un test escrito
+para confirmar una intuición la desmiente (el primero fue el «pincho» de T1.11).
+
+**Por qué la versión correcta es mejor para el paper:** la monotonía **no es gratis**. Es
+consecuencia de la negativa a concluir, y el test lo demuestra **por contraste**: reemplaza
+`_limite_vigente` por la alternativa «razonable» —ante la duda, concede la excepción más permisiva— y
+la misma búsqueda **sí** encuentra inversiones. La negativa a concluir no es prudencia defensiva: es
+la condición que **compra** la estabilidad del veredicto. Eso es un resultado; lo otro era una
+observación.
+
+**Y de ahí sale el portero, obligado:** si un `P` puede refinarse a `C` o a `NC`, equivocarse
+resolviendo un hecho como **falso** es tan peligroso como resolverlo como cierto. La banda gris de
+dos lados (`0,2–0,8`) no es tuning: es **obligatoria**. La asimetría habitual de los clasificadores
+se vuelve acá una simetría exigida por el teorema.
+
 ### ⬜ T1.12 — Resolución de zona
 
 - **Test primero:** coordenada conocida → `Zona` con parámetros del corpus; coordenada sin zona →

@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 1 — Vertical slice, en curso.** T1.1–T1.11 cerradas (más T1.7b, T1.14a y T1.17) (iteración 0 completa: T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1–T1.11 y T1.17 cerradas (más T1.7b, T1.14a y E1) (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|
 | Tarea en curso | ninguna. Siguiente: **T1.12** (resolución coordenada → zona) |
 | Código | `corpus/prc/RM/nunoa/zonas/Z-2.yaml` (nuevo) · `puente.py` · `clasificacion/{contrato,porteria,proveedor}.py` · `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
-| Tests | **468 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tests | **484 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | **`./gate.sh`** en verde (`set -euo pipefail`): pytest, ruff y mypy sobre `src` **y** `tests` |
 | Árbol git | limpio — todo commiteado |
 
