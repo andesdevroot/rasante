@@ -20,8 +20,6 @@ import pytest
 from rasante.corpus.cargador import ErrorCarga, cargar_zona, cargar_zonas, decimal_de
 from rasante.dominio.modelos import EstadoRevision, TipoLimite
 
-FIXTURES = Path(__file__).parent / "fixtures" / "zonas"
-
 PROCEDENCIA = """procedencia:
   url_fuente: "https://www.nunoa.cl/ordenanza.pdf"
   hash_fuente: "sha256:%s"

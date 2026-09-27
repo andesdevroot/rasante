@@ -12,7 +12,7 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 | | |
 |---|---|
 | Tarea en curso | ninguna. Siguiente: **T1.14b** (prosa normativa), luego T1.14 (más zonas) |
-| Código | `corpus/zonas/nunoa/Z-2.yaml` (nuevo) · `puente.py` · `clasificacion/{contrato,porteria,proveedor}.py` · `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
+| Código | `corpus/prc/RM/nunoa/zonas/Z-2.yaml` (nuevo) · `puente.py` · `clasificacion/{contrato,porteria,proveedor}.py` · `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
 | Tests | **432 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | **`./gate.sh`** en verde (`set -euo pipefail`): pytest, ruff y mypy sobre `src` **y** `tests` |
 | Árbol git | limpio — todo commiteado |
@@ -206,7 +206,7 @@ Cargar `2.6.5` destapó dos cosas que ninguna prueba sintética habría mostrado
 
 ## Primera zona real (2026-09-27, T1.14a)
 
-`corpus/zonas/nunoa/Z-2.yaml`: los 12 renglones del cuadro normativo de la Zona Z-2, cada uno con su
+`corpus/prc/RM/nunoa/zonas/Z-2.yaml`: los 12 renglones del cuadro normativo de la Zona Z-2, cada uno con su
 cita literal verificada contra el PDF de la ordenanza (fixture `nunoa_zonas.json` + sha256).
 
 **Los parámetros numéricos sí están en el texto extraído.** El spike previo fue concluyente:

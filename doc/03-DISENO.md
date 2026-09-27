@@ -342,39 +342,65 @@ Cuatro cosas que el esquema actual no representa:
 | **Acoplamiento geométrico** entre parámetros | cos 0,6 + cos_sup 0,4 + cus 4 | Cada parámetro se evalúa aislado (§2.6) |
 | **Excepciones condicionales** | OGUC `2.6.5`: Conjunto Armónico excede el cus hasta 50 % | `regla` es un string decorativo |
 
-### Esquema propuesto
+### El esquema, tal como quedó
 
 ```yaml
-# corpus/prc/RM/nunoa/zonas/Z-4.yaml
-zona: "Z-4"
+# corpus/prc/RM/nunoa/zonas/Z-2.yaml — la primera zona real del corpus (T1.14a)
+norma_id: prc:nunoa
+zona: Z-2
+comuna: Ñuñoa
+articulo: '26'                     # el artículo de la ordenanza que fija los valores
+cita: 'ZONA Z- 2  (104) Superficie de subdivisión predial mínima 500 m²'
+hechos:                            # predicados que el corpus evalúa sobre el proyecto
+  edificio_de_4_pisos_o_mas:
+    expresion: numero_pisos >= 4 and altura_m >= 12
+    cita: { norma_id: prc:nunoa, articulo: '26' }
 parametros:
-  cus:
-    unidad: adimensional
-    limites:                       # TODOS ligan: es una conjunción, no una alternativa
-      - valor: "4"
-        cita: { norma_id: "prc:nunoa", articulo: "..." }
-      - valor: "6"                 # excepción condicional
-        cuando: { clasificacion: conjunto_armonico }
-        cita: { norma_id: "oguc", articulo: "2.6.5" }
-  altura_maxima:
-    unidad: m
+  cos:
+    id: cos
+    sentido: maximo                # OBLIGATORIO
     limites:
-      - valor: "44.00"
+      - tipo: base
+        valor: '0,5'               # texto, y con coma decimal como la ordenanza
+        unidad: adimensional
+        cita:
+          norma_id: prc:nunoa
+          articulo: '26'
+          texto: Coeficiente de ocupación de suelo 0,5
+  distanciamiento:
+    id: distanciamiento
+    sentido: minimo
+    limites:
+      - tipo: excepcion
+        valor: '5'
         unidad: m
-        cita: { norma_id: "prc:nunoa", articulo: "..." }
-      - valor: "15"
-        unidad: pisos
-        cita: { norma_id: "prc:nunoa", articulo: "..." }
-        # la OGUC dice que el 3,50 m/piso solo aplica si NO se explicitan metros.
-        # Ñuñoa sí los explicita, así que este límite lija en pisos, no convertido.
-
-relaciones:                        # restricciones ENTRE parámetros
-  - tipo: cota_superior
-    objetivo: cus
-    expresion: "cos.primer_piso + (numero_pisos - 1) * cos.pisos_superiores"
-    fundamento: "se deduce de las definiciones de los coeficientes (OGUC 1.1.2)"
-    cita: { norma_id: "oguc", articulo: "1.1.2" }
+        cuando: [edificio_de_4_pisos_o_mas]   # lista de HECHOS, no un mapping
+        cita: { norma_id: prc:nunoa, articulo: '26', texto: '... 5 m' }
 ```
+
+**Cuatro cosas que el esquema exige y que la primera versión de este documento no decía.** Se
+registran acá a propósito: quien lea la versión vieja —o la reinvente— va a construir lo que no es.
+
+1. **`sentido` es obligatorio y no tiene valor por defecto.** Tratar un mínimo como máximo da el
+   veredicto **invertido** sin que nadie se entere. Un default silencioso sería peor que no tenerlo.
+2. **La unidad va en el límite, no en el parámetro**, y un parámetro **no puede** llevar dos límites
+   en unidades distintas esperando que rijan los dos: `_limite_vigente` elige **uno**. La ordenanza
+   que escribe *"10 pisos **y** 28,00 m"* se modela como **dos parámetros** —`altura_maxima` y
+   `pisos_maximos`—, no como un operador lógico.
+3. **`cuando` es una lista de nombres de hechos**, y los hechos los declara el corpus. No hay
+   `clasificacion:` ni listas de condiciones escritas en Python.
+4. **Las excepciones sustituyen al base, no se le suman**, y entre las que aplican manda la más
+   restrictiva. Este documento decía lo contrario —*"TODOS ligan: es una conjunción"*— y con esa
+   semántica la excepción del Conjunto Armónico, que **amplía** el `cus`, nunca podría aplicarse.
+
+**Un parámetro sin límites** se admite solo si declara `estado: desconocido`. Es el caso de una celda
+que contiene una remisión en vez de un número —*"Adosamiento: Según OGUC"*—. Omitirla la haría
+desaparecer del informe en silencio; declararla la deja visible y citada, con un `P`.
+
+**Toda cita se verifica.** `tests/test_realidad_corpus.py` contrasta las citas de la OGUC contra el
+PDF de MINVU, y `tests/test_corpus_nunoa.py` hace lo mismo con la ordenanza municipal: cada cita debe
+ser un fragmento **literal** del texto fuente, y cada **valor** debe ser un número que esa cita asocie
+a su unidad.
 
 **Cómo se evalúa.** La `expresion` es un mini-DSL evaluado con el módulo `ast` de la stdlib sobre
 un **vocabulario cerrado**: solo nombres declarados, operadores aritméticos y comparaciones. Nada de

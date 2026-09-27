@@ -228,11 +228,13 @@ def cargar_zona(archivo: Path) -> Zona:
 def cargar_zonas(raiz: Path) -> list[Zona]:
     """Todas las zonas del corpus bajo `raiz`, en orden determinista.
 
-    Se recorren **recursivamente** bajo `raiz/zonas/`: el corpus crece por comuna, y una carpeta
-    plana con las 40 zonas de Ñuñoa más las de la comuna siguiente no se sostiene.
+    El recorrido sigue el layout que fija `doc/03-DISENO.md`: `corpus/prc/<REGION>/<comuna>/zonas/`.
+    La región está en la ruta porque un mismo código de zona significa cosas distintas en comunas
+    distintas, y porque el corpus crece por comuna: una carpeta plana no se sostiene.
     """
-    zonas = Path(raiz) / "zonas"
-    return [cargar_zona(a) for a in sorted(zonas.rglob("*.yaml"))]
+    return [
+        cargar_zona(a) for a in sorted((Path(raiz) / "prc").rglob("zonas/*.yaml"))
+    ]
 
 
 def _parametro(

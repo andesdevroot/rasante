@@ -199,7 +199,7 @@ pendiente— y `factibilidad` dice **qué** falta.
 
 ### ✅ T1.14a — Primera zona real: Z-2 de Ñuñoa
 
-`corpus/zonas/nunoa/Z-2.yaml`: los 12 renglones del cuadro normativo del Artículo 26, cada uno con su
+`corpus/prc/RM/nunoa/zonas/Z-2.yaml`: los 12 renglones del cuadro normativo del Artículo 26, cada uno con su
 cita literal. El fixture `tests/fixtures/nunoa_zonas.json` guarda el texto tal como salió de `pypdf`
 más el sha256 del PDF, y `tests/test_corpus_nunoa.py` exige que **cada cita sea un fragmento literal**
 de ese texto: si alguien inventa un número, ese test lo caza.

@@ -233,7 +233,7 @@ normativa/
 Una zona:
 
 ```yaml
-# normativa/prc/RM/las-condes/zonas/UEe3.yaml
+# corpus/prc/RM/las-condes/zonas/UEe3.yaml
 zona: UEe3/Ee3
 nombre: "Zona Especial 3 Área de Parques"
 

@@ -41,7 +41,7 @@ from rasante.dominio.motor import clasificar, evaluar
 RAIZ = Path(__file__).resolve().parents[1]
 FIXTURE = json.loads((RAIZ / "tests" / "fixtures" / "nunoa_zonas.json").read_text(encoding="utf-8"))
 REALES: dict[str, str] = FIXTURE["zonas"]
-ARCHIVO = RAIZ / "corpus" / "zonas" / "nunoa" / "Z-2.yaml"
+ARCHIVO = RAIZ / "corpus" / "prc" / "RM" / "nunoa" / "zonas" / "Z-2.yaml"
 REGLAS = cargar_reglas(RAIZ / "corpus")
 
 
