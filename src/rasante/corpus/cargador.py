@@ -9,6 +9,7 @@ Acá vive la lectura de `derivaciones` y `relaciones` (T1.4). La lectura de zona
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from types import MappingProxyType
@@ -16,6 +17,13 @@ from typing import Any
 
 import yaml
 
+from rasante.clasificacion.contrato import (
+    Pregunta,
+    PreguntaChoice,
+    PreguntaDeHecho,
+    PreguntaNoul,
+    PreguntaScore,
+)
 from rasante.corpus.esquema import ErrorEsquema, validar_documento
 from rasante.dominio.modelos import (
     Cita,
@@ -74,6 +82,55 @@ def cargar_reglas(raiz: Path) -> Reglas:
         derivaciones=MappingProxyType(derivaciones),
         relaciones=tuple(relaciones),
         hechos=MappingProxyType(hechos),
+    )
+
+
+def cargar_preguntas(raiz: Path) -> Mapping[str, PreguntaDeHecho]:
+    """Lee `preguntas` de todos los documentos del corpus (T1.10).
+
+    Son las preguntas con que el puente llena los hechos que el corpus **no puede calcular**: si el
+    predio constituye una manzana existente, si es una fusión predial. Cada una queda atada a su
+    hecho y a la norma que lo exige.
+
+    Devuelve un mapping vacío si no hay ninguna: un corpus sin preguntas es un corpus que solo
+    calcula, y eso es correcto, no un error.
+    """
+    declaradas: dict[str, PreguntaDeHecho] = {}
+    for archivo in sorted(Path(raiz).rglob("*.yaml")):
+        datos = _leer(archivo)
+        for hecho, bruta in (datos.get("preguntas") or {}).items():
+            declaradas[hecho] = _pregunta_de_hecho(hecho, bruta, datos, archivo)
+    return MappingProxyType(declaradas)
+
+
+def _pregunta_de_hecho(
+    hecho: str, bruta: dict[str, Any], datos: dict[str, Any], archivo: Path
+) -> PreguntaDeHecho:
+    tipo = str(bruta["tipo"])
+    instrucciones = str(bruta["instrucciones"])
+    pregunta: Pregunta
+    if tipo == "noul":
+        pregunta = PreguntaNoul(id=hecho, instrucciones=instrucciones)
+    elif tipo == "choice":
+        pregunta = PreguntaChoice(
+            id=hecho,
+            instrucciones=instrucciones,
+            criterios={
+                str(opcion): str(definicion)
+                for opcion, definicion in (bruta.get("criterios") or {}).items()
+            },
+        )
+    else:
+        pregunta = PreguntaScore(
+            id=hecho,
+            instrucciones=instrucciones,
+            niveles=tuple(str(nivel) for nivel in (bruta.get("niveles") or ())),
+        )
+    return PreguntaDeHecho(
+        hecho=hecho,
+        pregunta=pregunta,
+        cita=_cita(bruta.get("cita"), datos, archivo),
+        verdadero_si=frozenset(str(v) for v in (bruta.get("verdadero_si") or ())),
     )
 
 

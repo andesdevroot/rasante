@@ -14,6 +14,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 
+from rasante.dominio.modelos import Cita
+
 
 class ErrorClasificacion(ValueError):
     """Una pregunta o una respuesta no cumple el contrato."""
@@ -148,3 +150,52 @@ class Politica:
     umbral_confianza: float = 0.8
     noul_afirmativo: float = 0.8
     noul_negativo: float = 0.2
+
+
+@dataclass(frozen=True, slots=True)
+class PreguntaDeHecho:
+    """Una pregunta del corpus, atada al **hecho** que resuelve y a la norma que lo exige.
+
+    El corpus no pregunta en general: pregunta para llenar un hueco concreto. `hecho` es el nombre
+    del hecho que el motor espera, y `cita` la norma que lo establece — sin cita, un hecho
+    clasificado no es trazable y el veredicto que dependa de él tampoco.
+
+    `verdadero_si` es cómo una respuesta categórica se vuelve booleana. Un `noul` ya es booleano y
+    no lo lleva. En `choice`/`score` el corpus declara **explícitamente** qué valores hacen cierto
+    el hecho: cualquier otro valor resuelto lo hace falso, y una respuesta sin resolver lo deja
+    indeterminado. La alternativa —inferir el booleano de la opción "más parecida"— sería inventar.
+    """
+
+    hecho: str
+    pregunta: Pregunta
+    cita: Cita
+    verdadero_si: frozenset[str] = frozenset()
+
+    def __post_init__(self) -> None:
+        if self.pregunta.id != self.hecho:
+            raise ErrorClasificacion(
+                f"la pregunta {self.pregunta.id!r} resuelve el hecho {self.hecho!r}: los "
+                "identificadores deben coincidir, o el motor no sabría a qué hecho corresponde "
+                "la respuesta"
+            )
+        if isinstance(self.pregunta, PreguntaNoul):
+            if self.verdadero_si:
+                raise ErrorClasificacion(
+                    f"{self.hecho!r}: un 'noul' ya es booleano, no lleva 'verdadero_si'"
+                )
+            return
+        if not self.verdadero_si:
+            raise ErrorClasificacion(
+                f"{self.hecho!r}: una pregunta '{tipo_de(self.pregunta).value}' necesita "
+                "'verdadero_si': sin eso no se sabe qué respuesta vuelve cierto el hecho"
+            )
+        ofrecidos = (
+            set(self.pregunta.criterios)
+            if isinstance(self.pregunta, PreguntaChoice)
+            else set(self.pregunta.niveles)
+        )
+        ajenos = sorted(self.verdadero_si - ofrecidos)
+        if ajenos:
+            raise ErrorClasificacion(
+                f"{self.hecho!r}: 'verdadero_si' nombra valores que la pregunta no ofrece: {ajenos}"
+            )

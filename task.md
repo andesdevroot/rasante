@@ -71,7 +71,8 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.7b | Un dato sin revisar no aprueba (D18) | ✅ | `[T1.7b]` |
 | T1.8 | Capa de clasificación con contrato tipado | ✅ | `[T1.8]` |
 | T1.9 | El sentido lo declara el corpus, no el motor | ✅ | `[T1.9]` |
-| T1.10 | Conectar la capa de clasificación al motor | ⬜ |
+| T1.10 | El puente: de las preguntas a los hechos | ✅ | `[T1.10]` |
+| T1.10b | `excepcion` del corpus nunca llega a `Limite` | ⬜ |
 | T1.11 | Geo: reproyección e índice espacial | ⬜ |
 | T1.12 | Resolución coordenada → zona | ⬜ |
 | T1.13 | CLI | ⬜ |
@@ -154,6 +155,43 @@ exige, **sin valor por defecto** — un mínimo tratado como máximo daría el v
 silencio. Con eso el motor no hardcodea nada: `derivaciones` dice cómo se calcula, los hechos cuál
 límite rige, y el `sentido` hacia dónde compara. Habilita parámetros de mínimo (densidad mínima, área
 verde mínima) sin tocar código. 13 tests.
+
+### ✅ T1.10 — El puente: de las preguntas a los hechos
+
+La capa de clasificación existía y estaba probada, pero **no estaba conectada a nada** (D19 quedaba
+a medias). `2.6.4` declara tres `hechos_pendientes` —`dimension_b`: ¿es una manzana existente?,
+`dimension_c`: ¿es una fusión predial del art. 63?, `condicion_uso`— que el motor no puede
+calcular. Ahora el corpus declara **preguntas tipadas** para ellos y `rasante/puente.py` las
+resuelve contra el expediente.
+
+- `motor.evaluar/clasificar` y `factibilidad.verificar` aceptan `hechos_externos`. Un hecho externo
+  **no puede sobrescribir** uno del corpus (`ErrorHechoDuplicado`): con dos fuentes, cuál gana sería
+  una decisión implícita, y un hecho decide **cuál límite rige**.
+- `corpus` gana `preguntas:` por hecho, con `cita` obligatoria y `verdadero_si` para las
+  categóricas. Sin `verdadero_si`, una respuesta `choice` no tiene forma determinista de volverse
+  booleana.
+- Tres invariantes del puente, cada uno con su test: **sin documento no se consulta al proveedor**
+  (no se gasta una llamada para que un modelo adivine sobre la nada); **lo que no se resuelve queda
+  `None`** —y por lo tanto `P`—, nunca en el límite permisivo; **una respuesta categórica se traduce
+  por el `verdadero_si` del corpus**, nunca por la opción más probable.
+- El circuito completo queda probado de punta a punta: `cos` base 0,5 con excepción 0,8 condicionada
+  a `dimension_c`, sobre un proyecto de 0,6 → `C` con el hecho en `True`, `NC` en `False`, `P` en
+  `None`.
+
+**El puente no emite hallazgos a propósito.** El único lugar que reporta `CLASIFICACION_INDETERMINADA`
+es `factibilidad`, por parámetro y por límite; si el puente emitiera además uno por hecho, el mismo
+dato faltante aparecería dos veces en el informe. El puente expone `motivos()` —**por qué** quedó
+pendiente— y `factibilidad` dice **qué** falta.
+
+**Dos huecos que aparecieron al conectar** (no se arreglan acá, se anotan):
+
+1. El bloque `excepcion:` de `corpus/oguc/2.6.5.yaml` **no lo lee ningún código**. El "+50 % de cus
+   por Conjunto Armónico" está escrito en el corpus y nunca llega a ser un `Limite`. `cargar_reglas`
+   lee `derivaciones`, `hechos` y `relaciones`, y nada más.
+2. `Proyecto.clasificaciones` se **valida** (`modelos.py` rechaza lo que no esté en `CONDICIONES`)
+   pero **no se consume** en ninguna parte. Es un segundo mecanismo para lo mismo que
+   `hechos_externos`, y peor: un `frozenset` no puede expresar "no se sabe", así que no puede
+   alimentar un `P`. `hechos_externos` lo supersede.
 
 ### ⬜ T1.11 — Geo: reproyección e índice espacial
 

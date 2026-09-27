@@ -18,6 +18,43 @@ hechos_pendientes:
     solo la superficie: daría por cumplida la 1.c) a un predio que no es fusión, y con eso el +30 % de
     cus.'
   condicion_uso: Requiere el destino del proyecto (equipamiento) y el art. 2.1.36.
+preguntas:
+  dimension_b:
+    tipo: noul
+    instrucciones: >
+      El predio del proyecto constituye una manzana existente, en el sentido de la letra a) del
+      numero 1. del articulo 2.6.4 de la OGUC. Afirmarlo exige que el predio coincida con una manzana
+      ya conformada del area urbana, y no con un terreno interior que todavia podria subdividirse. Si
+      el expediente no trae el plano de loteo o el certificado de informaciones previas que lo
+      acredite, responde con una probabilidad baja: no se trata de suponer, sino de leer.
+    cita:
+      norma_id: oguc
+      articulo: 2.6.4
+  dimension_c:
+    tipo: noul
+    instrucciones: >
+      El predio del proyecto es el resultado de una fusion predial acogida al articulo 63 del DFL
+      458, en el sentido de la letra c) del numero 1. del articulo 2.6.4 de la OGUC. NO BASTA con que
+      la superficie declarada sea la suma de varios predios: se necesita el acto registral de fusion.
+      Si el expediente no lo acredita, responde con una probabilidad baja.
+    cita:
+      norma_id: oguc
+      articulo: 2.6.4
+  condicion_uso:
+    tipo: choice
+    instrucciones: >
+      Clasifique el destino principal de la edificacion que declara el expediente. Elija
+      'equipamiento' solo si el destino principal es de equipamiento; 'vivienda' si es residencial;
+      'otro' si el expediente no permite asignar un destino principal, o si es distinto de los dos
+      anteriores.
+    criterios:
+      equipamiento: 'Destino principal de equipamiento: comercio, servicios, salud, educacion o esparcimiento.'
+      vivienda: 'Destino principal residencial (vivienda).'
+      otro: 'El expediente no permite asignar un destino principal, o es uno distinto de vivienda y equipamiento.'
+    verdadero_si: [equipamiento]
+    cita:
+      norma_id: oguc
+      articulo: 2.6.4
 procedencia:
   url_fuente: https://www.minvu.gob.cl/wp-content/uploads/2019/05/OGUC-Mayo-2026-D.S.-N5-D.O.-22-05-2026-rev-15.09.2026.pdf
   consolidado_por: D.D. N°5, D.O. 22-05-2026

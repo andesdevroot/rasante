@@ -29,8 +29,16 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from types import MappingProxyType
 
-from .modelos import Cita
+from .modelos import Cita, ErrorDominio
 from .vocabulario import VOCABULARIO, ErrorVocabulario, arbol, nombres_de_expresion, ruta_de
+
+
+class ErrorHechoDuplicado(ErrorDominio):
+    """Un hecho tiene dos fuentes: el corpus y el puente de clasificación.
+
+    Es un error y no una precedencia a propósito. Un hecho decide **cuál límite rige**, así que
+    dejar que dos fuentes lo definan es dejar el veredicto a merced del orden en que se aplicaron.
+    """
 
 
 @dataclass(frozen=True, slots=True)

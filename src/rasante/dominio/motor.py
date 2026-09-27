@@ -13,9 +13,13 @@ afirmarlo sería un informe falso firmado por un profesional.
 
 ## El corpus manda (D14, D16)
 
-**Cómo se calcula** viene de `derivaciones`, y **cuál límite aplica** viene de los hechos evaluados
-sobre el proyecto. El motor no sabe nada por su cuenta salvo qué parámetros son cotas superiores
-(`MAXIMOS`), que el esquema todavía no expresa.
+**Cómo se calcula** viene de `derivaciones`, **cuál límite aplica** viene de los hechos, y **hacia
+dónde compara** viene del `sentido` que declara cada parámetro. El motor no hardcodea nada.
+
+Un hecho puede venir de dos lados: de una expresión del corpus (`clasificar` la evalúa) o de afuera
+(`hechos_externos`), cuando el corpus declara que no es aritmética sobre el proyecto — saber si un
+predio constituye una manzana existente exige el acta registral, no una resta. El motor no
+distingue: para él un hecho es `True`, `False` o `None`, y `None` siempre da `P`.
 """
 
 from __future__ import annotations
@@ -35,13 +39,30 @@ from .modelos import (
     Veredicto,
     Zona,
 )
-from .reglas import Clasificacion, Reglas, declarar_nombres, evaluar_expresion, evaluar_hecho
+from .reglas import (
+    Clasificacion,
+    ErrorHechoDuplicado,
+    Reglas,
+    declarar_nombres,
+    evaluar_expresion,
+    evaluar_hecho,
+)
 
 
-def evaluar(proyecto: Proyecto, zona: Zona, reglas: Reglas) -> list[Veredicto]:
-    """Evalúa cada parámetro que la zona declara, en orden determinista por clave."""
+def evaluar(
+    proyecto: Proyecto,
+    zona: Zona,
+    reglas: Reglas,
+    hechos_externos: Mapping[str, bool | None] | None = None,
+) -> list[Veredicto]:
+    """Evalúa cada parámetro que la zona declara, en orden determinista por clave.
+
+    `hechos_externos` son los hechos que el corpus declara pero no puede calcular: los resuelve el
+    puente (T1.10) con la capa de clasificación. Se tratan **igual** que los del corpus — un hecho
+    externo indeterminado es exactamente tan indeterminado como uno que el corpus no pudo evaluar.
+    """
     valores = valores_del_proyecto(proyecto)
-    clasificacion = clasificar(proyecto, zona, reglas, valores)
+    clasificacion = clasificar(proyecto, zona, reglas, valores, hechos_externos)
     revisada = zona.procedencia.revisada
     parametros = sorted(zona.parametros.values(), key=lambda p: p.clave)
     return [
@@ -55,11 +76,16 @@ def clasificar(
     zona: Zona,
     reglas: Reglas,
     valores: Mapping[str, Decimal | None] | None = None,
+    hechos_externos: Mapping[str, bool | None] | None = None,
 ) -> Clasificacion:
     """Qué hechos del corpus se cumplen para este proyecto, contra esta zona.
 
     Tres estados por hecho: `True`, `False` y **`None` = no se sabe**. El tercero es lo que impide
     que un dato faltante se traduzca en aplicar el límite más permisivo.
+
+    Un hecho externo **no puede sobrescribir** uno del corpus: si un mismo hecho tuviera dos
+    fuentes, cuál gana sería una decisión implícita. El corpus lo impide al validar, y acá se
+    vuelve a exigir por si alguien llama al motor directamente.
     """
     disponibles: dict[str, Decimal | None] = dict(valores or valores_del_proyecto(proyecto))
     disponibles.update(valores_normados(zona))
@@ -67,6 +93,13 @@ def clasificar(
         nombre: evaluar_hecho(hecho.expresion, declarar_nombres(hecho.expresion, disponibles))
         for nombre, hecho in reglas.hechos.items()
     }
+    for nombre, estado in (hechos_externos or {}).items():
+        if nombre in evaluados:
+            raise ErrorHechoDuplicado(
+                f"el hecho {nombre!r} ya lo define el corpus: un hecho externo no puede "
+                "sobrescribirlo, porque cuál de las dos fuentes gana sería una decisión implícita"
+            )
+        evaluados[nombre] = estado
     return Clasificacion(hechos=MappingProxyType(evaluados))
 
 

@@ -23,6 +23,7 @@ dirección.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from decimal import Decimal
 
 from .modelos import (
@@ -44,7 +45,12 @@ from .reglas import Reglas
 PISO_REFERENCIA_M = Decimal("3.50")
 
 
-def verificar(proyecto: Proyecto, zona: Zona, reglas: Reglas) -> list[Hallazgo]:
+def verificar(
+    proyecto: Proyecto,
+    zona: Zona,
+    reglas: Reglas,
+    hechos_externos: Mapping[str, bool | None] | None = None,
+) -> list[Hallazgo]:
     """Hallazgos de factibilidad. Lista vacía significa "no se puede afirmar que haya problema"."""
     if not zona.procedencia.revisada:
         # De un corpus sin firma no se puede afirmar **nada**, ni siquiera que un proyecto sea
@@ -66,19 +72,22 @@ def verificar(proyecto: Proyecto, zona: Zona, reglas: Reglas) -> list[Hallazgo]:
     return [
         *_proyecto_imposible(proyecto, zona, reglas),
         *_cus_inalcanzable(zona, reglas),
-        *_clasificacion_indeterminada(proyecto, zona, reglas),
+        *_clasificacion_indeterminada(proyecto, zona, reglas, hechos_externos),
     ]
 
 
 def _clasificacion_indeterminada(
-    proyecto: Proyecto, zona: Zona, reglas: Reglas,
+    proyecto: Proyecto,
+    zona: Zona,
+    reglas: Reglas,
+    hechos_externos: Mapping[str, bool | None] | None = None,
 ) -> list[Hallazgo]:
     """Un límite condicional que no se puede decidir: el motor dará `P`, y hay que decir por qué.
 
     Que el veredicto salga `P` no basta: el revisor necesita saber **qué dato** le falta para
     clasificar el proyecto. Es la diferencia entre "no sé" y "no me consta".
     """
-    clasificacion = clasificar(proyecto, zona, reglas)
+    clasificacion = clasificar(proyecto, zona, reglas, hechos_externos=hechos_externos)
     hallazgos: list[Hallazgo] = []
     for parametro in sorted(zona.parametros.values(), key=lambda x: x.clave):
         for limite in parametro.excepciones:

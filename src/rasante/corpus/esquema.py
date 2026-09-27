@@ -30,6 +30,12 @@ from rasante.dominio.vocabulario import (
 
 CAMPOS_PROCEDENCIA = ("url_fuente", "hash_fuente", "consolidado_por", "extraido")
 
+TIPOS_PREGUNTA = ("choice", "noul", "score")
+
+# Campos de una pregunta `choice`/`score` que enumeran sus alternativas, y el nombre del campo con
+# que el corpus declara qué alternativas vuelven **cierto** el hecho.
+ALTERNATIVAS = {"choice": "criterios", "score": "niveles"}
+
 
 class ErrorEsquema(ValueError):
     """Un documento del corpus no cumple el esquema."""
@@ -38,23 +44,54 @@ class ErrorEsquema(ValueError):
 def validar_corpus(raiz: Path) -> list[Path]:
     """Valida todos los YAML bajo `raiz`. Devuelve los validados, en orden.
 
-    Además de cada archivo por separado, comprueba **entre archivos** que todo `cuando` tenga su
-    hecho definido en algún artículo. Sin eso, ese límite nunca aplicaría y nadie se enteraría.
+    Además de cada archivo por separado, comprueba **entre archivos** que:
+
+    - todo `cuando` nombre un hecho que algún artículo define (si no, ese límite nunca aplicaría),
+    - ninguna pregunta se haga sobre un hecho que el corpus ya sabe calcular (dos fuentes para un
+      mismo hecho dejan el veredicto a merced de cuál se aplicó),
+    - toda pregunta corresponda a un `hechos_pendientes` declarado (si no, es una pregunta sin
+      justificación: nadie dijo por qué ese hecho no se podía calcular).
     """
     archivos = sorted(Path(raiz).rglob("*.yaml"))
-    definidos: set[str] = set()
+    calculables: set[str] = set()
+    preguntables: set[str] = set()
+    pendientes: set[str] = set()
     exigidos: dict[str, str] = {}
+    con_pregunta: dict[str, str] = {}
+
     for archivo in archivos:
         validar_archivo(archivo)
         datos = _leer(archivo)
-        definidos.update(datos.get("hechos") or {})
+        calculables.update(datos.get("hechos") or {})
+        preguntables.update(datos.get("preguntas") or {})
+        pendientes.update(datos.get("hechos_pendientes") or {})
+        for nombre in datos.get("preguntas") or {}:
+            con_pregunta.setdefault(nombre, archivo.name)
         for parametro in (datos.get("parametros") or {}).values():
             for limite in parametro.get("limites", []):
                 for nombre in limite.get("cuando") or []:
                     exigidos.setdefault(nombre, archivo.name)
-    huerfanos = {n: a for n, a in exigidos.items() if n not in definidos}
+
+    dobles = sorted(calculables & preguntables)
+    if dobles:
+        raise ErrorEsquema(
+            f"hechos calculables por el corpus y además preguntados: {dobles}. Un hecho tiene una "
+            "sola fuente; con dos, cuál gana sería una decisión implícita"
+        )
+
+    resolubles = calculables | preguntables
+    huerfanos = {n: a for n, a in exigidos.items() if n not in resolubles}
     if huerfanos:
-        raise ErrorEsquema(f"'cuando' sin hecho definido en ningún artículo: {huerfanos}")
+        raise ErrorEsquema(
+            f"'cuando' sin hecho que lo resuelva (ni en 'hechos' ni en 'preguntas'): {huerfanos}"
+        )
+
+    sin_justificar = {n: a for n, a in con_pregunta.items() if n not in pendientes}
+    if sin_justificar:
+        raise ErrorEsquema(
+            f"preguntas sobre hechos que ningún 'hechos_pendientes' declara: {sin_justificar}. "
+            "Sin esa nota nadie sabe por qué el hecho no se calcula en el corpus"
+        )
     return archivos
 
 
@@ -85,6 +122,8 @@ def validar_documento(datos: Any, *, origen: str = "") -> None:
         _validar_parametros(datos, prefijo)
     _validar_derivaciones(datos, prefijo)
     _validar_hechos(datos, prefijo)
+    _validar_hechos_pendientes(datos, prefijo)
+    _validar_preguntas(datos, prefijo)
 
     declarados = set(datos.get("parametros", {}))
     permitidos = set(VOCABULARIO) | declarados
@@ -209,6 +248,93 @@ def _validar_hechos(datos: dict[str, Any], prefijo: str) -> None:
             raise ErrorEsquema(f"{prefijo}hechos.{nombre}: no es un mapping")
         if not isinstance(hecho.get("cita"), dict):
             raise ErrorEsquema(f"{prefijo}hechos.{nombre}: falta 'cita'")
+
+
+def _validar_hechos_pendientes(datos: dict[str, Any], prefijo: str) -> None:
+    """Los hechos que el corpus declara y **no** puede calcular.
+
+    Es una nota con destinatario: dice por qué ese hecho no es una expresión. No es decorativa —
+    `_validar_corpus` exige que toda `pregunta` corresponda a un pendiente declarado acá, así que
+    este bloque es el que ata una pregunta a su justificación.
+    """
+    pendientes = datos.get("hechos_pendientes")
+    if pendientes is None:
+        return
+    if not isinstance(pendientes, dict):
+        raise ErrorEsquema(f"{prefijo}'hechos_pendientes' no es un mapping")
+    for nombre, nota in pendientes.items():
+        if not str(nota or "").strip():
+            raise ErrorEsquema(
+                f"{prefijo}hechos_pendientes.{nombre}: falta la nota que explica por qué este "
+                "hecho no se puede calcular en el corpus"
+            )
+
+
+def _validar_preguntas(datos: dict[str, Any], prefijo: str) -> None:
+    """Una pregunta es cómo se llena un hecho pendiente (T1.10).
+
+    Se valida la **forma**, no la existencia del hecho: que un pendiente esté declarado en otro
+    artículo solo se puede comprobar con todos los archivos a la vista, y eso lo hace
+    `validar_corpus`.
+    """
+    preguntas = datos.get("preguntas")
+    if preguntas is None:
+        return
+    if not isinstance(preguntas, dict):
+        raise ErrorEsquema(f"{prefijo}'preguntas' no es un mapping")
+    for hecho, pregunta in preguntas.items():
+        donde = f"{prefijo}preguntas.{hecho}"
+        if not isinstance(pregunta, dict):
+            raise ErrorEsquema(f"{donde}: no es un mapping")
+        tipo = pregunta.get("tipo")
+        if tipo not in TIPOS_PREGUNTA:
+            raise ErrorEsquema(
+                f"{donde}: 'tipo' debe ser uno de {list(TIPOS_PREGUNTA)}, no {tipo!r}"
+            )
+        if not str(pregunta.get("instrucciones") or "").strip():
+            raise ErrorEsquema(f"{donde}: falta 'instrucciones'")
+        # Una pregunta sin la norma que la respalda produce un hecho clasificado que nadie puede
+        # rastrear hasta su fuente, y un veredicto que dependa de él tampoco.
+        if not isinstance(pregunta.get("cita"), dict):
+            raise ErrorEsquema(f"{donde}: falta 'cita'")
+        if tipo == "noul":
+            if "verdadero_si" in pregunta:
+                raise ErrorEsquema(
+                    f"{donde}: un 'noul' ya es booleano; 'verdadero_si' no aplica"
+                )
+            continue
+        _validar_alternativas(pregunta, tipo, donde)
+
+
+def _validar_alternativas(pregunta: dict[str, Any], tipo: str, donde: str) -> None:
+    """`choice` y `score` enumeran alternativas y declaran cuáles vuelven cierto el hecho."""
+    campo = ALTERNATIVAS[tipo]
+    crudas = pregunta.get(campo)
+    if tipo == "choice":
+        if not isinstance(crudas, dict):
+            raise ErrorEsquema(f"{donde}: '{campo}' debe ser un mapping de opción a definición")
+        alternativas = set(map(str, crudas))
+        for opcion, definicion in crudas.items():
+            if not str(definicion or "").strip():
+                raise ErrorEsquema(
+                    f"{donde}.{campo}.{opcion}: falta la definición; sin ella el clasificador "
+                    "adivina qué significa la opción"
+                )
+    else:
+        if not isinstance(crudas, list):
+            raise ErrorEsquema(f"{donde}: '{campo}' debe ser una lista, de menor a mayor")
+        alternativas = set(map(str, crudas))
+    if len(alternativas) < 2:
+        raise ErrorEsquema(f"{donde}: '{campo}' necesita al menos dos alternativas")
+
+    verdadero_si = pregunta.get("verdadero_si")
+    if not isinstance(verdadero_si, list) or not verdadero_si:
+        raise ErrorEsquema(
+            f"{donde}: falta 'verdadero_si'; sin él no se sabe qué respuesta vuelve cierto el hecho"
+        )
+    ajenos = sorted(set(map(str, verdadero_si)) - alternativas)
+    if ajenos:
+        raise ErrorEsquema(f"{donde}: 'verdadero_si' nombra valores que no ofrece: {ajenos}")
 
 
 def _validar_relacion(relacion: Any, objetivos_permitidos: set[str], donde: str) -> None:

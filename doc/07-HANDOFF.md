@@ -7,13 +7,13 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 1 — Vertical slice, en curso.** T1.1–T1.9 cerradas (más T1.7b) (iteración 0 completa: T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1–T1.10 cerradas (más T1.7b) (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.10** (conectar la capa de clasificación) |
+| Tarea en curso | ninguna. Siguiente: **T1.10b** (`excepcion` del corpus sin consumir) |
 | Código | `clasificacion/` (nueva) · `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
-| Tests | **324 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
+| Tests | **355 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | **`./gate.sh`** en verde (`set -euo pipefail`): pytest, ruff y mypy sobre `src` **y** `tests` |
 | Árbol git | limpio — todo commiteado |
 
@@ -162,6 +162,9 @@ La guía oficial de JEV recomienda literalmente nuestra arquitectura: *"route wi
 code**, write with an LLM"*, y advierte que **no es confiable en aritmética, conteo ni fechas** — que
 es exactamente lo que hace el motor. Detalle en `03-DISENO.md` §2.9.
 
-**Pendiente (T1.10):** la capa existe y está probada con un proveedor guionizado, pero **no está
-conectada al motor**. Falta que el corpus declare preguntas `choice`/`noul` y que sus resoluciones
-alimenten los `hechos_pendientes`.
+**Ya no hay pendiente de conexión (T1.10 cerrada).** La capa está conectada: `corpus/oguc/2.6.4.yaml`
+declara las tres preguntas de sus hechos pendientes y `rasante/puente.py` las resuelve contra el
+expediente. Queda **T1.10b**: el bloque `excepcion:` de `2.6.5.yaml` no lo lee ningún código, así que
+el +50 % de cus por Conjunto Armónico está en el corpus pero no llega a `Limite`. Y
+`Proyecto.clasificaciones` se valida sin consumirse: es un segundo mecanismo, menos expresivo (no
+admite «no se sabe»), que `hechos_externos` supersede.
