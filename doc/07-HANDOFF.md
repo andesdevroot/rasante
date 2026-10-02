@@ -7,11 +7,11 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 1 — Vertical slice, en curso.** T1.1–T1.13, T1.16 y T1.17 cerradas (más T1.7b, T1.14a, E1 y E4) (iteración 0 completa: T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1–T1.13, T1.16 y T1.17 cerradas (más T1.7b, T1.14a, E1, E4 y P6) (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|
-| Tarea en curso | ninguna. Siguiente: **T1.12** (resolución coordenada → zona) |
+| Tarea en curso | ninguna. Siguiente: **T1.14b** (prosa normativa) o **E2** (traza) |
 | Código | `corpus/prc/RM/nunoa/zonas/Z-2.yaml` (nuevo) · `puente.py` · `clasificacion/{contrato,porteria,proveedor}.py` · `dominio/{modelos,motor,reglas,vocabulario,factibilidad}.py` · `corpus/{ingesta,esquema,cargador}.py` · `geo/arcgis.py` |
 | Tests | **514 verdes** offline · **3 de integración** contra la API real, excluidos por defecto |
 | Gate | **`./gate.sh`** en verde local **y en CI** (`.github/workflows/gate.yml` corre el mismo script; primera corrida `success`, 2026-10-02) |

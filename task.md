@@ -369,7 +369,45 @@ falta.
 | E2 | Traza de auditoría: qué hecho cambió el límite vigente (habilita C4) | ⬜ |
 | E3 | Calibrar el portero de verdad (= P2) | ⬜ |
 | E4 | Métrica de cobertura y taxonomía de las `P` | ✅ `[E4]` |
-| P6 | Escribir §3–§4 formalizados en `doc/08-PAPER.md` (invariante + cascada + teorema de E1) | ⬜ |
+| P6 | §3–§4 formalizados en `doc/08-PAPER.md` | ✅ `[P6]` |
+### ✅ P6 — §3–§4 formalizados (`doc/08-PAPER.md`)
+
+Las dos secciones escritas contra el código que existe, con **cada afirmación formal apuntando a su
+respaldo**: una decisión (`D…`), un test que la verifica mecánicamente, o los dos. Lo que no tenía
+respaldo, no entró.
+
+**§3 — El invariante de seguridad epistémica.** El escenario (corpus, proyecto, estado de
+conocimiento `K: H → {⊤, ⊥, ?}`), el invariante (ES) enunciado sobre `C` pero con la nota de que
+**es simétrico en su efecto** —`NC` es una afirmación con la misma carga—, y las tres cosas que el
+invariante **no** es: no es "ser conservador", no es una probabilidad, no se verifica mirando el
+corpus.
+
+**§4 — El motor como procedimiento de decisión.**
+- **4.1** la cascada de seis pasos con el porqué de cada uno y de su orden.
+- **4.2 Proposición 1:** `V` es función total y determinista. *Demostrada.*
+- **4.3 Teorema 1 (solidez de `C`):** `C` exige fuente firmada, condiciones decididas, límite con
+  valor y valor computable. *Demostrado*, y con el corolario de que `NC` tiene la misma garantía.
+- **4.4 Teorema 2 (monotonía bajo refinamiento):** si `V(K) ∈ {C, NC}` y `K ⊑ K'`, entonces
+  `V(K') = V(K)`. *Demostrado*, y **verificado por búsqueda exhaustiva** sobre el corpus real.
+- **4.4 Teorema 3 (la negativa compra la monotonía):** la semántica permisiva **rompe** la monotonía,
+  con contraejemplo sobre `2.6.5`. *Demostrado.*
+- **Corolario:** la banda gris del portero es de **dos lados** por el Teorema 2, no por tuning. Es el
+  argumento que le faltaba a §5 del borrador.
+- **4.5:** la negativa **no es indiscriminada** — 6 de 12, con causas distintas.
+
+**El Teorema 3 es la tesis del paper.** "Elegimos ser conservadores" es una decisión de diseño;
+"ser conservadores es lo que hace el veredicto monótono, y relajarlo lo rompe" es un **resultado**,
+con contraejemplo en una ordenanza real.
+
+**Riesgo que el documento declara en su primera línea:** los teoremas son propiedades **del motor
+dado un corpus**. No dicen si el motor acierta. Eso es §7 y es otra métrica.
+
+**Y lo que el paper NO debe afirmar:** "the first formal treatment". Catala (ICFP 2021) y la lógica
+deóntica defeasible ya formalizan motores normativos. La afirmación defendible es la acotada.
+
+**Verificado antes de commitear:** los 41 tests citados pasan, `_limite_vigente` recolecta faltantes
+de todos los candidatos (premisa de la demostración), el cortocircuito sigue en pie (paso clave), y
+los números 6/12 con 2+4 motivos son los reales.
 
 **Orden sugerido, y por qué.** `T1.12` es **lo más atrasado** de la cola y cierra la cadena
 `coordenada → zona → veredictos`, que es lo que la iteración 1 prometió; T1.11 ya hizo la parte
