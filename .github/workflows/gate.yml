@@ -1,0 +1,33 @@
+name: gate
+
+# Un solo gate, el mismo que se corre en la máquina: `gate.sh`.
+# No hay un pipeline aparte para CI porque un CI que corre otra cosa que el desarrollador
+# es un CI que miente.
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      # Se fija la versión en vez de dejar que uv elija: el gate tiene que ser reproducible,
+      # y `3.13` es la que declaran `ruff.target-version` y `mypy.python_version`.
+      - name: Instalar Python
+        run: uv python install 3.13
+
+      # `cache/` está en .gitignore, así que acá NO hay datos reales. Es correcto: los tests
+      # de integración están marcados y excluidos por defecto (`-m 'not integracion'`), y todo
+      # lo demás corre contra `tests/fixtures/`, que sí está versionado.
+      - name: Gate
+        run: ./gate.sh

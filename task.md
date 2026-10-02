@@ -82,7 +82,6 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.14c | Hechos de agrupamiento (la altura cambia según el tipo) | ⬜ |
 | T1.14 | Corpus real: resto de las zonas de la comuna piloto | ⬜ |
 | T1.15 | Validación contra predios reales | ⬜ |
-| T1.16 | CI en GitHub Actions (barato, fuera del camino crítico) | ⬜ |
 
 > **T1.3–T1.6 se insertaron el 2026-09-26**, al detectar tres gaps encadenados: el motor no
 > ejecutaba el corpus (D14), evaluaba parámetros acoplados como si fueran independientes (D15), y no
@@ -525,7 +524,21 @@ motor como `evaluar_motor`. Es el tipo de colisión que el nombre obvio esconde.
   `revisado_por` poblado. **Se presenta cada extracción para validación antes del commit.**
 - **Commit:** `feat(corpus): zonas iniciales de <comuna> con parametros citados [T1.14]`
 
-### ⬜ T1.16 — CI en GitHub Actions
+### ✅ T1.16 — CI en GitHub Actions
+
+`.github/workflows/gate.yml`. Corre **el mismo `gate.sh`** que se corre en la máquina, y esa es la
+única decisión de diseño del archivo: no hay un pipeline aparte para CI, porque **un CI que corre
+otra cosa que el desarrollador es un CI que miente**. Si el gate cambia, cambia para los dos.
+
+- Se fija Python **3.13**, que es la versión que declaran `ruff.target-version` y
+  `mypy.python_version`. Dejar que uv elija haría el gate no reproducible.
+- **`cache/` no existe en CI** y está bien: los tests de integración están marcados y excluidos por
+  defecto, y todo lo demás corre contra `tests/fixtures/`, que sí está versionado. El diseño de D9
+  (caché en disco, tests sin red) es lo que hace que el CI corra sin red ni secretos.
+- `permissions: contents: read`: el workflow no necesita escribir nada.
+
+Antes de esto el repo era público con 514 tests y **ninguna señal de que pasaran**.
+
 
 `gate.sh` ya existe; el workflow son diez líneas. El repo es público y hoy **no hay ninguna señal de
 que los tests pasen**: sin CI ni badge, un visitante no tiene cómo saberlo. No está en el camino
