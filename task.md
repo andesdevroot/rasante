@@ -75,7 +75,7 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.10b | Excepciones de aplicación general: factor y acogerse | ✅ | `[T1.10b]` |
 | T1.11 | Geo: índice espacial de zonas (sin reproyección) | ✅ | `[T1.11]` |
 | T1.17 | Motor: caché de AST, procedencia de `None` y orden documentado | ✅ | `[T1.17]` |
-| T1.12 | Resolución coordenada → zona | ⬜ |
+| T1.12 | Resolución coordenada → zona | ✅ | `[T1.12]` |
 | T1.13 | CLI | ⬜ |
 | T1.14a | Corpus real: Zona Z-2 de Ñuñoa (primera zona transcrita) | ✅ | `[T1.14a]` |
 | T1.14b | La prosa normativa del cuadro (decisión de diseño) | ⬜ |
@@ -436,7 +436,33 @@ promete en C4 empieza a existir (es la mitad de E2).
 **Lo que falta para §7 (P3):** la matriz de confusión contra un revisor humano. La cobertura mide el
 corpus y el expediente; no mide si el motor **acierta**.
 
-### ⬜ T1.12 — Resolución de zona
+### ✅ T1.12 — Resolución coordenada → zona
+
+`geo/resolver.py`: une el código de zona que devuelve el índice (T1.11) con la `Zona` del corpus. Con
+eso la cadena **coordenada → zona → veredictos** existe de punta a punta por primera vez.
+
+**Lo único que hace este módulo es no confundir tres fallos distintos:**
+
+| excepción | qué pasó | quién lo arregla |
+|---|---|---|
+| `SinZonaError` | la coordenada no cae en ninguna zona del PRC | quien la escribió |
+| `ZonaSinCorpusError` | cae en `Z-4` y el corpus no tiene `Z-4` | quien cura el corpus |
+| `ZonaAmbiguaError` | cae en el límite de dos zonas transcritas | **una persona** |
+
+Decir "no se pudo resolver" para los tres es lo cómodo y lo inútil: el primero es un error de
+entrada, el segundo es trabajo pendiente y el tercero es una ambigüedad del plano que el programa
+**no puede resolver sin inventar**. La CLI (T1.13) los mapeará a códigos de salida distintos.
+
+**El espaciado irregular de T1.11, resuelto acá.** El servicio declara `'MH- 1'`; el corpus tendrá
+`MH-1`. La resolución compara ignorando **espacios y nada más** —en un identificador el espacio no
+es información, viene de cómo el PDF escribe el rótulo—, y hay un test que fija que `Z-4m` y `Z-4`
+**no** se confunden. El código que devuelve es el del **corpus**, no el del servicio.
+
+**Un caso sutil que quedó cubierto:** si el punto toca dos zonas y **solo una** está transcrita, se
+resuelve a esa. Que la otra falte **no** vuelve ambigua la coordenada; hace que falte corpus, y eso
+ya lo dice `ZonaSinCorpusError` cuando corresponde. Confundir "falta corpus" con "es ambiguo" habría
+mandado a un humano a resolver algo que no lo era.
+
 
 - **Test primero:** coordenada conocida → `Zona` con parámetros del corpus; coordenada sin zona →
   `SinZonaError`; zona en el PRC pero ausente del corpus → `ZonaSinCorpusError`. Son dos fallos
