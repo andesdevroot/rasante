@@ -372,6 +372,14 @@ falta.
 | E2 | Traza de auditoría: qué hecho cambió el límite vigente (habilita C4) | ⬜ |
 | E3 | Calibrar el portero de verdad (= P2) | ⬜ |
 | E4 | Métrica de cobertura y taxonomía de las `P` | ✅ `[E4]` |
+| P6 | Escribir §3–§4 formalizados en `doc/08-PAPER.md` (invariante + cascada + teorema de E1) | ⬜ |
+
+**Orden sugerido, y por qué.** `T1.12` es **lo más atrasado** de la cola y cierra la cadena
+`coordenada → zona → veredictos`, que es lo que la iteración 1 prometió; T1.11 ya hizo la parte
+difícil, así que es barato. Después **P6**, que no depende de más código: el invariante, la cascada y
+el teorema de E1 ya están, y solo falta redactarlos. **P3** (precisión vs. revisor humano) es lo único
+que no se puede escribir todavía, porque necesita expedientes reales — o sea, T1.12 + T1.13 + T1.15.
+Y **P1, P4 y P5** son redacción pura sobre el borrador y no bloquean nada.
 
 ### ✅ E1 — Monotonía del veredicto bajo refinamiento del conocimiento
 
