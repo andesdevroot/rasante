@@ -76,7 +76,7 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.11 | Geo: índice espacial de zonas (sin reproyección) | ✅ | `[T1.11]` |
 | T1.17 | Motor: caché de AST, procedencia de `None` y orden documentado | ✅ | `[T1.17]` |
 | T1.12 | Resolución coordenada → zona | ✅ | `[T1.12]` |
-| T1.13 | CLI | ⬜ |
+| T1.13 | CLI | ✅ | `[T1.13]` |
 | T1.14a | Corpus real: Zona Z-2 de Ñuñoa (primera zona transcrita) | ✅ | `[T1.14a]` |
 | T1.14b | La prosa normativa del cuadro (decisión de diseño) | ⬜ |
 | T1.14c | Hechos de agrupamiento (la altura cambia según el tipo) | ⬜ |
@@ -238,8 +238,6 @@ cita y exige que el valor sea uno de los asociados a su unidad. Demostrado con u
 
 Lo que **no** cierra un test es leer bien el renglón cuando la cita trae varios números de la misma
 unidad: la **revisión humana de Z-2 sigue pendiente**.
-
-### ⬜ T1.14b — La prosa normativa del cuadro (decidir antes de transcribir)
 
 Z-2 no termina en el cuadro. Debajo hay dos párrafos que **no son filas**:
 
@@ -470,7 +468,35 @@ mandado a un humano a resolver algo que no lo era.
 - **Entregable:** `geo/resolver.py`.
 - **Commit:** `feat(geo): resolucion coordenada -> zona del corpus [T1.12]`
 
-### ⬜ T1.13 — CLI
+### ✅ T1.13 — CLI
+
+`rasante zona --lat --lon [--json]` y `rasante evaluar ... [--json]`. Con esto la cadena
+**coordenada → zona → veredictos** se ejecuta desde una terminal, que era el criterio de aceptación
+de la iteración 1.
+
+**Criterio de aceptación, verificado:**
+```
+$ rasante zona --lat -33.472219 --lon -70.621721 --json
+{"zona": "Z-2", "nombre": "Z-2", "comuna": "Ñuñoa", "parametros": 12, "revisada": false}
+```
+
+**Los tres errores de T1.12 tienen códigos de salida distintos** (1, 2, 3): un `SinZonaError` es un
+error de entrada, un `ZonaSinCorpusError` es trabajo pendiente de corpus, y un `ZonaAmbiguaError`
+necesita una persona. Un script que los trate igual va a reintentar lo que no se arregla
+reintentando.
+
+**Los hallazgos van aparte de los veredictos**, en la salida de texto y en el JSON. Un veredicto es
+de un parámetro y va al Formato Tipo; un hallazgo es del proyecto y puede involucrar varios (D15).
+
+**Cada veredicto sale con su cita y su `motivo`**: sin la cita no es auditable, y sin el motivo un
+`P` no dice qué falta. La cobertura de E4 viaja en el mismo JSON, así que la CLI ya es un insumo
+para la sección de resultados del paper.
+
+**Trampa que costó tiempo:** la función de comando `evaluar` **sombreaba** `motor.evaluar`, así que
+`evaluar(p, z, reglas)` llamaba a la CLI con un `Proyecto` como latitud. Se arregló importando el
+motor como `evaluar_motor`. Es el tipo de colisión que el nombre obvio esconde.
+
+### ⬜ T1.14b — La prosa normativa del cuadro (decidir antes de transcribir)
 
 - **Test primero:** invocación con `typer.testing.CliRunner`. `rasante zona --lat --lon` imprime
   código y nombre de zona; salida `--json` con esquema estable; código de salida distinto de cero en
