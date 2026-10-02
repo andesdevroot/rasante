@@ -13,6 +13,28 @@ hechos:
       articulo: '26'
       texto: Distanciamiento mínimo a los deslindes en edificios de 4 pisos y altura 12 m o más.
     nota: 'Es la condición que separa los dos tramos de distanciamiento de la zona.'
+  mas_de_tres_pisos:
+    expresion: numero_pisos > 3
+    cita:
+      norma_id: prc:nunoa
+      articulo: '26'
+      texto: En todos los Conjuntos Habitacionales cuya altura sean mayores a tres pisos
+    nota: 'Condición del área libre de esparcimiento. OJO: la norma dice "Conjuntos
+      Habitacionales", y eso es una condición ADICIONAL que hay que clasificar, como
+      dimension_b. Acá está solo la parte aritmética.'
+derivaciones:
+  area_libre:
+    expresion: superficie_libre_m2 / superficie_predio_m2
+    cita:
+      norma_id: prc:nunoa
+      articulo: '26'
+      texto: deberá destinarse un 30% del total del terreno a Área Libre de Esparcimiento
+  area_libre_techada:
+    expresion: superficie_libre_techada_m2 / superficie_libre_m2
+    cita:
+      norma_id: prc:nunoa
+      articulo: '26'
+      texto: la que podrá ser techada hasta un 30%
 parametros:
   superficie_predial_minima:
     id: superficie_predial_minima
@@ -156,6 +178,36 @@ parametros:
       expresar "uno de estos", así que se declara desconocido en vez de fingir un límite. Además
       `agrupamiento` condiciona la altura en otras zonas de Ñuñoa (Z-1 tiene tres alturas máximas
       según el tipo), así que necesita modelarse como hecho, no como parámetro.'
+  area_libre:
+    id: area_libre
+    sentido: minimo
+    limites:
+      - tipo: excepcion
+        valor: '0,30'
+        unidad: adimensional
+        cuando: [mas_de_tres_pisos]
+        cita:
+          norma_id: prc:nunoa
+          articulo: '26'
+          texto: En todos los Conjuntos Habitacionales cuya altura sean mayores a tres pisos, deberá
+            destinarse un 30% del total del terreno a Área Libre de Esparcimiento
+    nota: 'SIN BASE a propósito. La norma no exige área libre a un edificio de hasta tres pisos:
+      solo la exige por encima de ese umbral. Y el esquema no sabe expresar "este parámetro no
+      aplica cuando la condición no se cumple", así que bajo la norma este parámetro dará P
+      (sin_limite) en vez de NP. Es el hueco que T1.14b deja anotado. La alternativa —un base de
+      0— daría un C vacuo, que es peor: afirmaría cumplimiento de algo que nadie exigió.'
+  area_libre_techada:
+    id: area_libre_techada
+    sentido: maximo
+    limites:
+      - tipo: base
+        valor: '0,30'
+        unidad: adimensional
+        cita:
+          norma_id: prc:nunoa
+          articulo: '26'
+          texto: la que podrá ser techada hasta un 30%
+    nota: 'Fracción TECHADA del área libre, sobre el área libre y no sobre el predio.'
 vigencia:
   nota: 'El P_DO del IPT (27/10/1989) NO se usa como vigencia (D12): es la publicación original del
     instrumento, no la del texto refundido. El texto transcrito es el refundido de junio 2025.'

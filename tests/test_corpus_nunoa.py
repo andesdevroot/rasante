@@ -183,10 +183,15 @@ def test_el_valor_sale_del_texto_que_la_cita_convoca(clave: str) -> None:
     for limite in parametro.limites:
         patron = PATRONES_UNIDAD.get(limite.unidad)
         assert patron is not None, f"{clave}: unidad '{limite.unidad}' sin patrón de verificación"
-        crudos = re.findall(patron, limite.cita.texto.replace("\u00a0", " "))
+        texto = limite.cita.texto.replace("\u00a0", " ")
         posibles: set[Decimal] = set()
-        for crudo in crudos:
+        for crudo in re.findall(patron, texto):
             posibles |= numeros_de(crudo)
+        if "%" in texto:
+            # La ordenanza escribe **porcentajes** y el corpus guarda **fracciones**: `30%` y `0,30`
+            # son el mismo número dicho de dos maneras. Se acepta la equivalencia explícitamente, en
+            # vez de aflojar la comprobación: un `0,31` con la cita del `30%` sigue fallando.
+            posibles |= {valor / 100 for valor in posibles}
         assert limite.valor in posibles, (
             f"{clave}: el valor {limite.valor} no aparece en su propia cita "
             f"({limite.cita.texto!r} → {sorted(str(x) for x in posibles)})"
@@ -196,12 +201,17 @@ def test_el_valor_sale_del_texto_que_la_cita_convoca(clave: str) -> None:
 # --- 3. la transcripción completa ---
 
 
-def test_la_zona_declara_los_doce_renglones_del_cuadro() -> None:
+def test_la_zona_declara_los_doce_renglones_del_cuadro_mas_dos_de_la_prosa() -> None:
+    """**Doce del cuadro y dos de la prosa de abajo.** La distinción importa: el cuadro es una
+    tabla y la prosa son condiciones, y confundirlas es lo que hacía creer que la zona tenía 12
+    parámetros. T1.14b agregó las dos del área libre, que están **fuera** de la tabla."""
     assert sorted(cargar_zona(ARCHIVO).parametros) == [
         "adosamiento",
         "agrupamiento",
         "altura_maxima",
         "antejarin",
+        "area_libre",
+        "area_libre_techada",
         "cos",
         "cuerpos_salientes",
         "cus",

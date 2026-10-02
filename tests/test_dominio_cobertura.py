@@ -64,10 +64,10 @@ def cobertura(externos: dict[str, bool | None] | None = None, firmada: bool = Tr
 
 
 def test_la_zona_declara_doce_parametros() -> None:
-    assert cobertura().total == 12
+    assert cobertura().total == 14
 
 
-def test_el_motor_concluye_seis_de_doce_sin_clasificar_nada() -> None:
+def test_el_motor_concluye_seis_de_catorce_sin_clasificar_nada() -> None:
     """El número base: **6 de 12**.
 
     Y el `cus` **se concluye**, que es lo contraintuitivo y lo correcto: el proyecto no se acoge al
@@ -77,8 +77,8 @@ def test_el_motor_concluye_seis_de_doce_sin_clasificar_nada() -> None:
     """
     c = cobertura()
     assert c.concluidos == 6
-    assert c.pendientes == 6
-    assert c.proporcion == 0.5
+    assert c.pendientes == 8
+    assert c.proporcion == 6 / 14
 
 
 def test_acogerse_al_conjunto_armonico_cuesta_una_cobertura() -> None:
@@ -112,6 +112,8 @@ def test_el_desglose_por_causa() -> None:
     )
     assert c.codigos(MotivoPendiente.SIN_DATO_PROYECTO.value) == (
         "antejarin",
+        "area_libre",
+        "area_libre_techada",
         "cuerpos_salientes",
         "distanciamiento",
         "rasante",
@@ -127,8 +129,8 @@ def test_sin_firma_no_se_concluye_nada_y_la_causa_lo_dice() -> None:
     """
     c = cobertura(firmada=False)
     assert c.concluidos == 0
-    assert c.pendientes == 12
-    assert len(c.codigos(MotivoPendiente.FUENTE_SIN_REVISAR.value)) == 12
+    assert c.pendientes == 14
+    assert len(c.codigos(MotivoPendiente.FUENTE_SIN_REVISAR.value)) == 14
 
 
 # --- 2. invariantes del reporte ---

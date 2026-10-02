@@ -35,6 +35,8 @@ PRIMITIVAS: Mapping[str, str] = MappingProxyType(
         "numero_viviendas": "número de unidades de vivienda",
         "altura_m": "altura de edificación, en metros",
         "acoge_conjunto_armonico": "el proyecto se acoge a la calidad de Conjunto Armónico",
+        "superficie_libre_m2": "superficie destinada a área libre de esparcimiento, en m²",
+        "superficie_libre_techada_m2": "parte cubierta de esa área libre, en m²",
     }
 )
 
@@ -60,6 +62,8 @@ PARAMETROS: frozenset[str] = frozenset(
         "distanciamiento",
         "cuerpos_salientes",
         "superficie_predial_minima",
+        "area_libre",
+        "area_libre_techada",
     }
 )
 

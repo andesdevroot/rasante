@@ -656,6 +656,69 @@ notaba; con una conjunción, un hecho ya descartado seguía reportándose como d
 hallazgos pidiéndole al revisor un dato que ya no cambiaba el veredicto. Corregido en las dos: **un
 `False` decide antes que un `None`**.
 
+## 2.11 La prosa normativa que no es una fila (T1.14b)
+
+Debajo del cuadro normativo de Z-2 hay dos párrafos. **No son renglones del cuadro**, y por eso el
+esquema no los veía: al transcribir la tabla se perdían en silencio. Mirarlos con cuidado muestra que
+son **cuatro cosas distintas**, y solo tres son modelables hoy.
+
+### (a) Un parámetro condicionado — expresable
+
+> *"En todos los Conjuntos Habitacionales cuya altura sean mayores a tres pisos, deberá destinarse un
+> 30% del total del terreno a Área Libre de Esparcimiento"*
+
+Es `area_libre` con derivación `superficie_libre_m2 / superficie_predio_m2`, sentido **mínimo**,
+límite `0,30`, **condicionado** al hecho `mas_de_tres_pisos`. El mecanismo `cuando:` ya existe desde
+T1.6: costó una primitiva, una derivación y un hecho, y **cero maquinaria nueva**.
+
+Y un sub-límite del mismo tipo: *"la que podrá ser techada hasta un 30%"* es `area_libre_techada`,
+máximo `0,30`, **sobre el área libre y no sobre el predio**.
+
+### (b) Una no aplicabilidad condicional — **acá está el hueco**
+
+La norma **no exige** área libre a un edificio de hasta tres pisos: la exige *por encima* de ese
+umbral. El esquema sabe condicionar un **límite** (`cuando`), pero no sabe decir **"este parámetro no
+aplica si tal hecho no se cumple"**.
+
+Las dos salidas disponibles son malas, y la elección entre ellas es la decisión de esta tarea:
+
+- **Sin base** (lo elegido): bajo el umbral el parámetro da `P` con motivo `sin_limite`. Es
+  **conservador**: no afirma nada de algo que nadie exigió, pero **cuenta como pendiente** en la
+  métrica de cobertura y ensucia el informe.
+- **Base de 0**: bajo el umbral daría `C` vacuo — *"el área libre es ≥ 0"*—. **Peor**: afirmaría
+  cumplimiento de algo que ningún artículo exige, que es exactamente lo que (ES) prohíbe.
+
+Se eligió **sin base**, y el hueco queda como **T1.14d**: el esquema necesita no aplicabilidad
+condicional. No es cosmético — sin él, toda norma con umbral produce un `P` falso o un `C` vacuo, y
+los `P` falsos son una de las métricas de §7.
+
+### (c) Un referente ambiguo — no se modela
+
+> *"No se permitirá el uso del subsuelo en el área de antejardín de 5m. y **la ocupación de éste**
+> será igual a un 70% máx. del total del terreno."*
+
+*"Éste"* admite dos lecturas: el subsuelo o el antejardín. La lectura del antejardín es dimensionalmente
+imposible —una franja de 5 m no ocupa el 70 % de un terreno— así que la del subsuelo es casi
+seguramente la correcta. **Casi.** No se modela: se anota, porque un límite inventado sobre una lectura
+plausible es precisamente lo que el proyecto no hace (D18, D21). Necesita una persona que lea el
+artículo completo.
+
+### (d) Una condición adicional que hay que clasificar
+
+La norma dice *"Conjuntos Habitacionales"*, y ser un Conjunto Habitacional **no se deduce del
+proyecto**: es la misma familia que `dimension_b`. El hecho `mas_de_tres_pisos` captura solo la parte
+aritmética; la parte de "Conjunto Habitacional" queda pendiente de clasificación.
+
+### Un hallazgo metodológico: porcentajes y fracciones
+
+La ordenanza escribe **`30%`** y el corpus guarda **`0,30`**. Son el mismo número dicho de dos maneras,
+y el test que exige que *el valor salga de la cita* —el que cierra el agujero de T1.14a— **falló** al
+agregar estos parámetros. La equivalencia se declaró **explícitamente** en el test en vez de aflojar la
+comprobación: un `0,31` con la cita del `30%` sigue fallando.
+
+**Vecino de `P_DO` (D12):** cada vez que una norma se escribe en una unidad y se guarda en otra, hay una
+conversión que puede esconder un error de factor 100. Vale la pena que sea explícita y verificada.
+
 ## 3. Flujo de la iteración 1
 
 ```

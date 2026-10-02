@@ -113,7 +113,7 @@ def test_sobre_el_corpus_real() -> None:
     corpus = CorpusZonas.desde_zonas(cargar_zonas(RAIZ / "corpus"))
     z = resolver_zona(-33.472219, -70.621721, indice=idx, corpus=corpus)
     assert z.codigo == "Z-2"
-    assert len(z.parametros) == 12
+    assert len(z.parametros) == 14
 
 
 # --- 2. los tres fallos, y no se confunden ---

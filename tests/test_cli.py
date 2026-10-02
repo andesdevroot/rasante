@@ -54,7 +54,7 @@ def test_zona_json_tiene_esquema_estable() -> None:
     assert set(datos) == {"zona", "nombre", "comuna", "parametros", "revisada"}
     assert datos["zona"] == "Z-2"
     assert datos["revisada"] is False, "la zona transcrita viaja en borrador: nadie la ha firmado"
-    assert datos["parametros"] == 12
+    assert datos["parametros"] == 14
 
 
 def test_zona_sin_revisar_lo_advierte_en_json() -> None:
@@ -145,7 +145,7 @@ def test_evaluar_json_trae_veredictos_y_hallazgos_aparte() -> None:
     assert r.exit_code == CODIGO_OK, r.output
     datos = json.loads(r.output)
     assert set(datos) == {"zona", "veredictos", "hallazgos", "cobertura"}
-    assert datos["cobertura"]["total"] == 12
+    assert datos["cobertura"]["total"] == 14
     assert isinstance(datos["veredictos"], list)
     assert isinstance(datos["hallazgos"], list)
 

@@ -7,7 +7,7 @@ Documento vivo. Estado **real**, no aspiracional. Se actualiza en el commit que 
 
 ## Estado actual
 
-**Iteración 1 — Vertical slice, en curso.** T1.1–T1.13, T1.16 y T1.17 cerradas (más T1.7b, T1.14a, E1, E4 y P6) (iteración 0 completa: T0.1–T0.6).
+**Iteración 1 — Vertical slice, en curso.** T1.1–T1.13, T1.16 y T1.17 cerradas (más T1.7b, T1.14a, T1.14b, E1, E4 y P6) (iteración 0 completa: T0.1–T0.6).
 
 | | |
 |---|---|

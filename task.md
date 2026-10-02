@@ -78,7 +78,8 @@ Alcance en `doc/02-ALCANCE.md`. Parámetros: `cos`, `cus`, `altura_maxima` y **`
 | T1.12 | Resolución coordenada → zona | ✅ | `[T1.12]` |
 | T1.13 | CLI | ✅ | `[T1.13]` |
 | T1.14a | Corpus real: Zona Z-2 de Ñuñoa (primera zona transcrita) | ✅ | `[T1.14a]` |
-| T1.14b | La prosa normativa del cuadro (decisión de diseño) | ⬜ |
+| T1.14b | La prosa normativa del cuadro: cuatro categorías | ✅ | `[T1.14b]` |
+| T1.14d | No aplicabilidad condicional de un parámetro | ⬜ |
 | T1.14c | Hechos de agrupamiento (la altura cambia según el tipo) | ⬜ |
 | T1.14 | Corpus real: resto de las zonas de la comuna piloto | ⬜ |
 | T1.15 | Validación contra predios reales | ⬜ |
